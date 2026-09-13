@@ -1,0 +1,10 @@
+[["w5","pipelines"],["w5","DAGs"],["w5","containers"],
+ ["w4","Docker"],["w4","Kubernetes"],["w4","orchestration"],["w4","Spark"],["w4","Flyte"],
+ ["w3","idempotence"],["w3","critical path"],["w3","Compose"],["w3","MapReduce"],
+ ["w3","Parquet"],["w3","Slurm"],["w3","DataFrames"],["w3","ETL / ELT"],["w3","workflow engines"],
+ ["w2","latency"],["w2","registry"],["w2","image layers"],["w2","Amdahl's law"],["w2","volumes"],
+ ["w2","throughput"],["w2","scale out"],["w2","data locality"],["w2","RDD"],["w2","retries"],
+ ["w2","HDFS"],["w2","lazy evaluation"],
+ ["w1","CI/CD"],["w1","Apptainer"],["w1","observability"],["w1","Airflow"],["w1","Nextflow"],
+ ["w1","partitioning"],["w1","CWL"],["w1","shuffle"],["w1","Dagster"],["w1","data lake"],
+ ["w1","schema-on-read"],["w1","columnar"]]

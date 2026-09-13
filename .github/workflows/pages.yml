@@ -1,0 +1,59 @@
+# Publish the decks to GitHub Pages.
+#
+# Replaces GitHub's automatic "pages-build-deployment" (Deploy from a branch),
+# which always checks out submodules recursively and can only reach public
+# repositories. Three of this repo's submodules are private lab repositories,
+# so that build fails at Checkout and nothing is ever deployed.
+#
+# Nothing on the site comes from those repositories, so this workflow checks
+# out the one submodule the decks actually load: the public slide engine.
+#
+# Requires Settings -> Pages -> Source = "GitHub Actions".
+name: Deploy slides
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; never cancel one that is already publishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The private lab submodules are not part of the site. Checking them
+          # out is what broke the automatic build.
+          submodules: false
+
+      - name: Check out the slide engine
+        run: git submodule update --init remark
+
+      - uses: actions/configure-pages@v5
+
+      # upload-pages-artifact dereferences symlinks, so the per-day roster.yml
+      # symlinks that roulette.js fetches at run time survive. The Jekyll
+      # builder used by the branch deployment drops them (safe mode).
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

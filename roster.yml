@@ -1,6 +1,7 @@
-# roster.yml
-# To keep real names out of Git: git update-index --assume-unchanged roster.yml
-# To re-track again: git update-index --no-assume-unchanged roster.yml
+# roster.yml - synthetic placeholder, committed and published with the decks.
+# Do not put real names here: this repository is public and the published site
+# serves this file. Real names go in roster.local.yml, which .gitignore refuses
+# to stage. Create it with tools/roster-local.sh; roulette.js prefers it.
 attendees:
   - Amina El-Sayed
   - Amir Haddad

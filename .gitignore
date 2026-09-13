@@ -1,2 +1,10 @@
 .DS_Store
 .ipynb_checkpoints/
+__pycache__/
+
+# The real class roster, and the per-day symlinks to it. Never in git: the
+# repository is public and roulette.js fetches this file at run time.
+# `git add roster.local.yml` is refused; `git add .` skips it silently.
+# Create it with tools/roster-local.sh; the committed roster.yml is a
+# synthetic placeholder and is what the published site serves.
+roster.local.yml

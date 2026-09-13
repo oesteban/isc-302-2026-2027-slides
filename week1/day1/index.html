@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Introduction to data pipelines | 15.09.2025</title>
+    <title>Introduction to data pipelines | 14.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
     <link rel="stylesheet" type="text/css" href="../../remark/vendor/asciinema-player/asciinema-player.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/core/base.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/themes/hes-so.css" />
-    <link rel="stylesheet" href="../../remark/ext/roulette.css" />
+    <link rel="stylesheet" type="text/css" href="../../remark/ext/nav-controls.css" />
+    <link rel="stylesheet" type="text/css" href="../../remark/ext/roulette.css" />
   </head>
   <body>
 <style>:root { --logo-url: url("../../assets/isc_logo.png"); }</style>
@@ -33,7 +34,6 @@
   });
 </script>
 
-
 <textarea id="source">
 name: title
 layout: true
@@ -43,10 +43,10 @@ count: false
 
 
 .section-mark.center[
-<a href="https://oesteban.github.io/isc-hei-302/week1/day1/index.html">
+<a href="https://oesteban.github.io/isc-302-2026-2027-slides/week1/day1/index.html">
   <object type="image/svg+xml" data="images/qr-talk-url.svg" style="width: 20%"></object>
   <br />
-  https://oesteban.github.io/isc-hei-302/week1/day1/index.html
+  https://oesteban.github.io/isc-302-2026-2027-slides/week1/day1/index.html
 </a>
 
 <br />
@@ -58,7 +58,7 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data computation (week 1, day 1) — 15.09.2025
+### 302 Data infrastructures (week 1, day 1) — 14.09.2026
 ]
 
 ???
@@ -70,32 +70,52 @@ layout: true
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">Introduction to data pipelines (15.09.2025)</span>
+  <span style="padding-left: 10px; font-weight: 600;">Introduction to data pipelines (14.09.2026)</span>
 </p>
 ]
 
 ---
+class: vcenter
 
 # Objectives
 
-.boxed-content.larger.no-bullet[
-* .large[<i class="fa-solid fa-circle-right"></i> Explain **data transformations**]
-  <br /> .indent[.gray-text[and identify/create examples]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Recognize how **tasks depend on one another**]
-  <br /> .indent[.gray-text[without feedback loops, contrast pipelines vs. representations of the internal flow of tasks]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Apply **DAGs** to represent pipelines]
-  <br /> .indent[.gray-text[correctly encoding tasks and dependencies, and understand pipeline nesting/flattening]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> **ETL vs. ELT**, **warehouse/mart vs. lake**.]
-  <br />
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Describe the notion of **scaling** and **resource limitations**]
-  <br /> .indent[.gray-text[e.g., laptop vs. HPC]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Establish a functional **Docker environment**.]
-  <br /> .indent[.gray-text[Execute processing tasks on a laptop given a Docker environment with a prepared Jupyter notebook.]]
+.cards.goals[
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Explain what a **data transformation** is
+.gray-text[and name one from your own field]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Recognize how **tasks depend on one another**
+.gray-text[and why a pipeline has no feedback loops]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Apply **DAGs** to represent a pipeline
+.gray-text[nesting and flattening the same computation]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Bound the **speed-up** you can expect
+.gray-text[latency, throughput, the critical path, Amdahl's law]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Choose **ETL or ELT**, and say where the data lands
+.gray-text[warehouse, mart or lake, and what a table format adds]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Run a pipeline **in a container**
+.gray-text[a working Docker environment on your laptop]
+]
 ]
 
 ---
@@ -105,18 +125,16 @@ layout: true
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 9h20 | Quick quiz (**not graded**). |
 | 9h40 | Explaining a pipeline (**intro**). |
 | 9h50 | .gray-text[Break] |
 | 10h10 | **Roulette**: Explaining a pipeline (game). |
-| 10h40 | **Class**: from the pipeline to DAGs. |
-| 11h15 | **Guided tutorial**: Docker primer |
+| 10h40 | **Lecture**: Introduction to data pipelines. |
+| 11h15 | **&micro;Lab**: Docker primer |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **Lab**: brain pipeline |
-| 15h20 | Quick quiz (repetition) |
-| 15h35 | Discussion of quiz & **outlook** for next session |
-| 15h50 | Voluntary time |
+| 12h45 | **"Changing hats"**: topic draw |
+| 13h40 | **&micro;Lab**: brain pipeline |
+| 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
 
@@ -125,7 +143,7 @@ layout: true
 .section-mark[
 # Quick quiz
 
-.large[20 minutes, not graded]
+.large[ISC Learn opens and closes it.]
 ]
 
 ---
@@ -490,6 +508,51 @@ count: false
 ]
 
 ---
+class: vcenter, stepwise
+
+# Use cases: weather
+
+.cards.cols-5[
+.card.step-1[
+.section-icon.centered[<i class="fa-solid fa-tower-broadcast"></i>]
+
+### Collection
+
+Automatic stations, all over Switzerland.
+]
+.card.step-2[
+.section-icon.centered[<i class="fa-solid fa-cloud-arrow-down"></i>]
+
+### Ingestion
+
+Published as open government data.
+]
+.card.step-3[
+.section-icon.centered[<i class="fa-solid fa-filter"></i>]
+
+### Preprocessing
+
+Quality control, gaps, aggregation.
+]
+.card.step-4[
+.section-icon.centered[<i class="fa-solid fa-chart-line"></i>]
+
+### Modeling
+
+Trends across years and altitudes.
+]
+.card.step-5[
+.section-icon.centered[<i class="fa-solid fa-chalkboard-user"></i>]
+
+### Use
+
+Forecasts, climate reports, and your notebook on 12 Oct.
+]
+]
+
+???
+
+---
 class: roulette
 time: 75
 
@@ -731,48 +794,196 @@ Examples:
 - ELT: land raw JSON into object storage or a warehouse staging schema; then run SQL/Notebooks to materialize curated tables.
 
 ---
+class: vcenter, stepwise
 
-# ETL or ELT: When?
+# ETL or ELT: When? .gray-text[(many sensors, many rates)]
 
-.boxed-content.no-bullet[
-* .large[<i class="fa-solid fa-circle-right"></i></i> **ETL**:]
-  <br /> .indent.larger[Regulatory constraints require curated/validated data **before** it's stored; destination compute is limited/expensive.]
+.cards.cols-3.larger[
+.card.step-1[
+.section-icon.corner[<i class="fa-solid fa-filter"></i>]
 
-<br />
+### ETL
 
-* .large[<i class="fa-solid fa-circle-right"></i></i> **ELT**:]
-  <br /> .indent.larger[Destination engine is powerful/elastic; many downstream use-cases need access to **raw** history; speed of iteration matters.]
+Curate **before** you store.
 
-<br />
+.foot[One table, one fixed rate: fast channels downsampled, slow ones padded with N/A. Ready to query.]
+]
+.card.step-3[
+.section-icon.corner[<i class="fa-solid fa-shuffle"></i>]
 
-* .large[<i class="fa-solid fa-shuffle"></i></i> Hybrid patterns exist:]
-  <br /> .indent.larger[Light **pre-load** checks (anonymization, schema validation) + **post-load** modeling (ELT).]
+### Hybrid
+
+Interpret on arrival, reshape **after**.
+
+.foot[One clock and real units on the way in; pick the grid downstream, per analysis.]
+]
+.card.step-2[
+.section-icon.corner[<i class="fa-solid fa-database"></i>]
+
+### ELT
+
+Land it raw, shape it **after**.
+
+.foot[Each stream as the device sends it, plus the metadata to interpret it. Align later.]
+]
+]
+
+.admonition.question.step-4[
+.large[<i class="fa-solid fa-circle-question"></i> What would you choose for a **clinical MRI pipeline**?]
 ]
 
 ???
 
 ---
-count: false
+class: vcenter, stepwise
 
-# ETL or ELT: When?
+# ETL or ELT: When? .gray-text[(many layers, many CRS)]
 
-.boxed-content.no-bullet[
-* .large[<i class="fa-solid fa-circle-right"></i></i> **ETL**:]
-  <br /> .indent.larger[Regulatory constraints require curated/validated data **before** it's stored; destination compute is limited/expensive.]
+.cards.cols-3.larger[
+.card.step-1[
+.section-icon.corner[<i class="fa-solid fa-filter"></i>]
 
-<br />
+### ETL
 
-* .large[<i class="fa-solid fa-circle-right"></i></i> **ELT**:]
-  <br /> .indent.larger[Destination engine is powerful/elastic; many downstream use-cases need access to **raw** history; speed of iteration matters.]
+Curate **before** you store.
 
-<br />
+.foot[Everything reprojected to EPSG:2056 on a 10 m grid: one stack the map server reads straight.]
+]
+.card.step-3[
+.section-icon.corner[<i class="fa-solid fa-shuffle"></i>]
 
-* .large[<i class="fa-solid fa-shuffle"></i></i> Hybrid patterns exist:]
-  <br /> .indent.larger[Light **pre-load** checks (anonymization, schema validation) + **post-load** modeling (ELT).]
+### Hybrid
 
-<br />
+Interpret on arrival, reshape **after**.
 
-.large.gray-text.center[What would you choose for a clinical MRI pipeline?]
+.foot[CRS and footprint pinned on arrival, because a tile that loses them is unusable. Grid later.]
+]
+.card.step-2[
+.section-icon.corner[<i class="fa-solid fa-database"></i>]
+
+### ELT
+
+Land it raw, shape it **after**.
+
+.foot[Every tile in the projection and resolution it arrived in, with its footprint and its date.]
+]
+]
+
+.admonition.question.step-4[
+.large[<i class="fa-solid fa-circle-question"></i> And for **card payments**, where the raw may not be kept?]
+]
+
+???
+
+---
+class: vcenter
+
+# ETL vs. ELT .gray-text[side by side]
+
+.plan-table.large[
+<table>
+<thead>
+<tr><th style="width:22%">Aspect</th><th style="width:39%">ETL</th><th style="width:39%">ELT</th></tr>
+</thead>
+<tbody>
+<tr class="band"><td class="sec">Compute location</td><td>Outside the warehouse</td><td>Inside it</td></tr>
+<tr><td class="sec">Governance</td><td>Strong control on the way in</td><td>Enforced at query time</td></tr>
+<tr class="band"><td class="sec">Storage</td><td>Smaller, curated only</td><td>Large: raw and curated</td></tr>
+<tr><td class="sec">Latency</td><td>Often batch windows</td><td>Low, incremental models</td></tr>
+<tr class="band"><td class="sec">Cost</td><td>ETL infra + warehouse</td><td>Mostly the warehouse</td></tr>
+<tr><td class="sec">Flexibility</td><td>Fixed curated schema</td><td>High: schema-on-read</td></tr>
+</tbody>
+</table>
+]
+
+???
+
+- ETL feels familiar to strict pipelines (neuroimaging with rigid file contracts).  
+- ELT is popular where warehouses scale elastically.
+
+---
+class: vcenter
+
+# Where it lands decides the order
+
+.cards.cols-2[
+.card[
+<img src="images/geodata-prep.png" style="width: 100%; height: 150px; object-fit: cover; object-position: center 22%; border-radius: 8px" />
+
+### ETL
+
+Reproject and resample every tile, then load the result.
+
+.foot[Into a **warehouse** or a **mart**: one grid, one schema, queried directly.]
+]
+.card[
+<img src="images/orography.png" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px" />
+
+### ELT
+
+Tiles land as they arrive, each in its own projection.
+
+.foot[Into a **lake**: files on object storage, reshaped on the way out.]
+]
+]
+
+???
+
+---
+class: vcenter
+
+# The MeteoSuisse record .gray-text[(again on 12 Oct)]
+
+.boxed-content[
+Hourly and daily readings from the federal station network, published as open government data. `tre200h0` is air temperature, two metres above ground, hourly.
+]
+
+.boxed-content.larger[
+```
+meteosuisse/
+├── year=2021/
+│   ├── month=1/
+│   │   ├── stn=ZER/file0.parquet
+│   │   └── stn=MLS/file0.parquet
+│   └── month=2/…
+└── year=2022/…
+```
+]
+
+.boxed-content.gray-text[
+Gaps, station moves, instrument changes, and a different story at every altitude. Nothing synthetic about it.
+]
+
+???
+
+---
+class: vcenter, stepwise
+
+# The same record, two ways
+
+.cards.cols-2.larger[
+.card.step-1[
+.kicker[what we do]
+
+### ETL
+
+Take the published record and write it once as Parquet, partitioned by year, month and station.
+
+.foot[MeteoSuisse did the cleaning before we saw it. We inherit a fixed schema and query it.]
+]
+.card.step-2[
+.kicker[what we would do instead]
+
+### ELT
+
+Land every file as published, at the finest granularity offered, and derive the aggregates in the store.
+
+.foot[Costs you the work MeteoSuisse already did. Buys you a rebuild when the question changes.]
+]
+]
+
+.admonition.question.step-3[
+.large[<i class="fa-solid fa-circle-question"></i> Which one did **MeteoSuisse** already run for you?]
 ]
 
 ???
@@ -806,23 +1017,77 @@ count: false
 
 ---
 
-.boxed-content.center[
-<br />
-.large[
-| Aspect | ETL | ELT |
-|:--|:--|:--|
-| **Compute location** | Outside DW | Inside DW/DL |
-| **Governance** | Strong control | Flexible; enforce at query/model time |
-| **Storage** | Smaller curated footprint | Large (keep raw + curated) |
-| **Latency** | Often batch windows | Can be low with incremental models |
-| **Cost model** | ETL infra + DW | Mostly DW/DL compute + storage |
-| **Flexibility** | Fixed curated schema | High (schema-on-read patterns) |
+# A directory of Parquet is not a table
+
+.cards.cols-3.vcenter[
+.card[
+### What breaks
+
+A reader sees a half-written batch. Two writers clobber each other. Renaming a column means rewriting everything.
+]
+.card[
+### What a table format adds
+
+A manifest, and an atomic **snapshot**. A reader pins the snapshot it started on, so it never sees half a write.
+]
+.card[
+### Who
+
+**Iceberg**, Delta Lake, Hudi. The same idea; Iceberg is the vendor-neutral one.
+
+.foot[Topic 14, drawn this afternoon.]
 ]
 ]
+
 ???
 
-- ETL feels familiar to strict pipelines (neuroimaging with rigid file contracts).  
-- ELT is popular where warehouses scale elastically.
+---
+
+# Does the data ever stop?
+
+.cards.cols-3.vcenter[
+.card[
+### Batch
+
+Bounded input. You know when it ends, so you can compute over **all** of it.
+]
+.card[
+### Streaming
+
+Unbounded input. There is no "all of it", so every answer is about a **window**.
+]
+.card[
+### Micro-batch
+
+The stream cut into small bounded batches. Batch machinery, seconds of latency.
+]
+]
+
+???
+
+---
+
+# Kafka is a log, not a queue
+
+.cards.cols-2.vcenter[
+.card[
+### A queue
+
+Deletes a message once it is consumed. One reader gets it, and a restart loses what was in flight.
+]
+.card[
+### A log
+
+**Appends and retains.** Every reader keeps its own offset, so any number of them read all of it, and can read it again.
+]
+.card.wide.accent[
+That one difference is why a broker sits between producers and consumers, instead of a queue you wrote yourself.
+
+.foot[Topic 6, drawn this afternoon.]
+]
+]
+
+???
 
 ---
 
@@ -837,9 +1102,11 @@ count: false
 .section-mark[
 
 # <i class="fa-brands fa-docker large"></i>
-# Docker primer
+# &micro;Lab
 
-.large[Getting started with Docker]
+.large[Docker primer]
+
+.gray-text[Driver, mapper, referee. The first round of the way we work all block.]
 ]
 
 ---
@@ -863,15 +1130,55 @@ count: false
 ???
 
 ---
+class: group-roulette
+groups: 4
+seed: 14.09.2026
 
-# Containers vs. virtual machines
+# The first &micro;Lab of the section
 
-.boxed-content.center[
-<img src="https://wac-cdn.atlassian.com/dam/jcr:92adde69-f728-4cfc-8bab-ba391c25ae58/SWTM-2060_Diagram_Containers_VirtualMachines_v03.png" style="width: 100%; padding-top: 20px;"/>
+.cards.goals[
+.card[
+.marker[<i class="fa-solid fa-list-ol"></i>]
 
-.align-right[
-Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/containers-vs-vms)
+Top of your list **drives**. Next one **maps**. The rest of you **referee**.
 ]
+]
+
+???
+
+---
+
+# **&micro;Lab**: Docker primer
+
+.cards.goals[
+.card[
+.marker[<i class="fa-brands fa-docker"></i>]
+
+Get Docker onto the driver's laptop
+.gray-text[Install it if it is not there. Links on the next slide.]
+]
+.card[
+.marker[<i class="fa-solid fa-cloud-arrow-down"></i>]
+
+Start the download you need after lunch
+.gray-text[`docker pull oesteban/neuropipeline-302` is big. Start it now, and put the layers it prints on your sheet.]
+]
+.card[
+.marker[<i class="fa-solid fa-pen-ruler"></i>]
+
+While it downloads, **draw the two stacks**
+.gray-text[Containers and VMs side by side, on your sheet. What does the container *not* have?]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-check"></i>]
+
+Then check it all worked
+.gray-text[`docker info`, then `docker run oesteban/whalesay 'hi 302!'`]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> Done when the sheet is filled in, the two stacks are drawn, and `docker images` lists **both**.
 ]
 
 ???
@@ -894,25 +1201,6 @@ Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/cont
 
 ---
 
-.boxed-content[
-<div class="asciicast" id="docker-info" style="padding-top: 25px"></div>
-]
-
----
-
-.boxed-content[
-<div class="asciicast" id="docker-whalesay" style="padding-top: 25px"></div>
-]
-
----
-
-.boxed-content[
-<div class="asciicast" id="docker-pull" style="padding-top: 25px"></div>
-]
-
-
----
-
 .section-mark[
 # Lunch break
 
@@ -922,9 +1210,407 @@ Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/cont
 ---
 
 .section-mark[
-# Lab
+# "Changing hats"
+
+.large[Choosing the topic you will teach]
+]
+
+???
+
+---
+class: vcenter
+
+# How the draw works
+
+.cards.steps[
+.card.step-1[
+.enum[1]
+
+.large[I walk you through **all sixteen topics**] .gray-text[(one slide each, about a minute)]
+
+.section-icon.corner[<i class="fa-solid fa-list-ol"></i>]
+]
+.card.step-2[
+.enum[2]
+
+.large[You **read the briefs** and write your own shortlist] .gray-text[(quietly, on paper)]
+
+.section-icon.corner[<i class="fa-solid fa-book-open"></i>]
+]
+.card.step-3[
+.enum[3]
+
+.large[The **printouts go on the table**] .gray-text[(one copy of each topic)]
+
+.section-icon.corner[<i class="fa-solid fa-table-list"></i>]
+]
+.card.step-4[
+.enum[4]
+
+.large[The roulette **calls you in**, you take one] .gray-text[(random order, and it is first come first served)]
+
+.section-icon.corner[<i class="fa-solid fa-ticket"></i>]
+]
+.card.step-5[
+.enum[5]
+
+.large[**Ten minutes to trade**] .gray-text[(with anyone, for any reason)]
+
+.section-icon.corner[<i class="fa-solid fa-right-left"></i>]
+]
+]
+
+???
+
+---
+
+# .gray-text[1] Containers vs. VMs
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[Containers and VMs both isolate execution. How do you choose between them?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Run the same small job in a Docker container and in a virtual machine. Report three numbers: cold start time, memory at rest, and disk footprint.
+]
+]
+
+???
+
+---
+
+# .gray-text[2] Building containers (with Docker)
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[When an image is too large or takes long to rebuild; how do you refactor the Dockerfile?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Demonstrate how Dockerfiles are built, caching of layers, the order of instructions, tags, digests, and multi-stage builds. Show how to reduce image size and improve build times by reordering instructions and using multi-stage builds.
+]
+]
+
+???
+
+---
+
+# .gray-text[3] Automating image building with CI/CD
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[How do you save time, and make the process repeatable, when building images and uploading them for distribution?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+A repository whose workflow builds and publishes the image on every push. Show a commit triggering it, the image appearing in the registry, and a second commit that reuses the cache.
+]
+]
+
+???
+
+---
+
+# .gray-text[4] From Docker Compose to Kubernetes
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[Compose already runs several containers that find each other. So what does Kubernetes add?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Start from a two-service Compose file and show the containers reaching each other by name. Then run the same two services on a local Kubernetes and show what replaced the Compose network — and what you had to write that Compose gave you for free.
+]
+]
+
+???
+
+---
+
+# .gray-text[5] K8s, MicroK8s, K3s, minikube: container orchestration
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[Four things call themselves Kubernetes. What is actually different, and which one is on your laptop?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Bring the same Deployment up on at least two of them. Show what differs where it is visible: install time, what is running on the node, what is missing, and what happens when you kill a pod.
+]
+]
+
+???
+
+---
+
+# .gray-text[6] Data streams with Kafka
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[How do you handle data that is governed by events (as opposed to regular sampling)?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Run a single-broker Kafka from a compose file. Produce a handful of messages to a topic, kill the broker, bring it back, and consume from offset 0 to show nothing was lost. Then attach a second consumer in its own group and show it reads the messages the first one has already read.
+]
+]
+
+???
+
+---
+
+# .gray-text[7] Packaging Kubernetes apps with Helm
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[How do you ship the same application to a test cluster and a production cluster without maintaining two copies of its manifests?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Install a public chart in one command and watch a working application come up. Then take that same chart with two different values files and show two genuinely different deployments coming out of one package.
+]
+]
+
+???
+
+---
+
+# .gray-text[8] Container security: what isolation does not give you
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[Your container runs as root. What can it reach on the host, and what stops it?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Bind-mount a host directory into a container, write a file from inside as root, and show it on the host owned by root. Then run the same image as a non-root user with capabilities dropped, and show the write fail. Keep it to what you can demonstrate on your own laptop.
+]
+]
+
+???
+
+---
+
+# .gray-text[9] Caching and typed interfaces in Flyte
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[You changed one task and re-ran the workflow. What has to run again, and who decides?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Run a Flyte workflow. Run it again unchanged and show the cache hits. Change one task's input and show exactly what re-runs and what does not. Then break a type on purpose and show the failure arrive before anything executes.
+]
+]
+
+???
+
+---
+
+# .gray-text[10] Retries and idempotence: what happens after a task fails
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[How to use retry to build more dependable pipelines? When are tasks really retriable?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+A Flyte task that fails at random. Add a retry policy and show it recover. Then make it non-idempotent, appending to a file, and show the retry produce a quietly wrong answer. Fix it, and show the difference in the logs.
+]
+]
+
+???
+
+---
+
+# .gray-text[11] Slurm and Kubernetes, two ways to schedule work
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[Your job will run on a machine that is not yours. What does Slurm need to know before it starts, and what does Kubernetes want instead?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Submit the same small job twice, once as a Slurm batch script and once as a Kubernetes Job. Show what each makes you declare up front, how each queues you, and what you get back when it is done.
+]
+]
+
+???
+
+---
+
+# .gray-text[12] Inside a Parquet file
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[Why is the same data both smaller and faster to query as Parquet than as CSV?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Write one dataset as CSV and as Parquet, and compare size. Then read a single column from each and compare time and bytes actually read. Finish by showing the row-group and column-chunk structure of the file itself.
+]
+]
+
+???
+
+---
+
+# .gray-text[13] Partitioning and the small-files problem
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[You partitioned the dataset by day and the same query got slower. Where did the time go?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Take the MeteoSuisse measurements and write them twice, once with a directory per day and once with a directory per year. Run a single-day query against both, then a query spanning three years against both. Report the read time and the number of files opened in each of the four cases.
+]
+]
+
+???
+
+---
+
+# .gray-text[14] Table formats and the lakehouse
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[A lake is a directory of files. What does it take to call it a table?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Write Parquet, then append to it while a reader is running, and show what the reader sees. Do the same through an Iceberg table and show the reader get a consistent snapshot. Finish by changing the schema and showing old readers survive it.
+]
+]
+
+???
+
+---
+
+# .gray-text[15] Object stores versus file systems
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[What is the difference between a filesystem and an object store?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+Run the same operations against a local object store and against a filesystem path. Rename a directory, list a prefix with many keys, read the middle of a large file. Report which operations are cheap on each and which are quietly expensive. MinIO is enough for this. Its community edition was archived in April 2026, so existing builds still run but get no further releases, and new users are pointed at AIStor Free, which is free and single-node. Both speak the same S3 API, so either one works here.
+]
+]
+
+???
+
+---
+
+# .gray-text[16] DataFrames with pandas, Polars and Arrow
+
+.cards.cols-1.vcenter[
+.card[
+.kicker[the question you answer]
+
+.large[pandas and Polars both give you a DataFrame. What is Arrow then?]
+]
+.card.muted[
+.kicker[what your demo has to show]
+
+The same small transformation in pandas and in Polars. Show the eager versus lazy difference, with one honest measurement. Then show the two handing data to each other through Arrow without copying it.
+]
+]
+
+???
+
+---
+
+.section-mark[
+# Read them properly
+
+.large[Every brief is in your hands.]
+
+.large[Write your own shortlist: .timer[12 minutes].]
+]
+
+???
+
+---
+class: roulette
+time: 20
+
+<br />
+<br />
+
+.boxed-content.large[
+One copy of each brief is on the table. When your name comes up, walk over and take the one you want.
+]
+
+???
+
+---
+
+.section-mark[
+# Trade
+
+.large[Swap with anyone, for any reason.]
+
+.large[.timer[10 minutes] left.]
+]
+
+???
+
+---
+
+.section-mark[
+# &micro;Lab
 
 .large[A first processing pipeline for brain extraction and segmentation from anatomical MRI]
+
+.gray-text[One round today: a dry run of the way we will work from Friday on.]
 ]
 
 
@@ -960,15 +1646,9 @@ Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/cont
 .section-mark[
 # Quick quiz (repeat)
 
-.large[20 minutes, not graded]
-]
+.large[Opens **15h20**, closes **15h50**.]
 
----
-
-.section-mark[
-# Concluding
-
-.large[Discuss the quiz answers and outlook for next session]
+.large[.gray-text[ISC Learn opens and closes it.]]
 ]
 
 ---
@@ -977,7 +1657,7 @@ Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/cont
 # End
 
 .large[
-See you next time: 18.09.2025 @ 8h15 (in <span class="timer" data-until="2025-09-18T08:15:00+02:00"></span>)
+See you next time: 18.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-18T08:15:00+02:00"></span>)
 
 <i class="fa-solid fa-circle-left" style="opacity: 20%"></i>
 [<i class="fa-solid fa-home"></i>](#1)
@@ -989,6 +1669,9 @@ See you next time: 18.09.2025 @ 8h15 (in <span class="timer" data-until="2025-09
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>
+    <script src="../../remark/ext/stepwise-svg.js"></script>
+    <script src="../../remark/ext/svg-theme.js"></script>
+    <script src="../../remark/ext/nav-controls.js"></script>
     <script src="../../remark/ext/asciicasts.js"></script>
     <script src="../../remark/ext/timer.js"></script>
     <script src="../../remark/ext/roulette.js"></script>

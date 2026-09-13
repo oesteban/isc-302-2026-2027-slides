@@ -1,38 +1,18 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Specifying pipelines & Apache Airflow | 22.09.2025</title>
+    <title>Specifying pipelines & Apache Airflow | 24.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
-    <link rel="stylesheet" type="text/css" href="../../remark/vendor/asciinema-player/asciinema-player.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/core/base.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/themes/hes-so.css" />
-    <link rel="stylesheet" href="../../remark/ext/roulette.css" />
+    <link rel="stylesheet" type="text/css" href="../../remark/ext/nav-controls.css" />
+    <link rel="stylesheet" type="text/css" href="../../remark/ext/roulette.css" />
   </head>
   <body>
 <style>:root { --logo-url: url("../../assets/isc_logo.png"); }</style>
-<script src="../../remark/vendor/asciinema-player/asciinema-player.min.js"></script>
 <script src="https://kit.fontawesome.com/015d4b01de.js" crossorigin="anonymous"></script>
-<script type="text/javascript"
-  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML">
-</script>
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    tex2jax: {
-      inlineMath: [['$','$'], ['\\(','\\)']],
-      processEscapes: true},
-      jax: ["input/TeX","input/MathML","input/AsciiMath","output/CommonHTML"],
-      extensions: ["tex2jax.js","mml2jax.js","asciimath2jax.js","MathMenu.js","MathZoom.js","AssistiveMML.js", "[Contrib]/a11y/accessibility-menu.js"],
-      TeX: {
-      extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"],
-      equationNumbers: {
-      autoNumber: "AMS"
-      }
-    }
-  });
-</script>
-
 
 <textarea id="source">
 name: title
@@ -44,10 +24,10 @@ counter: false
 
 
 .section-mark.center[
-<a href="https://oesteban.github.io/isc-hei-302/week2/day1/index.html">
+<a href="https://oesteban.github.io/isc-302-2026-2027-slides/week2/day1/index.html">
   <object type="image/svg+xml" data="images/qr-talk-url.svg" style="width: 20%"></object>
   <br />
-  https://oesteban.github.io/isc-hei-302/week2/day1/index.html
+  https://oesteban.github.io/isc-302-2026-2027-slides/week2/day1/index.html
 </a>
 
 <br />
@@ -59,7 +39,7 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data computation (week 2, day 1) — 22.09.2025
+### 302 Data infrastructures (week 2, day 1) — 24.09.2026
 ]
 
 ???
@@ -71,31 +51,46 @@ layout: true
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">Specifying pipelines & Apache Airflow (22.09.2025)</span>
+  <span style="padding-left: 10px; font-weight: 600;">Specifying pipelines & Apache Airflow (24.09.2026)</span>
 </p>
 ]
 
 ---
+class: vcenter
 
 # Objectives
 
-.boxed-content.larger.no-bullet[
-* .large[<i class="fa-solid fa-circle-right"></i> Convert a DAG sketch into a data pipeline specification]
-  <br /> .indent[.gray-text[applying *Apache Airflow* as first option]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Recognize *Apache Airflow*'s main components]
-  <br /> .indent.gray-text[play with the Web UI, describe how its components relate to one another]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Deploy *Apache Airflow* on a laptop with *Docker*]
-  <br /> .indent[.gray-text[reinforcing the first steps with *Docker compose* from the previous session]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Create advanced *Apache Airflow*'s DAGs]
-  <br /> .indent[.gray-text[applying operators: `BashOperator`, `PythonOperator`, `DockerOperator`]]
-  <br />
-* .large[<i class="fa-solid fa-circle-right"></i> Build, orchestrate, and execute the pipeline of Day 1]
-  <br /> .indent.gray-text[Exercise monitoring, logging, and benchmarking]
-  <br />
+.cards.goals[
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
 
+Convert a DAG sketch into a data pipeline specification
+.gray-text[applying *Apache Airflow* as first option]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Recognize *Apache Airflow*'s main components
+.gray-text[play with the Web UI, describe how its components relate to one another]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Deploy *Apache Airflow* on a laptop with *Docker*
+.gray-text[reinforcing the first steps with *Docker compose* from the previous session]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Create advanced *Apache Airflow*'s DAGs
+.gray-text[applying operators: `BashOperator`, `PythonOperator`, `DockerOperator`]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Build, orchestrate, and execute the pipeline of Day 1
+.gray-text[Exercise monitoring, logging, and benchmarking]
+]
 ]
 
 ---
@@ -103,18 +98,15 @@ layout: true
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 8h15 | Quick quiz (**not graded**). |
-| 8h35 | **Challenge from 18.09**: Group 2 presentation |
+| 8h35 | **&micro;Lab from 18.09**: Group 2 presentation |
 | 9h00 | **Roulette**: what do we expect from Airflow? |
 | 9h15 | **Class**: *Apache Airflow* introduction |
 | 10h05 | .gray-text[Short break] |
-| 10h15 | **Group challenge**: Creating a new Bash&Python pipeline |
+| 10h15 | **&micro;Lab**: Creating a new Bash&Python pipeline |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **Group challenge**: neuro-302 with Airflow and Docker compose |
-| 15h00 | Quick quiz (repetition) |
-| 15h30 | Preparation of next session (groups, and flipped class lectures) |
-| 15h50 | Voluntary time |
+| 12h45 | **&micro;Lab**: neuro-302 with Airflow and Docker compose |
+| 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
 
@@ -124,7 +116,9 @@ layout: true
 .section-mark[
 # Quick quiz
 
-.large[20 minutes, not graded]
+.large[Opens **8h15**, closes **8h45**.]
+
+.large[.gray-text[ISC Learn opens and closes it.]]
 ]
 
 ---
@@ -144,11 +138,11 @@ layout: true
 count: false
 class: group-roulette
 groups: 4
-seed: 18.09.2025
+seed: 18.09.2026
 
 <br />
 .boxed-content[
-# Group challenges from last session
+# &micro;Labs from last session
 
 .large[
 1. Group 2 describes their solution.
@@ -500,12 +494,12 @@ Now, open **http://localhost:8080** and log in with `airflow / airflow`.
 .section-mark[
 # Q&A
 
-.large[Then we jump into the group challenge]
+.large[Then we jump into the &micro;Lab]
 ]
 
 ---
 
-# **Group Challenge**
+# **&micro;Lab**
 
 ## Deploy Apache Airflow and develop the following pipeline:
 
@@ -517,7 +511,7 @@ Now, open **http://localhost:8080** and log in with `airflow / airflow`.
 
 ---
 
-# Challenge's DAG - Tasks
+# &micro;Lab's DAG - Tasks
 
 .boxed-content.no-bullet[
 * .large[<i class="fa-solid fa-snowplow"></i> **prepare_dirs**:]
@@ -567,11 +561,11 @@ USER airflow
 ---
 class: group-roulette
 groups: 4
-seed: 22.09.2025
+seed: 24.09.2026
 
 <br />
 .boxed-content[
-# **Group Challenge**:
+# **&micro;Lab**:
 ## Airflow pipeline to count the words in the 20 newsgroup dataset
 .large[Please remember to group with your team after the break]
 ]
@@ -588,11 +582,11 @@ seed: 22.09.2025
 count: false
 class: group-roulette
 groups: 4
-seed: 22.09.2025
+seed: 24.09.2026
 
 <br />
 .boxed-content[
-# **Group Challenge**:
+# **&micro;Lab**:
 ## Airflow pipeline to count the words in the 20 newsgroup dataset
 
 ]
@@ -608,7 +602,7 @@ seed: 22.09.2025
 
 ---
 
-# **Group challenge**: neuro pipeline with Airflow + Docker
+# **&micro;Lab**: neuro pipeline with Airflow + Docker
 
 .boxed-content.large[
 - Extend the **official Airflow 2.11.0** stack with the **Docker provider**
@@ -626,10 +620,10 @@ seed: 22.09.2025
 ---
 class: group-roulette
 groups: 4
-seed: 22.09.2025
+seed: 24.09.2026
 
 <br />
-# **Group challenge**: neuro pipeline with Airflow + Docker
+# **&micro;Lab**: neuro pipeline with Airflow + Docker
 
 
 .boxed-content[
@@ -651,149 +645,28 @@ seed: 22.09.2025
 .section-mark[
 # Quick quiz (repeat)
 
-.large[20 minutes, not graded]
+.large[Opens **15h20**, closes **15h50**.]
+
+.large[.gray-text[ISC Learn opens and closes it.]]
 ]
 
 ---
 
 # Flipped-class | Description
 
-.boxed-content[
-### Summary
+.boxed-content.no-bullet[
 .large[
-* Thursday, 25th, will be **self-guided**.
+* **15 minutes each**, at the top of the afternoon, from 12h45. Then **10 minutes of questions** for the whole set.
 
-* There will be a **quizz before and after**.
+* Three slots: **21, 24 and 28 September**. Topics were drawn on day 1.
+
+* Everything presented is **examinable in the section test** on 1 October.
 ]
-
-### Flipped-class: description & topics
-.large[
-* Flipped-class **presentations will be graded**.
-
-* Materials presented in the flipped class **will be part of the final exam**.
-
-* Materials for the flipped-class **will be graded**.
-]
-
 ]
 
 ???
 
----
-
-# Flipped-class topics: **Pipelines**
-
-.boxed-content.large[
-1. ETL vs. ELT and the warehouse/lake/lakehouse triad (architectures, pros/cons, common tools).
-
-1. Data formats for pipelines: CSV/JSON vs. Parquet/Dataframes (schema evolution, compression, interoperability).
-
-1. Observability for pipelines: metrics, structured logs, basic tracing (what to measure and why).
-
-]
-
-???
-
----
-
-# Flipped-class topics: **Airflow**
-
-.boxed-content.large[
-1. Handling task failures on Airflow, task retry, logging and exception handling, slack notifications.
-
-1. Airflow's DAGRun operator, BranchPython operator, and XComs (control flow + passing data between tasks).
-
-1. Nextflow as an alternative to Airflow.
-
-1. Common Workflow Language as an alternative to Airflow.
-
-1. Demonstrating providers and creation of custom providers.
-]
-
----
-
-# Flipped-class topics: **Docker**
-
-.boxed-content.large[
-1. Multi-stage Docker builds & image slimming: measure size, cache hits, and reproducibility tips.
-
-1. Containers vs. VMs in practice: isolation, performance, and when to choose which (mini benchmark or case study).
-
-1. Volumes, user mapping, and permissions: reproducible outputs across host/container (UID/GID pitfalls & fixes).
-
-1. Containers on HPC: Apptainer
-]
-
-???
-
----
-
-# Flipped-class topics: **Spark and Kafka**
-
-.boxed-content.large[
-1. Spark: Dataframe vs. RDD
-
-1. Spark I/O and file layout: partitioning best practices, introduce Parquet.
-
-1. Deploy Kafka locally using Docker Compose. Explore broker logs and topic creation.
-
-1. Compare Kafka with other streaming frameworks: trade-offs and ecosystems.
-
-1. Introduction to streaming: batch vs. stream vs. micro-batch; Lambda vs. Kappa architecture.
-]
-
-???
-
----
-class: roulette
-time: 15
-
-<br />
-.boxed-content.small[
-1. ETL vs. ELT and the warehouse/lake/lakehouse triad (architectures, pros/cons, common tools).
-
-1. Data formats for pipelines: CSV/JSON vs. Parquet/Dataframes (schema evolution, compression, interoperability).
-
-1. Observability for pipelines: metrics, structured logs, basic tracing (what to measure and why).
-
-1. Handling task failures on Airflow, task retry, logging and exception handling, slack notifications.
-
-1. Airflow's DAGRun operator, BranchPython operator, and XComs (control flow + passing data between tasks).
-
-1. Nextflow as an alternative to Airflow: description, differences with respect to Airflow, benefits and applications.
-
-1. Common Workflow Language as an alternative to Airflow: description, differences with respect to Airflow, benefits and applications.
-
-1. Demonstrating providers and creation of custom providers.
-
-1. Multi-stage Docker builds & image slimming: measure size, cache hits, and reproducibility tips.
-
-1. Containers vs. VMs in practice: isolation, performance, and when to choose which (mini benchmark or case study).
-
-1. Volumes, user mapping, and permissions: reproducible outputs across host/container (UID/GID pitfalls & fixes).
-
-1. Containers on HPC: Apptainer
-
-1. Spark: Dataframe vs. RDD
-
-1. Spark I/O and file layout: partitioning best practices, introduce Parquet.
-
-1. Deploy Kafka locally using Docker Compose. Explore broker logs and topic creation.
-
-1. Compare Kafka with other streaming frameworks: trade-offs and ecosystems.
-
-1. Introduction to streaming: batch vs. stream vs. micro-batch; Lambda vs. Kappa architecture.
-]
-
-
-
----
-
-.section-mark[
-# Concluding
-
-.large[Discuss the quiz answers and outlook for next session]
-]
+Same rules as published on days 0 and 1. Nothing here is new.
 
 ---
 
@@ -801,11 +674,11 @@ time: 15
 # End
 
 .large[
-Next time (self-guided): 25.09.2025 @ 8h15 (in <span class="timer" data-until="2025-09-25T08:15:00+02:00"></span>)
+See you next time: 28.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-28T08:15:00+02:00"></span>)
 
-[<i class="fa-solid fa-circle-left"></i>](../../week1/day2/index.html)
+[<i class="fa-solid fa-circle-left"></i>](../../week2/day2/index.html)
 [<i class="fa-solid fa-home"></i>](#1)
-[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
+[<i class="fa-solid fa-circle-right"></i>](../../week3/day1/index.html)
 ]
 ]
 
@@ -813,7 +686,8 @@ Next time (self-guided): 25.09.2025 @ 8h15 (in <span class="timer" data-until="2
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>
-    <script src="../../remark/ext/asciicasts.js"></script>
+    <script src="../../remark/ext/svg-theme.js"></script>
+    <script src="../../remark/ext/nav-controls.js"></script>
     <script src="../../remark/ext/timer.js"></script>
     <script src="../../remark/ext/roulette.js"></script>
     <script>Roulette.init(slideshow);</script>

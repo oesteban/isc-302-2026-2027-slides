@@ -1,38 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>DevOps and Docker | 18.09.2025</title>
+    <title>DevOps and Docker | 18.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
     <link rel="stylesheet" type="text/css" href="../../remark/vendor/asciinema-player/asciinema-player.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/core/base.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/themes/hes-so.css" />
-    <link rel="stylesheet" href="../../remark/ext/roulette.css" />
+    <link rel="stylesheet" type="text/css" href="../../remark/ext/nav-controls.css" />
+    <link rel="stylesheet" type="text/css" href="../../remark/ext/roulette.css" />
   </head>
   <body>
 <style>:root { --logo-url: url("../../assets/isc_logo.png"); }</style>
 <script src="../../remark/vendor/asciinema-player/asciinema-player.min.js"></script>
 <script src="https://kit.fontawesome.com/015d4b01de.js" crossorigin="anonymous"></script>
-<script type="text/javascript"
-  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML">
-</script>
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    tex2jax: {
-      inlineMath: [['$','$'], ['\\(','\\)']],
-      processEscapes: true},
-      jax: ["input/TeX","input/MathML","input/AsciiMath","output/CommonHTML"],
-      extensions: ["tex2jax.js","mml2jax.js","asciimath2jax.js","MathMenu.js","MathZoom.js","AssistiveMML.js", "[Contrib]/a11y/accessibility-menu.js"],
-      TeX: {
-      extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"],
-      equationNumbers: {
-      autoNumber: "AMS"
-      }
-    }
-  });
-</script>
-
 
 <textarea id="source">
 name: title
@@ -44,10 +26,10 @@ count: false
 counter: false
 
 .section-mark.center[
-<a href="https://oesteban.github.io/isc-hei-302/week1/day2/index.html">
+<a href="https://oesteban.github.io/isc-302-2026-2027-slides/week1/day2/index.html">
   <object type="image/svg+xml" data="images/qr-talk-url.svg" style="width: 20%"></object>
   <br />
-  https://oesteban.github.io/isc-hei-302/week1/day2/index.html
+  https://oesteban.github.io/isc-302-2026-2027-slides/week1/day2/index.html
 </a>
 
 <br />
@@ -59,7 +41,7 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data computation (week 1, day 2) — 18.09.2025
+### 302 Data infrastructures (week 1, day 2) — 18.09.2026
 ]
 
 ???
@@ -71,32 +53,52 @@ layout: true
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">DevOps and Docker (18.09.2025)</span>
+  <span style="padding-left: 10px; font-weight: 600;">DevOps and Docker (18.09.2026)</span>
 </p>
 ]
 
 ---
+class: vcenter
 
 # Objectives
 
-.boxed-content.no-bullet[
-* .larger[<i class="fa-solid fa-circle-right"></i> Solve problems with  **containers**]
-  <br /> .indent[.gray-text[and describe the differences with virtual machines]]
-  <br />
-* .larger[<i class="fa-solid fa-circle-right"></i> Explain the *Docker* **containers** and **images**]
-  <br /> .indent[.gray-text[including layers, Dockerfile, and registries]]
-  <br />
-* .larger[<i class="fa-solid fa-circle-right"></i> Build *Docker* **images** and edit the `Dockerfile`]
-  <br /> .indent[.gray-text[understanding layer caching and multi-stage builds]]
-  <br />
-* .larger[<i class="fa-solid fa-circle-right"></i> Execute commands in *Docker* **containers**]
-  <br /> .indent[.gray-text[applying volume mounts, networking, and user mapping]]
-  <br />
-* .larger[<i class="fa-solid fa-circle-right"></i> Use *Docker compose* to orchestrate containers]
-  <br /> .indent[.gray-text[and enable invoking ``docker run`` from within a container]]
-  <br />
-* .larger[<i class="fa-solid fa-circle-right"></i> Establish a functional **Docker environment**.]
-  <br /> .indent[.gray-text[Execute processing tasks on a laptop given a Docker environment with a prepared Jupyter notebook.]]
+.cards.goals[
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Solve problems with  **containers**
+.gray-text[and describe the differences with virtual machines]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Explain the *Docker* **containers** and **images**
+.gray-text[including layers, Dockerfile, and registries]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Build *Docker* **images** and edit the `Dockerfile`
+.gray-text[understanding layer caching and multi-stage builds]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Execute commands in *Docker* **containers**
+.gray-text[applying volume mounts, networking, and user mapping]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Use *Docker compose* to orchestrate containers
+.gray-text[and enable invoking ``docker run`` from within a container]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Establish a functional **Docker environment**.
+.gray-text[Execute processing tasks on a laptop given a Docker environment with a prepared Jupyter notebook.]
+]
 ]
 
 ---
@@ -104,18 +106,15 @@ layout: true
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 8h15 | Quick quiz (**not graded**). |
 | 8h35 | **Roulette**: What do you know/want to know about containers? |
-| 9h05 | **Intro&challenge**: the first `Dockerfile` |
+| 9h05 | **Intro & &micro;Lab**: the first `Dockerfile` |
 | 9h35 | .gray-text[Short break] |
-| 9h45 | **Intro&challenge**: Docker compose 1 |
-| 11h15 | Challenge results. |
+| 9h45 | **Intro & &micro;Lab**: Docker compose 1 |
+| 11h15 | &micro;Lab results. |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **Group use-case**: Docker compose 2 |
-| 15h20 | Quick quiz (repetition) |
-| 15h35 | Discussion of quiz & **outlook** for next session |
-| 15h50 | Voluntary time |
+| 12h45 | **&micro;Lab**: Docker compose 2 |
+| 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
 
@@ -124,7 +123,9 @@ layout: true
 .section-mark[
 # Quick quiz
 
-.large[20 minutes, not graded]
+.large[Opens **8h15**, closes **8h45**.]
+
+.large[.gray-text[ISC Learn opens and closes it.]]
 ]
 
 ---
@@ -481,11 +482,11 @@ afdf7ad851ab   5 days ago     /bin/sh -c #(nop)  ENTRYPOINT "/usr/local/bi…   
 ---
 class: group-roulette
 groups: 4
-seed: 18.09.2025
+seed: 18.09.2026
 
 <br />
 
-# **Group Challenge**
+# **&micro;Lab**
 
 .boxed-content[
 .text-gray.large[
@@ -527,11 +528,11 @@ Bonus: use mounting to change the cow at run time.
 ---
 class: group-roulette
 groups: 4
-seed: 18.09.2025
+seed: 18.09.2026
 
 <br />
 
-# **Group Challenge**
+# **&micro;Lab**
 
 .boxed-content[
 .large[
@@ -563,7 +564,7 @@ seed: 18.09.2025
 
 ---
 
-# Group use-case
+# &micro;Lab
 
 
 .boxed-content[
@@ -607,10 +608,10 @@ compose-neuro/
 count: false
 class: group-roulette
 groups: 4
-seed: 18.09.2025
+seed: 18.09.2026
 
 .boxed-content[
-# Group use-case
+# &micro;Lab
 
 .large[
 Rebuild the `oesteban/neuropipeline-302` example, separating neuroimaging libraries and the Jupyter notebook.
@@ -625,15 +626,9 @@ Rebuild the `oesteban/neuropipeline-302` example, separating neuroimaging librar
 .section-mark[
 # Quick quiz (repeat)
 
-.large[20 minutes, not graded]
-]
+.large[Opens **15h20**, closes **15h50**.]
 
----
-
-.section-mark[
-# Concluding
-
-.large[Discuss the quiz answers and outlook for next session]
+.large[.gray-text[ISC Learn opens and closes it.]]
 ]
 
 ---
@@ -642,11 +637,11 @@ Rebuild the `oesteban/neuropipeline-302` example, separating neuroimaging librar
 # End
 
 .large[
-See you next time: 22.09.2025 @ 8h15 (in <span class="timer" data-until="2025-09-22T08:15:00+02:00"></span>)
+See you next time: 21.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-21T08:15:00+02:00"></span>)
 
 [<i class="fa-solid fa-circle-left"></i>](../../week1/day1/index.html)
 [<i class="fa-solid fa-home"></i>](#1)
-[<i class="fa-solid fa-circle-right"></i>](../../week2/day1/index.html)
+[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
 ]
 ]
 
@@ -654,6 +649,8 @@ See you next time: 22.09.2025 @ 8h15 (in <span class="timer" data-until="2025-09
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>
+    <script src="../../remark/ext/svg-theme.js"></script>
+    <script src="../../remark/ext/nav-controls.js"></script>
     <script src="../../remark/ext/asciicasts.js"></script>
     <script src="../../remark/ext/timer.js"></script>
     <script src="../../remark/ext/roulette.js"></script>

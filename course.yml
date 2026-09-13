@@ -1,0 +1,107 @@
+# ---------------------------------------------------------------------------
+# course.yml — single source of truth for everything YEAR-BOUND in these decks.
+#
+# The 25-26 edition hardcoded the cohort calendar in 5 countdown timers,
+# 11 roulette seeds, ~30 visible date strings, 14 deck URLs and 8 QR codes.
+# Rolling the course over meant hunting all of it by hand, every year.
+#
+#   Workflow:  edit this file  ->  python3 tools/reyear.py  ->  review the diff
+#
+# `reyear.py` is deliberately narrow: it rewrites mechanical state only
+# (dates, seeds, timers, URLs, QR codes). It never touches prose or titles —
+# those are content decisions and live in the planning notes, which are kept
+# outside this repository.
+#
+# Idempotence: after a successful run the script sets each `replaces:` equal to
+# its `date:`. Next year you change `date:` only, and `replaces:` tells the
+# script what to look for.
+# ---------------------------------------------------------------------------
+
+cohort: "2026-2027"
+short_year: "26-27"
+
+# Where the rendered decks are served. See the planning notes, risk R5: the 26-27
+# decks repo is PRIVATE, and GitHub Pages on a private repo needs a paid plan.
+# If Pages is unavailable, change this to whatever actually serves the slides
+# and re-run; every deck URL and all 8 QR codes follow from this one value.
+base_url: "https://oesteban.github.io/isc-302-2026-2027-slides"
+repo_url: "https://github.com/oesteban/isc-302-2026-2027-slides"
+
+# Superseded values, rewritten on sight anywhere in the deck tree.
+previous_base_url: "https://oesteban.github.io/isc-302-2026-2027-slides"
+previous_repo_url: "https://github.com/oesteban/isc-302-2026-2027-slides"
+
+# Own-host URLs that legitimately appear in the decks but are not deck URLs
+# (lab starting points students fork). reyear.py --check allows these.
+lab_urls:
+  - "https://github.com/oesteban/whalesay"
+
+# The module was renamed in the 26-27 plan d'etudes (descriptif v1.0.7+).
+module_name: "302 Data infrastructures"
+previous_module_name: "302 Data infrastructures"
+
+timezone_offset: "+02:00"
+
+# ---------------------------------------------------------------------------
+# Teaching days, in delivery order. `id` is the deck directory.
+#
+#   date:     the 26-27 session date              (edit this to roll over)
+#   replaces: the date currently written in the deck (what reyear.py searches)
+#   start:    door-open time, used by the "see you next time" countdown
+#   title:    informational only — reyear.py does NOT rewrite titles
+#
+# Verified 2026-09-10 against the printed filiere plan
+# (2026-27/302 One-shot planning-1.pdf), which is the source of record and the
+# origin of images/course-plan.png. Two corrections came out of it: day 2 moved
+# to Fri 18.09 (swap with 301), and weeks 2's two sessions traded dates.
+# ---------------------------------------------------------------------------
+days:
+  - id: week1/day0
+    date: 2026-09-14
+    replaces: 2026-09-14
+    start: "08:20"
+    title: "Data computing — module overview"
+
+  - id: week1/day1
+    date: 2026-09-14
+    replaces: 2026-09-14
+    start: "09:20"
+    title: "Introduction to data pipelines"
+
+  # Thursday 17.09 was swapped with module 301 and became FRIDAY 18.09.
+  # Source: "302 One-shot planning-1.pdf" (the printed filiere plan), which is
+  # also what images/course-plan.png is rendered from. Closes F0009.
+  - id: week1/day2
+    date: 2026-09-18
+    replaces: 2026-09-18
+    start: "08:15"
+    title: "DevOps, Docker and Compose"
+
+  # week2/day2 and week2/day1 are listed here in DELIVERY order, not directory
+  # order: the printed plan puts container orchestration on the Monday and Flyte
+  # on the Thursday, the reverse of what the 25-26 shape implied. The decks keep
+  # their directory names (content did not move); only their dates swapped.
+  - id: week2/day2
+    date: 2026-09-21
+    replaces: 2026-09-21
+    start: "08:15"
+    title: "Container orchestration at scale: Kubernetes and Slurm"
+                                                    # was: Airflow project (self-guided)
+
+  - id: week2/day1
+    date: 2026-09-24
+    replaces: 2026-09-24
+    start: "08:15"
+    title: "Specifying pipelines with Flyte"        # was: … & Apache Airflow
+
+  - id: week3/day1
+    date: 2026-09-28
+    replaces: 2026-09-28
+    start: "08:15"
+    title: "MapReduce and Apache Spark"
+
+  - id: week3/day2
+    date: 2026-10-01
+    replaces: 2026-10-01
+    start: "08:15"
+    title: "Wrap-up and section test"

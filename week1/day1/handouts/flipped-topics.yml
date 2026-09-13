@@ -1,0 +1,401 @@
+# ---------------------------------------------------------------------------
+# flipped-topics.yml — the sixteen flipped-class topics, weeks 1-3.
+#
+# SINGLE SOURCE OF TRUTH. The printed worksheets (flipped-worksheets.typ) are
+# generated from this file, and the deck's topic list should be too. The 25-26
+# list drifted precisely because it lived only in a slide; do not copy topics
+# into a deck by hand.
+#
+#   typst compile flipped-worksheets.typ            # the 16 printed briefs
+#   python3 ../../../tools/check-topics.py          # deck vs this file
+#
+# Ordering is deliberate: easiest-after-seeding first. A topic the lecture has
+# already introduced can be hard; a topic nobody has mentioned must be easy or
+# late. Slot order therefore encodes difficulty *after* seeding, not raw
+# difficulty.
+# ---------------------------------------------------------------------------
+
+course: "302 Data infrastructures"
+section: "Data pipelines, weeks 1-3"
+teacher: "Oscar Esteban"
+lottery: "Monday 14 September, afternoon"
+
+# Deadlines are D-5, D-3, D-1 (18:00). Each worksheet prints its own slot's
+# dates, so a student never has to look up a schedule.
+slots:
+  - id: 1
+    presents: "Monday 21 September"
+    c1: "Wednesday 16 September"
+    c2: "Friday 18 September"
+    c3: "Sunday 20 September"
+  - id: 2
+    presents: "Thursday 24 September"
+    c1: "Saturday 19 September"
+    c2: "Monday 21 September"
+    c3: "Wednesday 23 September"
+  - id: 3
+    presents: "Monday 28 September"
+    c1: "Wednesday 23 September"
+    c2: "Friday 25 September"
+    c3: "Sunday 27 September"
+
+topics:
+  - id: 1
+    slot: 1
+    title: "Containers vs. VMs"
+    short: "Containers vs VMs"   # the label on the day-0 deck
+    question: "Containers and VMs both isolate execution. How do you choose between them?"
+    demo: >-
+      Run the same small job in a Docker container and in a virtual machine.
+      Report three numbers: cold start time, memory at rest, and disk
+      footprint.
+    shape:
+      - "Technical details of each isolation mechanism"
+      - "Why VMs will always take longer to start?"
+      - "The demo: three measurements, side by side"
+      - "When do you still want a VM? (with examples)"
+    refs:
+      - cite: "Kurtzer, Sochat & Bauer (2017). Singularity: scientific containers for mobility of compute"
+        url: "https://doi.org/10.1371/journal.pone.0177459"
+      - cite: "IBM Technology. Containers vs VMs: What's the difference?"
+        url: "https://www.youtube.com/watch?v=cjXI-yxqGTI"
+
+  - id: 2
+    slot: 1
+    title: "Building containers (with Docker)"
+    short: "Building with Docker"   # the label on the day-0 deck
+    question: "When an image is too large or takes long to rebuild; how do you refactor the Dockerfile?"
+    demo: >-
+      Demonstrate how Dockerfiles are built, caching of layers, the order of instructions,
+      tags, digests, and multi-stage builds.
+      Show how to reduce image size and improve build times by reordering instructions and using multi-stage builds.
+    shape:
+      - "One instruction, one layer: what the build actually produces"
+      - "The cache, and why moving one COPY down saves four minutes"
+      - "Multi-stage: build in an image you then throw away"
+      - "Tags move, digests do not"
+      - "The demo: two numbers before, two numbers after"
+    refs:
+      - cite: "Merkel (2014). Docker: lightweight Linux containers for consistent development and deployment"
+        url: "https://dl.acm.org/doi/10.5555/2600239.2600241"
+      - cite: "Better Stack. Docker Image BEST Practices - From 1.2GB to 10MB"
+        url: "https://www.youtube.com/watch?v=t779DVjCKCs"
+      - cite: "TechWorld with Nana. Top 8 Docker Best Practices for using Docker in Production."
+        url: "https://www.youtube.com/watch?v=8vXoMqWgbQQ"
+
+  - id: 3
+    slot: 1
+    title: "Automating image building with CI/CD"
+    short: "CI/CD"   # the label on the day-0 deck
+    question: "How do you save time, and make the process repeatable, when building images and uploading them for distribution?"
+    demo: >-
+      A repository whose workflow builds and publishes the image on every push.
+      Show a commit triggering it, the image appearing in the registry, and a
+      second commit that reuses the cache.
+    shape:
+      - "Doing every step manually: build, push and see."
+      - "GitHub Actions: anatomy of a workflow file"
+      - "GHAs: how workflows are triggered, show them in action"
+      - "Building docker images within GHA"
+      - "Pushing a commit and see the action kick in and build-push a new image."
+    refs:
+      - cite: "TechWorld with Nana. GitHub Actions Tutorial - Basic Concepts and CI/CD Pipeline with Docker"
+        url: "https://www.youtube.com/watch?v=R8_veQiYBjI"
+
+  - id: 4
+    slot: 1
+    title: "From Docker Compose to Kubernetes"
+    short: "From Compose to Kubernetes"   # the label on the day-0 deck
+    question: "Compose already runs several containers that find each other. So what does Kubernetes add?"
+    demo: >-
+      Start from a two-service Compose file and show the containers reaching
+      each other by name. Then run the same two services on a local Kubernetes
+      and show what replaced the Compose network — and what you had to write
+      that Compose gave you for free.
+    shape:
+      - "Two containers, one network: how Compose makes them find each other"
+      - "The same two services, on Kubernetes"
+      - "The demo: same app, both ways, side by side"
+      - "What Kubernetes buys, and what it charges for it"
+    refs:
+      - cite: "IBM Technology. Container Orchestration Explained"
+        url: "https://www.youtube.com/watch?v=kBF6Bvth0zw"
+      - cite: "IBM Technology. Kubernetes vs. Docker: It's Not an Either/Or Question"
+        url: "https://www.youtube.com/watch?v=2vMEQ5zs1ko"
+
+  - id: 5
+    slot: 1
+    title: "K8s, MicroK8s, K3s, minikube: container orchestration"
+    short: "K8s, K3s, MicroK8s, minikube"   # the label on the day-0 deck
+    question: "Four things call themselves Kubernetes. What is actually different, and which one is on your laptop?"
+    demo: >-
+      Bring the same Deployment up on at least two of them. Show what differs
+      where it is visible: install time, what is running on the node, what is
+      missing, and what happens when you kill a pod.
+    shape:
+      - "One API, several distributions: what upstream Kubernetes is, in parts"
+      - "What each distribution keeps, drops or replaces"
+      - "The demo: the same Deployment on two of them"
+      - "Which one to reach for, and why this course runs k3s"
+    refs:
+      - cite: "Burns et al. (2016). Borg, Omega, and Kubernetes"
+        url: "https://doi.org/10.1145/2890784"
+      - cite: "TechWorld with Nana. Minikube and Kubectl explained | Setup for Beginners | Kubernetes Tutorial 17"
+        url: "https://www.youtube.com/watch?v=E2pP1MOfo3g"
+      - cite: "MicroK8s vs K3s vs minikube"
+        url: "https://canonical.com/microk8s/compare"
+      - cite: "Zakhar Snezhkin.Small Kubernetes for your local experiments: k0s, MicroK8s, kind, k3s, and Minikube"
+        url: "https://palark.com/blog/small-local-kubernetes-comparison/"
+
+  - id: 6
+    slot: 1
+    title: "Data streams with Kafka"
+    short: "Data streams with Kafka"   # the label on the day-0 deck
+    question: "How do you handle data that is governed by events (as opposed to regular sampling)?"
+    demo: >-
+      Run a single-broker Kafka from a compose file. Produce a handful of
+      messages to a topic, kill the broker, bring it back, and consume from
+      offset 0 to show nothing was lost. Then attach a second consumer in its
+      own group and show it reads the messages the first one has already read.
+    shape:
+      - "A queue forgets, a log does not: append, offset, retention"
+      - "Topics and partitions, and what ordering you actually get"
+      - "The demo: kill the broker, bring it back, read it anyway"
+      - "Two consumers, one topic, and who tracks how far each has read"
+    refs:
+      - cite: "Kreps, Narkhede & Rao (2011). Kafka: a distributed messaging system for log processing"
+        url: "https://cwiki.apache.org/confluence/download/attachments/27822226/Kafka-netdb-06-2011.pdf"
+      - cite: "IBM Technology. What is Kafka?"
+        url: "https://www.youtube.com/watch?v=aj9CDZm0Glc"
+      - cite: "Stephane Maarek. How do Kafka Consumer Groups and Consumer Offsets work in Apache Kafka?"
+        url: "https://www.youtube.com/watch?v=9o5LAbPNc28"
+
+  - id: 7
+    slot: 2
+    title: "Packaging Kubernetes apps with Helm"
+    short: "Packaging Kubernetes apps with Helm"   # the label on the day-0 deck
+    question: "How do you ship the same application to a test cluster and a production cluster without maintaining two copies of its manifests?"
+    demo: >-
+      Install a public chart in one command and watch a working application
+      come up. Then take that same chart with two different values files and
+      show two genuinely different deployments coming out of one package.
+    shape:
+      - "The problem: the same app, several clusters, one set of manifests"
+      - "What a chart is: templates, values, and the release as a unit"
+      - "The demo: one chart, two values files, two deployments"
+      - "Where templating YAML breaks down, and what people reach for instead"
+    refs:
+      - cite: "Iglesias (2016). Helm Charts: making it simple to package and deploy common applications on Kubernetes"
+        url: "https://kubernetes.io/blog/2016/10/helm-charts-making-it-simple-to-package-and-deploy-apps-on-kubernetes/"
+      - cite: "Helm documentation. Charts"
+        url: "https://helm.sh/docs/topics/charts/"
+      - cite: "TechWorld with Nana. What is Helm in Kubernetes? Helm and Helm Charts explained | Kubernetes Tutorial 23"
+        url: "https://www.youtube.com/watch?v=-ykwb1d0DXU"
+
+  - id: 8
+    slot: 2
+    title: "Container security: what isolation does not give you"
+    short: "Container security"   # the label on the day-0 deck
+    question: "Your container runs as root. What can it reach on the host, and what stops it?"
+    demo: >-
+      Bind-mount a host directory into a container, write a file from inside as
+      root, and show it on the host owned by root. Then run the same image as a
+      non-root user with capabilities dropped, and show the write fail. Keep it
+      to what you can demonstrate on your own laptop.
+    shape:
+      - "Root in the container is root on the host, unless you say otherwise"
+      - "What the kernel actually separates: namespaces, cgroups, capabilities"
+      - "The demo: the same write, before and after dropping privilege"
+      - "Why `--privileged` shows up in tutorials, and what it costs"
+    refs:
+      - cite: "Combe, Martin & Di Pietro (2016). To Docker or Not to Docker: A Security Perspective"
+        url: "https://doi.org/10.1109/MCC.2016.100"
+      - cite: "IBM Technology. Container Security Explained"
+        url: "https://www.youtube.com/watch?v=b_euX_M82uI"
+      - cite: "Container Security Fundamentals: Linux Capabilities (Part 1)"
+        url: "https://www.youtube.com/watch?v=lBIvPys7L8w"
+
+  - id: 9
+    slot: 2
+    title: "Caching and typed interfaces in Flyte"
+    short: "Caching and types in Flyte"   # the label on the day-0 deck
+    question: "You changed one task and re-ran the workflow. What has to run again, and who decides?"
+    demo: >-
+      Run a Flyte workflow. Run it again unchanged and show the cache hits.
+      Change one task's input and show exactly what re-runs and what does not.
+      Then break a type on purpose and show the failure arrive before anything
+      executes.
+    shape:
+      - "The problem: re-running work you have already done"
+      - "What the cache keys on, and how you invalidate it when it lies to you"
+      - "Typed interfaces: the failure that arrives before you spend the compute"
+      - "The demo: run, re-run, change one input, break a type"
+    refs:
+      - cite: "Flyte documentation. Caching"
+        url: "https://docs.flyte.org/en/latest/user_guide/development_lifecycle/caching.html"
+      - cite: "Samhita Alla. Run Your Data and Machine Learning Workflows on Kubernetes with Flyte"
+        url: "https://www.youtube.com/watch?v=nXZHtaTnp14"
+
+  - id: 10
+    slot: 2
+    title: "Retries and idempotence: what happens after a task fails"
+    short: "Retries and idempotence"   # the label on the day-0 deck
+    question: "How to use retry to build more dependable pipelines? When are tasks really retriable?"
+    demo: >-
+      A Flyte task that fails at random. Add a retry policy and show it
+      recover. Then make it non-idempotent, appending to a file, and show the
+      retry produce a quietly wrong answer. Fix it, and show the difference in
+      the logs.
+    shape:
+      - "Retries, and the backoff that stops them turning one failure into many"
+      - "A task is retriable when running it twice leaves the world as running it once did"
+      - "The ones that pass that test, and the ones that only look like they do"
+      - "The demo, and what has to be in the logs to tell those two apart"
+    refs:
+      - cite: "Helland (2012). Idempotence Is Not a Medical Condition"
+        url: "https://doi.org/10.1145/2181796.2187821"
+      - cite: "Beyer et al. Site Reliability Engineering, ch. 22: Addressing Cascading Failures"
+        url: "https://sre.google/sre-book/addressing-cascading-failures/"
+
+  - id: 11
+    slot: 2
+    title: "Slurm and Kubernetes, two ways to schedule work"
+    short: "Slurm and Kubernetes"   # the label on the day-0 deck
+    question: "Your job will run on a machine that is not yours. What does Slurm need to know before it starts, and what does Kubernetes want instead?"
+    demo: >-
+      Submit the same small job twice, once as a Slurm batch script and once as
+      a Kubernetes Job. Show what each makes you declare up front, how each
+      queues you, and what you get back when it is done.
+    shape:
+      - "Both tools say scheduling and they do not mean the same thing by it"
+      - "Slurm gives you an allocation of machines for a while and runs your script on it"
+      - "Kubernetes takes a description of what should be true and works to keep it true"
+      - "The demo, the same job both ways, and which model fits which work"
+    refs:
+      - cite: "Yoo, Jette & Grondona (2003). SLURM: Simple Linux Utility for Resource Management"
+        url: "https://doi.org/10.1007/10968987_3"
+      - cite: "Beltre et al. (2019). Enabling HPC Workloads on Cloud Infrastructure Using Kubernetes Container Orchestration Mechanisms"
+        url: "https://doi.org/10.1109/CANOPIE-HPC49598.2019.00007"
+      - cite: "NAISS. Lecture 3: Introduction to the batch scheduler Slurm"
+        url: "https://www.youtube.com/watch?v=GA3xZ-eG6yk"
+
+  - id: 12
+    slot: 3
+    title: "Inside a Parquet file"
+    short: "Inside a Parquet file"   # the label on the day-0 deck
+    question: "Why is the same data both smaller and faster to query as Parquet than as CSV?"
+    demo: >-
+      Write one dataset as CSV and as Parquet, and compare size. Then read a
+      single column from each and compare time and bytes actually read. Finish
+      by showing the row-group and column-chunk structure of the file itself.
+    shape:
+      - "A CSV stores a row at a time, Parquet stores a column at a time"
+      - "Why a column of one type compresses when a row of mixed types does not"
+      - "Row groups, column chunks, and the footer that lets a reader skip most of the file"
+      - "The demo, size first and then the time to read one column"
+    refs:
+      - cite: "Melnik et al. (2010). Dremel: interactive analysis of web-scale datasets"
+        url: "https://doi.org/10.14778/1920841.1920886"
+      - cite: "Abadi, Boncz, Harizopoulos, Idreos & Madden (2013). The Design and Implementation of Modern Column-Oriented Database Systems"
+        url: "https://doi.org/10.1561/1900000024"
+      - cite: "Julien Le Dem. The columnar roadmap: Apache Parquet and Apache Arrow"
+        url: "https://www.youtube.com/watch?v=dPb2ZXnt2_U"
+      - cite: "Row Groups in Apache Parquet"
+        url: "https://www.youtube.com/watch?v=BjssGRlSnfA"
+
+  - id: 13
+    slot: 3
+    title: "Partitioning and the small-files problem"
+    short: "Partitioning and small files"   # the label on the day-0 deck
+    question: "You partitioned the dataset by day and the same query got slower. Where did the time go?"
+    demo: >-
+      Take the MeteoSuisse measurements and write them twice, once with a
+      directory per day and once with a directory per year. Run a single-day
+      query against both, then a query spanning three years against both.
+      Report the read time and the number of files opened in each of the four
+      cases.
+    shape:
+      - "Partitioning a dataset by making a directory for each value in a column (for example: \"date\")"
+      - "Why that partition only works if analysis queries only for single days"
+      - "If instead, you'd typically run 1000-day queries, then access cost raises"
+      - "The demo uses the MeteoSuisse dataset to demonstrate the performance of two distant layouts"
+    refs:
+      - cite: "Armbrust et al. (2020). Delta Lake: High-Performance ACID Table Storage over Cloud Object Stores"
+        url: "https://doi.org/10.14778/3415478.3415560"
+      - cite: "Matthew Powers. Optimizing Delta Parquet Data Lakes for Apache Spark"
+        url: "https://www.youtube.com/watch?v=euBvYFTVN8s"
+
+  - id: 14
+    slot: 3
+    title: "Table formats and the lakehouse"
+    short: "Table formats and Iceberg"   # the label on the day-0 deck
+    question: "A lake is a directory of files. What does it take to call it a table?"
+    demo: >-
+      Write Parquet, then append to it while a reader is running, and show what
+      the reader sees. Do the same through an Iceberg table and show the reader
+      get a consistent snapshot. Finish by changing the schema and showing old
+      readers survive it.
+    shape:
+      - "Without a table format, a reader finds the data by listing the directory and reading every file it finds"
+      - "If a writer is adding files while that listing happens, the reader gets some of them and not others, and its answer mixes before and after"
+      - "Iceberg keeps a metadata file listing the data files in each snapshot, so a reader stays on the snapshot it opened while the writer builds the next"
+      - "The demo does that same append twice, once on a plain folder and once on an Iceberg table, then adds a column and re-runs a query written before the change"
+    refs:
+      - cite: "Armbrust et al. (2020). Delta Lake: high-performance ACID table storage over cloud object stores"
+        url: "https://doi.org/10.14778/3415478.3415560"
+      - cite: "Armbrust, Ghodsi, Xin & Zaharia (2021). Lakehouse: A New Generation of Open Platforms that Unify Data Warehousing and Advanced Analytics"
+        url: "https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf"
+      - cite: "Ryan Blue. Apache Iceberg: A Table Format for Huge Analytic Datasets"
+        url: "https://www.youtube.com/watch?v=mf8Hb0coI6o"
+
+  - id: 15
+    slot: 3
+    title: "Object stores versus file systems"
+    short: "Object stores vs file systems"   # the label on the day-0 deck
+    question: "What is the difference between a filesystem and an object store?"
+    demo: >-
+      Run the same operations against a local object store and against a
+      filesystem path. Rename a directory, list a prefix with many keys, read
+      the middle of a large file. Report which operations are cheap on each and
+      which are quietly expensive. MinIO is enough for this. Its community
+      edition was archived in April 2026, so existing builds still run but get
+      no further releases, and new users are pointed at AIStor Free, which is
+      free and single-node. Both speak the same S3 API, so either one works
+      here.
+    shape:
+      - "A filesystem gives you a tree of directories and files you can open, seek into, append to and rename"
+      - "An object store gives you a flat set of keys, each holding bytes you write whole and read back whole or by byte range"
+      - "On an object store a rename means copy and delete, listing a prefix is a paged API call, and reading part of a file needs a range request"
+      - "The demo times those three operations on MinIO and on a local path and says which side pays for each"
+    refs:
+      - cite: "Ghemawat, Gobioff & Leung (2003). The Google File System"
+        url: "https://doi.org/10.1145/945445.945450"
+      - cite: "Brantner, Florescu, Graf, Kossmann & Kraska (2008). Building a Database on S3"
+        url: "https://doi.org/10.1145/1376616.1376645"
+      - cite: "IBM Technology. What is Object Storage?"
+        url: "https://www.youtube.com/watch?v=ZfTOQJlLsAs"
+      - cite: "MinIO for Developers, Session 1: Understanding Object Storage, Buckets, and S3"
+        url: "https://www.youtube.com/watch?v=gY090GEDdu8"
+
+  - id: 16
+    slot: 3
+    title: "DataFrames with pandas, Polars and Arrow"
+    short: "pandas, Polars and Arrow"   # the label on the day-0 deck
+    question: "pandas and Polars both give you a DataFrame. What is Arrow then?"
+    demo: >-
+      The same small transformation in pandas and in Polars. Show the eager
+      versus lazy difference, with one honest measurement. Then show the two
+      handing data to each other through Arrow without copying it.
+    shape:
+      - "The MeteoSuisse measurements are a table of typed columns, and a DataFrame is that table plus the operations to filter, join and aggregate it"
+      - "pandas runs each step as you wrote it, so filtering to one station after joining the station metadata reads every station first"
+      - "Polars can read the whole chain before running it and push that filter down into the read, so most of the file never loads"
+      - "Arrow is not a third DataFrame, it is the memory layout under both, so the same MeteoSuisse table passes from one to the other without a copy"
+      - "The demo runs one MeteoSuisse aggregation in each, times it honestly, then hands the table across through Arrow"
+    refs:
+      - cite: "McKinney (2010). Data structures for statistical computing in Python"
+        url: "https://doi.org/10.25080/Majora-92bf1922-00a"
+      - cite: "Ritchie Vink. Polars: DataFrames in the multi-core era (PyData NYC 2023)"
+        url: "https://www.youtube.com/watch?v=tqcudsykOGc"
+      - cite: "A deep dive into the Arrow Columnar format with pyarrow and nanoarrow"
+        url: "https://www.youtube.com/watch?v=k0mkDXWfLb4"
