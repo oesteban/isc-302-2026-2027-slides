@@ -772,7 +772,6 @@ Use this to reason about “worth it?” before scaling out.
 
 ---
 
-# Trending topic: ETL vs. ELT
 
 .section-mark.large.no-bullet[
 * .large[**ETL** = Extract → Transform → Load]
@@ -788,15 +787,11 @@ Use this to reason about “worth it?” before scaling out.
 
 ???
 
-Examples:
-
-- ETL: nightly batch jobs transform CSVs with a Python/DBT job, then load into a data warehouse table used by BI.  
-- ELT: land raw JSON into object storage or a warehouse staging schema; then run SQL/Notebooks to materialize curated tables.
 
 ---
 class: vcenter, stepwise
 
-# ETL or ELT: When? .gray-text[(many sensors, many rates)]
+# ETL or ELT: .gray-text[many sensors, many sampling rates]
 
 .cards.cols-3.larger[
 .card.step-1[
@@ -806,7 +801,7 @@ class: vcenter, stepwise
 
 Curate **before** you store.
 
-.foot[One table, one fixed rate: fast channels downsampled, slow ones padded with N/A. Ready to query.]
+.foot[Data stored in tables at one fixed rate: fast channels anti-alias filtered then downsampled, slow ones padded with N/A, outliers rejected on the way in.]
 ]
 .card.step-3[
 .section-icon.corner[<i class="fa-solid fa-shuffle"></i>]
@@ -815,7 +810,7 @@ Curate **before** you store.
 
 Interpret on arrival, reshape **after**.
 
-.foot[One clock and real units on the way in; pick the grid downstream, per analysis.]
+.foot[Streams are stored with their original sampling rate in different tables with a pre-defined schema. Drops some metadata that is not necessary given the schema.]
 ]
 .card.step-2[
 .section-icon.corner[<i class="fa-solid fa-database"></i>]
@@ -824,7 +819,7 @@ Interpret on arrival, reshape **after**.
 
 Land it raw, shape it **after**.
 
-.foot[Each stream as the device sends it, plus the metadata to interpret it. Align later.]
+.foot[Each stream preserved "untouched" in an object store as the device sends it, plus the metadata to interpret it.]
 ]
 ]
 
@@ -837,7 +832,7 @@ Land it raw, shape it **after**.
 ---
 class: vcenter, stepwise
 
-# ETL or ELT: When? .gray-text[(many layers, many CRS)]
+# ETL or ELT: .gray-text[geospatial data]
 
 .cards.cols-3.larger[
 .card.step-1[
@@ -847,7 +842,7 @@ class: vcenter, stepwise
 
 Curate **before** you store.
 
-.foot[Everything reprojected to EPSG:2056 on a 10 m grid: one stack the map server reads straight.]
+.foot[Data of a specific area, reprojected on a 10 m grid.]
 ]
 .card.step-3[
 .section-icon.corner[<i class="fa-solid fa-shuffle"></i>]
@@ -856,7 +851,7 @@ Curate **before** you store.
 
 Interpret on arrival, reshape **after**.
 
-.foot[CRS and footprint pinned on arrival, because a tile that loses them is unusable. Grid later.]
+.foot[Data of a specific area, but the original resolution is preserved.]
 ]
 .card.step-2[
 .section-icon.corner[<i class="fa-solid fa-database"></i>]
@@ -870,7 +865,7 @@ Land it raw, shape it **after**.
 ]
 
 .admonition.question.step-4[
-.large[<i class="fa-solid fa-circle-question"></i> And for **card payments**, where the raw may not be kept?]
+.large[<i class="fa-solid fa-circle-question"></i> And for **card payments**, what would be the issue with an ELT approach?]
 ]
 
 ???
@@ -904,7 +899,7 @@ class: vcenter
 ---
 class: vcenter
 
-# Where it lands decides the order
+# [Data] Warehouses, Marts & Lakes
 
 .cards.cols-2[
 .card[
@@ -912,85 +907,30 @@ class: vcenter
 
 ### ETL
 
-Reproject and resample every tile, then load the result.
+Stores in a *Data Warehouse* (DW), with a fixed schema.
 
-.foot[Into a **warehouse** or a **mart**: one grid, one schema, queried directly.]
+.foot[**Data mart**: a subject-area subset of a DW, scoped to one team, product or domain (e.g., finance mart, a clinical mart). ]
 ]
 .card[
 <img src="images/orography.png" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px" />
 
 ### ELT
 
-Tiles land as they arrive, each in its own projection.
+Stores in a *Data Lake* (DL), with schema-on-read.
 
-.foot[Into a **lake**: files on object storage, reshaped on the way out.]
+.foot[**Data swamp**: a degraded DL due to lack of governance.]
 ]
 ]
 
-???
-
----
-class: vcenter
-
-# The MeteoSuisse record .gray-text[(again on 12 Oct)]
-
-.boxed-content[
-Hourly and daily readings from the federal station network, published as open government data. `tre200h0` is air temperature, two metres above ground, hourly.
-]
-
-.boxed-content.larger[
-```
-meteosuisse/
-├── year=2021/
-│   ├── month=1/
-│   │   ├── stn=ZER/file0.parquet
-│   │   └── stn=MLS/file0.parquet
-│   └── month=2/…
-└── year=2022/…
-```
-]
-
-.boxed-content.gray-text[
-Gaps, station moves, instrument changes, and a different story at every altitude. Nothing synthetic about it.
-]
-
-???
-
----
-class: vcenter, stepwise
-
-# The same record, two ways
-
-.cards.cols-2.larger[
-.card.step-1[
-.kicker[what we do]
-
-### ETL
-
-Take the published record and write it once as Parquet, partitioned by year, month and station.
-
-.foot[MeteoSuisse did the cleaning before we saw it. We inherit a fixed schema and query it.]
-]
-.card.step-2[
-.kicker[what we would do instead]
-
-### ELT
-
-Land every file as published, at the finest granularity offered, and derive the aggregates in the store.
-
-.foot[Costs you the work MeteoSuisse already did. Buys you a rebuild when the question changes.]
-]
-]
-
-.admonition.question.step-3[
-.large[<i class="fa-solid fa-circle-question"></i> Which one did **MeteoSuisse** already run for you?]
+.admonition.warning[
+<i class="fa-solid fa-triangle-exclamation"></i> Do not confuse a DL with **Delta Lake**: that is a *table format*, layered on a lake.
 ]
 
 ???
 
 ---
 
-# Data Warehouse, mart & lake
+# DW, DM & DL .gray-text[(recap)]
 
 <br />
 
@@ -1017,29 +957,39 @@ Land every file as published, at the finest granularity offered, and derive the 
 
 ---
 
-# A directory of Parquet is not a table
+# A directory of Parquet is not a table .gray-text[(in the lake)]
 
 .cards.cols-3.vcenter[
 .card[
+### Parquet
+
+A columnar file format. Every write drops **new files** into the lake.
+
+.foot[The file format determines how the data is stored. However, the DL cannot be queried directly because how those many files create a table together is unknown.]
+]
+.card[
 ### What breaks
 
-A reader sees a half-written batch. Two writers clobber each other. Renaming a column means rewriting everything.
+If data is being added to the DL (e.g., new parquet files), 
+a simultaneous query will run on a dirty state (some new files will be read, some ignored).
 ]
 .card[
-### What a table format adds
+### "Meta-" table formats
 
-A manifest, and an atomic **snapshot**. A reader pins the snapshot it started on, so it never sees half a write.
-]
-.card[
-### Who
+Creates a **snapshot** (e.g., with manifest files) that allows seeing
+a pool of Parquet files as an actual table with optimizations
+such as leveraging Parquet's columnar storage.
 
-**Iceberg**, Delta Lake, Hudi. The same idea; Iceberg is the vendor-neutral one.
-
-.foot[Topic 14, drawn this afternoon.]
+.foot[**Iceberg**, Delta Lake, Hudi.]
 ]
 ]
 
 ???
+
+Two more, if they ask:
+
+- Two jobs writing at once overwrite each other's files.
+- Renaming a column means rewriting every file, because the name lives in each footer.
 
 ---
 
