@@ -112,9 +112,12 @@
     text(size: 8pt)[Docker root dir], rule(100%),
   )
   #v(7pt)
+  // True on the Engine, false on Desktop: there the daemon runs inside a Linux
+  // VM, so its Docker root dir is a path in the VM and does not exist on a Mac
+  // or Windows host. Asked rather than asserted, so the "no" is the discovery.
   #text(size: 7.5pt, fill: luma(130))[
-    Every layer in box 1 is on your disk right now, under one of those three.
-    Which one, and what else would you expect to find there?
+    Every layer in box 1 is on your disk right now. Which of those three says
+    where the daemon keeps them, and does that path exist on *your* machine?
   ]
   #writing(2)
   #v(6pt)
@@ -147,10 +150,24 @@
 
 #v(9pt)
 
-// ── 5. the two stacks ─────────────────────────────────────────────────────
+// ── 5. engine versus desktop ──────────────────────────────────────────────
+// The deck sends Linux users to the Engine and Mac/Windows users to Desktop,
+// so both cases are in the room and the pairs can compare. Placed last before
+// the stacks drawing on purpose: whoever answers "Desktop runs a Linux VM"
+// has already drawn half of box 6.
+#panel("5 · Docker Engine and Docker Desktop are not the same thing")[
+  #text(size: 7.5pt, fill: luma(130))[Which one did you install? What does the other one add?]
+  #writing(3)
+  #v(5pt)
+  #text(size: 7.5pt, fill: luma(130))[Where did the answer come from? #rule(60%)]
+]
+
+#v(9pt)
+
+// ── 6. the two stacks ─────────────────────────────────────────────────────
 // Open paper, no boxes: a drawn stack is a pile of rectangles and a frame
 // around it only competes with them.
-#panel("5 · The two stacks")[
+#panel("6 · The two stacks")[
   #text(size: 7.5pt, fill: luma(130))[
     Draw them side by side. What does the container *not* have?
   ]
