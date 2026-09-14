@@ -84,37 +84,37 @@ class: vcenter
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
 Explain what a **data transformation** is
-.gray-text[and name one from your own field]
+.gray-text[and be able to name some in the context of a neuroimaging pipeline]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
 Recognize how **tasks depend on one another**
-.gray-text[and why a pipeline has no feedback loops]
+.gray-text[and explain why a pipeline has no feedback loops]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
 Apply **DAGs** to represent a pipeline
-.gray-text[nesting and flattening the same computation]
+.gray-text[and judge whether a graph is a DAG or not]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
 Bound the **speed-up** you can expect
-.gray-text[latency, throughput, the critical path, Amdahl's law]
+.gray-text[define latency, throughput, the critical path, Amdahl's law]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Choose **ETL or ELT**, and say where the data lands
-.gray-text[warehouse, mart or lake, and what a table format adds]
+Choose between **ETL or ELT**, and the corresponding storage solution
+.gray-text[define data warehouse, mart or lake, and explain how they store data]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Run a pipeline **in a container**
-.gray-text[a working Docker environment on your laptop]
+Manually run a pipeline **in a container**
+.gray-text[preparing a Docker environment for the remainder of the section]
 ]
 ]
 
@@ -143,7 +143,7 @@ Run a pipeline **in a container**
 .section-mark[
 # Quick quiz
 
-.large[ISC Learn opens and closes it.]
+.large[Remaining time: .timer[in 30 minutes].]
 ]
 
 ---
@@ -546,7 +546,7 @@ Trends across years and altitudes.
 
 ### Use
 
-Forecasts, climate reports, and your notebook on 12 Oct.
+Forecasts, climate reports, etc.
 ]
 ]
 
@@ -1118,17 +1118,6 @@ queue you wrote yourself.
 .large[We reconvene .timer[in 10 minutes].]
 ]
 
----
-
-.section-mark[
-
-# <i class="fa-brands fa-docker large"></i>
-# &micro;Lab
-
-.large[Docker primer]
-
-.gray-text[Driver, mapper, referee. The first round of the way we work all block.]
-]
 
 ---
 
@@ -1149,6 +1138,17 @@ queue you wrote yourself.
 
 ]
 ???
+
+---
+
+.section-mark[
+
+# <i class="fa-brands fa-docker large"></i>
+# Docker primer
+
+.large[Our first &micro;Lab!]
+
+]
 
 ---
 class: group-roulette
@@ -1247,35 +1247,35 @@ class: vcenter
 .card.step-1[
 .enum[1]
 
-.large[I walk you through **all sixteen topics**] .gray-text[(one slide each, about a minute)]
+.large[We introduce **all sixteen topics**]
 
 .section-icon.corner[<i class="fa-solid fa-list-ol"></i>]
 ]
 .card.step-2[
 .enum[2]
 
-.large[You **read the briefs** and write your own shortlist] .gray-text[(quietly, on paper)]
+.large[You **read the briefs** and write your own shortlist]
 
 .section-icon.corner[<i class="fa-solid fa-book-open"></i>]
 ]
 .card.step-3[
 .enum[3]
 
-.large[The **printouts go on the table**] .gray-text[(one copy of each topic)]
+.large[One paper sheet per topic is presented on the table]
 
 .section-icon.corner[<i class="fa-solid fa-table-list"></i>]
 ]
 .card.step-4[
 .enum[4]
 
-.large[The roulette **calls you in**, you take one] .gray-text[(random order, and it is first come first served)]
+.large[Take your preferred topic] .gray-text[(from those available when the roulette calls you in)]
 
 .section-icon.corner[<i class="fa-solid fa-ticket"></i>]
 ]
 .card.step-5[
 .enum[5]
 
-.large[**Ten minutes to trade**] .gray-text[(with anyone, for any reason)]
+.large[Topics can be *traded* during the next ten minutes]
 
 .section-icon.corner[<i class="fa-solid fa-right-left"></i>]
 ]
@@ -1590,11 +1590,9 @@ The same small transformation in pandas and in Polars. Show the eager versus laz
 ---
 
 .section-mark[
-# Read them properly
+# Read all the topics...
 
-.large[Every brief is in your hands.]
-
-.large[Write your own shortlist: .timer[12 minutes].]
+.large[... and prepare your shortlist: .timer[12 minutes].]
 ]
 
 ???
@@ -1617,8 +1615,6 @@ One copy of each brief is on the table. When your name comes up, walk over and t
 .section-mark[
 # Trade
 
-.large[Swap with anyone, for any reason.]
-
 .large[.timer[10 minutes] left.]
 ]
 
@@ -1631,7 +1627,6 @@ One copy of each brief is on the table. When your name comes up, walk over and t
 
 .large[A first processing pipeline for brain extraction and segmentation from anatomical MRI]
 
-.gray-text[One round today: a dry run of the way we will work from Friday on.]
 ]
 
 
