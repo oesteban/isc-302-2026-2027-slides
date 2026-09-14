@@ -957,21 +957,25 @@ Stores in a *Data Lake* (DL), with schema-on-read.
 
 ---
 
-# A directory of Parquet is not a table .gray-text[(in the lake)]
+# Standard ELT: a DL of Parquet files
 
 .cards.cols-3.vcenter[
 .card[
 ### Parquet
 
-A columnar file format. Every write drops **new files** into the lake.
+A **columnar file format** for fast storage and retrieval of large datasets.
+Typically, folders logically structure parquet files, which keep arriving to the DL.
 
-.foot[The file format determines how the data is stored. However, the DL cannot be queried directly because how those many files create a table together is unknown.]
+.foot[The file format determines how the data is stored.]
 ]
 .card[
-### What breaks
+### A *naive* structure
 
 If data is being added to the DL (e.g., new parquet files), 
 a simultaneous query will run on a dirty state (some new files will be read, some ignored).
+
+.foot[The DL cannot be queried directly because how those many files create a table together is unknown.]
+
 ]
 .card[
 ### "Meta-" table formats
@@ -992,32 +996,56 @@ Two more, if they ask:
 - Renaming a column means rewriting every file, because the name lives in each footer.
 
 ---
+class: vcenter, stepwise
 
-# Does the data ever stop?
+# Types of data pipelines in terms of input timing
 
-.cards.cols-3.vcenter[
-.card[
+.cards.cols-3.larger[
+.card.step-1[
+.section-icon.corner[<i class="fa-solid fa-box"></i>]
+
+.kicker[Latency: hours]
+
 ### Batch
 
-Bounded input. You know when it ends, so you can compute over **all** of it.
-]
-.card[
-### Streaming
+A dataset has clear starting and ending points,
+and can be processed in one go.
 
-Unbounded input. There is no "all of it", so every answer is about a **window**.
+.foot[For example, a CSV file with 12 days of data from sensors sampling at 1 KHz (&sim;1 million rows).]
 ]
-.card[
+.card.step-3[
+.section-icon.corner[<i class="fa-solid fa-stopwatch"></i>]
+
+.kicker[Latency: minutes]
+
 ### Micro-batch
 
-The stream cut into small bounded batches. Batch machinery, seconds of latency.
+The input is unbounded, but it is cut into small
+bounded chunks of a few seconds.
+
+.foot[For example, the same sensor readings, grouped into 1-day chunks (&sim;90,000 rows).]
+]
+.card.step-2[
+.section-icon.corner[<i class="fa-solid fa-infinity"></i>]
+
+.kicker[Latency: seconds]
+
+### Streaming
+
+The input is unbounded because the dataset is continuously
+growing.
+
+.foot[For example, real-time trading data, or a sensor that keeps sending readings.]
 ]
 ]
 
 ???
 
+Micro-batch is the compromise: batch machinery, seconds of latency instead of milliseconds. It is how Spark Structured Streaming reuses the batch engine.
+
 ---
 
-# Kafka is a log, not a queue
+# Handling streams .gray-text[(e.g., Apache Kafka)]
 
 .cards.cols-2.vcenter[
 .card[
