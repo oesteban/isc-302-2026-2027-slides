@@ -1044,28 +1044,71 @@ growing.
 Micro-batch is the compromise: batch machinery, seconds of latency instead of milliseconds. It is how Spark Structured Streaming reuses the batch engine.
 
 ---
+class: vcenter
 
 # Handling streams .gray-text[(e.g., Apache Kafka)]
 
-.cards.cols-2.vcenter[
+.cards.cols-3[
 .card[
-### A queue
+.section-icon.corner[<i class="fa-solid fa-bolt"></i>]
 
-Deletes a message once it is consumed. One reader gets it, and a restart loses what was in flight.
+### Event
+
+The record that **something happened**: key, value, timestamp, optional headers.
+
+.foot[One sensor reading, and when it was taken.]
 ]
 .card[
-### A log
+.section-icon.corner[<i class="fa-solid fa-tag"></i>]
 
-**Appends and retains.** Every reader keeps its own offset, so any number of them read all of it, and can read it again.
-]
-.card.wide.accent[
-That one difference is why a broker sits between producers and consumers, instead of a queue you wrote yourself.
+### Topic
 
-.foot[Topic 6, drawn this afternoon.]
+What you publish to, and what you subscribe to. Many producers, many subscribers.
+
+.foot[Works like a local log: publishing appends to the topic and reading does not consume.]
 ]
+.card[
+.section-icon.corner[<i class="fa-solid fa-server"></i>]
+
+### Broker
+
+Manages the servers underneath.
+A topic is split into **partitions**, spread across them and replicated.
+
+.foot[Order is kept inside a partition, never across a topic.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> **Producers** write, **consumers** read, and neither knows the other. See [Apache Kafka: introduction](https://kafka.apache.org/43/getting-started/introduction/)
 ]
 
 ???
+
+---
+class: vcenter
+
+.plan-table.large[
+<table>
+<thead>
+<tr><th style="width:22%">Aspect</th><th style="width:39%">Queue</th><th style="width:39%">Streams (like a log)</th></tr>
+</thead>
+<tbody>
+<tr class="band"><td class="sec">On read</td><td>The message is removed</td><td>Nothing is removed</td></tr>
+<tr><td class="sec">Readers</td><td>One gets each message</td><td>Any number, each reads all of it</td></tr>
+<tr class="band"><td class="sec">Position</td><td>Held by the broker</td><td>An <b>offset</b> held by the reader</td></tr>
+<tr><td class="sec">Replay</td><td>Gone once consumed</td><td>Rewind the offset, read it again</td></tr>
+<tr class="band"><td class="sec">Lifetime</td><td>Until delivered</td><td>A retention window, set per topic</td></tr>
+<tr><td class="sec">After a crash</td><td>In-flight messages are lost</td><td>Resume from the last offset</td></tr>
+</tbody>
+</table>
+]
+
+
+???
+
+That one difference is why a broker sits between producers and consumers, instead of a
+queue you wrote yourself.
 
 ---
 
