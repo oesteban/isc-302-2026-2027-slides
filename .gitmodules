@@ -4,12 +4,3 @@
 [submodule "remark"]
 	path = remark
 	url = https://github.com/oesteban/remark-engine.git
-[submodule "isc-302-2026-2027-neuro-lab"]
-	path = week1/day1/neuro-lab
-	url = git@github.com:oesteban/isc-302-2026-2027-neuro-lab.git
-[submodule "isc-302-2026-2027-flyte-newsgroup"]
-	path = week2/day1/flyte-newsgroup
-	url = git@github.com:oesteban/isc-302-2026-2027-flyte-newsgroup.git
-[submodule "isc-302-2026-2027-flyte-neuro"]
-	path = week2/day1/flyte-neuro
-	url = git@github.com:oesteban/isc-302-2026-2027-flyte-neuro.git

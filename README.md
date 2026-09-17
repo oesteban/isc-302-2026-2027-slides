@@ -90,7 +90,7 @@ therefore a 404 once published.
 ```bash
 git clone https://github.com/oesteban/isc-302-2026-2027-slides.git
 cd isc-302-2026-2027-slides
-git submodule update --init remark      # the slide engine, public
+git submodule update --init remark      # the slide engine
 python3 -m http.server 8000
 ```
 
@@ -100,18 +100,23 @@ Serve over HTTP rather than opening the files directly: over `file://` the
 browser blocks the `fetch` calls that load the roster and the inline SVGs, so
 the roulette comes up empty and some figures do not render.
 
-**Do not clone with `--recursive`.** Three submodules are private lab
-repositories and the clone will fail on them. They hold the lab code, not the
-slides: no deck loads anything from them, which is why the Pages build
-initialises only `remark`.
+`--recursive` is safe: both submodules are public, and only one of them matters
+to the site.
 
-| submodule | visibility | needed for the slides |
-|---|---|---|
-| `remark` | public | **yes**, the engine |
-| `week1/day2/302-whalesay` | public | no |
-| `week1/day1/neuro-lab` | private | no |
-| `week2/day1/flyte-newsgroup` | private | no |
-| `week2/day1/flyte-neuro` | private | no |
+| submodule | needed for the slides |
+|---|---|
+| `remark` | **yes**, the engine |
+| `week1/day2/302-whalesay` | no, it is the µLab 1 starting point |
+
+The lab repositories used to be mounted here too, which is what made a recursive
+clone fail. They were never part of the site and no deck loads anything from
+them, so they now live in one place only, beside the decks rather than inside
+them:
+
+| lab | repository |
+|---|---|
+| the neuroimaging pipeline | [`isc-302-2026-2027-neuro-lab`](https://github.com/oesteban/isc-302-2026-2027-neuro-lab) |
+| the Flyte labs | `isc-302-2026-2027-flyte-neuro`, `isc-302-2026-2027-flyte-newsgroup` |
 
 ## Printed handouts
 
