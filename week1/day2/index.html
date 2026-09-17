@@ -618,6 +618,51 @@ Then watch the build in the *Actions* tab.
 
 ---
 
+# &micro;Lab 1 .gray-text[· a web front end and a cow back end]
+
+.cards.cols-2.tight[
+.card[
+.kicker[the shape]
+
+### Two services, one volume
+
+`cow` writes a page. `web` serves it. They never talk to each other &mdash; they
+share a **named volume**, and that is the whole interface.
+]
+.card[
+.kicker[the awkward bit]
+
+### `cowsay` prints and stops
+
+It is a program, not a server. So override its entrypoint, redirect it into a
+file on the volume, and let it exit.
+]
+.card[
+.kicker[the ordering]
+
+### `web` must not start first
+
+There is nothing to serve until `cow` has finished. Compose can wait:
+`condition: service_completed_successfully`
+]
+.card[
+.kicker[the proof]
+
+### Change it and watch it change
+
+`docker compose up`, then `curl localhost:8080`. Edit the message, `up` again,
+`curl` again.
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** `curl localhost:8080` prints your cow, `docker compose ps -a` shows `cow` **exited 0** and `web` **up**, and you can change the words without touching `web`.
+]
+
+???
+
+---
+
 .section-mark[
 # Short break
 
@@ -700,53 +745,6 @@ permissions:
 
 ???
 
----
-
-# **&micro;Lab 1** .gray-text[· publish it, then use someone else&apos;s]
-
-.cards.cols-2.tight[
-.card[
-.kicker[step 5]
-
-### Merge your own PR
-
-The second run does publish. Watch it reach `ghcr.io`.
-
-.foot[Packages appear under your profile, not the repository&apos;s front page.]
-]
-.card[
-.kicker[step 6]
-
-### Make the package public
-
-Package settings &rarr; *Change visibility* &rarr; **Public**. Otherwise nobody can pull it.
-
-.foot[This is the step everyone forgets. Do it before step 7.]
-]
-.card[
-.kicker[step 7]
-
-### Run a neighbour&apos;s cow
-
-`docker run --rm ghcr.io/&lt;them&gt;/whalesay -f group-M "moo"`
-
-]
-.card[
-.kicker[step 8]
-
-### Wrap it in Compose
-
-Two services: `cow` uses their **`image:`**, `web` is `nginx:alpine` and proxies to
-`http://cow:4000`.
-
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** `curl localhost:8080` prints a cow your group did not build. Referee writes both image references.
-]
-
-???
 
 ---
 

@@ -110,7 +110,7 @@
 #v(7pt)
 
 // ── 2. the steps ──────────────────────────────────────────────────────────
-#panel("2 · The round, in four steps")[
+#panel("2 · The first half, in four steps")[
   #step("1", "Take the template")[
     Open #raw("github.com/oesteban/whalesay") and press *Use this template* →
     *Create a new repository*, under *your own* account. Not a fork.
@@ -283,10 +283,85 @@
   #writing(2)
 ]
 
+#pagebreak()
+
+// ── 8. the compose stack ──────────────────────────────────────────────────
+// The file is printed in full on purpose. The exercise is not to invent YAML
+// from nothing in forty minutes; it is to see two containers cooperate without
+// ever addressing each other, and to be able to say how.
+#panel("8 · A web front end and a cow back end")[
+  #text(size: 8.5pt)[
+    Two containers. `cow` writes a page and stops. `web` serves it and stays up.
+    They never talk to each other: they share one *named volume*, mounted at a
+    different path in each. Put this in `compose.yaml`:
+  ]
+  #v(4pt)
+  #block(inset: (x: 5pt, y: 4pt), fill: luma(245), radius: 2pt, width: 100%)[
+    #text(size: 7.5pt)[
+      ```yaml
+      services:
+        cow:
+          image: my_whale
+          entrypoint: ["/bin/sh", "-c"]
+          command: ["{ echo '<pre>'; cowsay -f group-N 'your words'; echo '</pre>'; } > /srv/index.html"]
+          volumes:
+            - site:/srv
+
+        web:
+          image: nginx:alpine
+          depends_on:
+            cow:
+              condition: service_completed_successfully
+          ports: ["8080:80"]
+          volumes:
+            - site:/usr/share/nginx/html:ro
+
+      volumes:
+        site:
+      ```
+    ]
+  ]
+  #v(5pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Four things in there are worth knowing rather than copying. `nginx` serves
+    whatever is in `/usr/share/nginx/html`. `cowsay` writes to the screen, not to
+    a file, so it needs a shell to redirect it — that is what overriding the
+    entrypoint buys. The `<pre>` stops a browser collapsing the artwork. And
+    `service_completed_successfully` is what stops `web` starting before there is
+    anything to serve.
+  ]
+  #v(6pt)
+  #text(size: 8.5pt)[
+    #raw("docker compose up -d") then #raw("curl localhost:8080")
+  ]
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    `docker compose ps` does not list `cow`. Where did it go, and which flag from
+    box 4 finds it? #rule(38%)
+  ]
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    `cow` exited. Is that a failure? Say what would make it one.
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    `web` never asks `cow` for anything. Trace how the words get from one
+    container to the other, naming each thing they pass through.
+  ]
+  #writing(3)
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Change the words, and run `docker compose up -d` again. Compose recreated one
+    container and left the other alone. Which, and why that one?
+  ]
+  #writing(2)
+]
+
 #v(7pt)
 #align(center)[
   #text(size: 7.5pt, fill: luma(140), style: "italic")[
-    Done when your cow prints from a container you built, and the pull request is
-    open with a green check.
+    Done when `curl localhost:8080` prints your cow, `cow` has exited 0, and `web`
+    is still up.
   ]
 ]
