@@ -202,10 +202,12 @@ def check(cfg: dict) -> int:
 
     base = cfg["base_url"].rstrip("/")
     valid_urls = {cfg["repo_url"]} | {f"{base}/{d['id']}/index.html" for d in cfg["days"]} | {base}
-    # Lab starting points students fork are legitimate own-host links.
+    # Lab starting points students fork, or instantiate from a template, are
+    # legitimate own-host links.
     for lab in cfg.get("lab_urls") or []:
         valid_urls.add(lab.rstrip("/"))
         valid_urls.add(f"{lab.rstrip('/')}/fork")
+        valid_urls.add(f"{lab.rstrip('/')}/generate")
 
     # Session dates are written as DD.MM.YYYY / D.MM.YYYY, or ISO inside data-until.
     date_re = re.compile(r"\b\d{1,2}\.\d{2}\.\d{4}\b|\bdata-until=\"(\d{4}-\d{2}-\d{2})")

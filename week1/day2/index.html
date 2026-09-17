@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>DevOps and Docker | 18.09.2026</title>
+    <title>DevOps, Docker and Compose | 18.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
@@ -35,7 +35,7 @@ counter: false
 <br />
 <br />
 
-## DevOps and Docker
+## DevOps, Docker and Compose
 
 Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
@@ -53,7 +53,7 @@ layout: true
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">DevOps and Docker (18.09.2026)</span>
+  <span style="padding-left: 10px; font-weight: 600;">DevOps, Docker and Compose (18.09.2026)</span>
 </p>
 ]
 
@@ -99,21 +99,33 @@ Use *Docker compose* to orchestrate containers
 Establish a functional **Docker environment**.
 .gray-text[Execute processing tasks on a laptop given a Docker environment with a prepared Jupyter notebook.]
 ]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Publish an image from **CI**, and run one on **Kubernetes**
+.gray-text[a workflow that builds and pushes to a registry, and a local cluster running a Deployment]
+]
 ]
 
 ---
+
+# Schedule
 
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
 | 8h35 | **Roulette**: What do you know/want to know about containers? |
-| 9h05 | **Intro & &micro;Lab**: the first `Dockerfile` |
-| 9h35 | .gray-text[Short break] |
-| 9h45 | **Intro & &micro;Lab**: Docker compose 1 |
-| 11h15 | &micro;Lab results. |
+| 8h55 | Containers, virtual machines, images, layers, Compose |
+| 9h30 | **&micro;Lab 1**: a cow of your own |
+| 10h10 | .gray-text[Short break] |
+| 10h25 | **Intro**: what built your image while you watched |
+| 10h45 | **&micro;Lab 1**: publish it, then use someone else's |
+| 11h35 | &micro;Lab 2 brief .gray-text[start the download] |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **&micro;Lab**: Docker compose 2 |
+| 12h45 | **&micro;Lab 2**: one image, two jobs |
+| 14h00 | **Intro**: Kubernetes |
+| 14h20 | **&micro;Lab 3**: hello, Kubernetes |
 | 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
@@ -188,61 +200,37 @@ Examples of why:
 
 
 ---
-
-# What's Docker?
-
-.boxed-content[
-> Docker is a set of [platform as a service](https://en.wikipedia.org/wiki/Platform_as_a_service) (PaaS) products that use [OS-level virtualization](https://en.wikipedia.org/wiki/OS-level_virtualization) to deliver software in packages called [containers](https://en.wikipedia.org/wiki/Container_%28virtualization%29).
-> <br />
-> <br />
-> (...)
-> <br />
-> <br />
-> Docker is a tool that is used to automate the **deployment** of **applications** in lightweight **containers** so that applications can work efficiently in different environments in isolation. 
-
-.align-right.small[
-[Wikipedia](https://en.wikipedia.org/wiki/Docker_%28software%29)
-]
-]
-???
-
----
-count:false
-
-# What's Docker?
-
-.boxed-content[
-> Docker is a set of [platform as a service](https://en.wikipedia.org/wiki/Platform_as_a_service) (PaaS) products that use [OS-level virtualization](https://en.wikipedia.org/wiki/OS-level_virtualization) to deliver software in packages called [containers](https://en.wikipedia.org/wiki/Container_%28virtualization%29).
-> <br />
-> <br />
-> (...)
-> <br />
-> <br />
-> Docker is a tool that is used to automate the **deployment** of **applications** in lightweight **containers** so that applications can work efficiently in different environments in isolation. 
-
-.align-right.small[
-[Wikipedia](https://en.wikipedia.org/wiki/Docker_%28software%29)
-]
-
-.large.center[
-**Consistently** build, run and ship applications.
-]
-
-]
-???
-
-This is why companies  
-
----
+class: vcenter
 
 # Containers vs. virtual machines
 
-.boxed-content.center[
-<img src="https://wac-cdn.atlassian.com/dam/jcr:92adde69-f728-4cfc-8bab-ba391c25ae58/SWTM-2060_Diagram_Containers_VirtualMachines_v03.png" style="width: 100%; padding-top: 20px;"/>
+.cards.cols-2[
+.card[
+.section-icon.corner[<i class="fa-solid fa-cubes"></i>]
 
-.align-right.small[
-Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/containers-vs-vms)
+.kicker[shares the host kernel]
+
+### Container
+
+Isolated *processes*, not an isolated machine. No second kernel, nothing to boot.
+
+.foot[Megabytes. Up in under a second.]
 ]
+.card[
+.section-icon.corner[<i class="fa-solid fa-server"></i>]
+
+.kicker[brings its own kernel]
+
+### Virtual machine
+
+A simulated computer running a full OS stack on top of a **hypervisor**.
+
+.foot[Gigabytes. Boots in minutes. Stronger isolation.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Box 6 of Monday&apos;s sheet asked what the container does **not** have. It is the kernel. **Topic 1**, Monday 21, brings the measurements.
 ]
 
 ???
@@ -264,28 +252,6 @@ virtualization to create and run virtual machines.
 * VMware ESXi (type 1, server)
 * Hyper-V (type 1, Windows)
 
----
-count: false
-
-# Containers vs. virtual machines
-
-.boxed-content.center[
-<img src="https://wac-cdn.atlassian.com/dam/jcr:92adde69-f728-4cfc-8bab-ba391c25ae58/SWTM-2060_Diagram_Containers_VirtualMachines_v03.png" style="width: 100%; padding-top: 20px;"/>
-
-.align-right.small[
-Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/containers-vs-vms)
-]
-
-> — It works on my (virtual) machine
-
-]
-
-???
-
-In terms of deployment, unless you ship the whole VM image
-(which is large and may not be portable to the new hardware),
-we still may hit 'it works on my (virtual) machine'.
-
 Main caveats of VMs vs containers—each VM needs a full OS:
 * Heavy (GBs)
 * Slow to boot (minutes)
@@ -295,6 +261,53 @@ Main caveats of VMs vs containers—each VM needs a full OS:
 
 Benefits of VMs vs containers—each VM is fully isolated:
 * More secure (stronger isolation)
+
+---
+class: vcenter
+
+# So what is Docker doing on your Mac?
+
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-laptop"></i>]
+
+.kicker[the awkward fact]
+
+### macOS has no Linux kernel
+
+A container shares the host kernel. Your host has the wrong one. Same on Windows.
+
+.foot[So the thing containers replaced is still here.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-layer-group"></i>]
+
+.kicker[the workaround]
+
+### Docker Desktop runs a **VM**
+
+A Linux virtual machine, started for you, that you never see. Your containers live inside it.
+
+.foot[`docker info` &mdash; the OS it reports is not the one you booted.]
+]
+.card.alert[
+.section-icon.corner[<i class="fa-solid fa-triangle-exclamation"></i>]
+
+.kicker[Monday, for real]
+
+### On Apple silicon that VM is arm64
+
+An `amd64` image then has to be **emulated**, instruction by instruction. That is why it crawled.
+
+.foot[An image pins dependencies. It cannot pin a CPU.]
+]
+]
+
+.admonition.warning[
+<i class="fa-solid fa-triangle-exclamation"></i> This is the honest limit of &ldquo;it runs the same everywhere&rdquo;. Today&apos;s image is built for **both** architectures, which is why it works on every laptop in this room.
+]
+
+???
 
 ---
 
@@ -375,10 +388,37 @@ count: false
 
 ---
 
-# Docker images vs. containers
+class: vcenter
 
-.boxed-content.center[
-<img src="https://lh6.googleusercontent.com/H8mhf23JNy-zCPrLaNs_H4h6K1xLRHv-P0JS4_Ad86xSo7En4tLT3POuOJPrcBNXG5lWDy2Y6fdNzRrzoB9SSLxrHhwrdk-qO28__D19NzO01OkkyBdr7YzZo2K_46HidAoUpmxeW2FOF42uOtAg3Pnfe_gcWafYs7xYywgdFeRdK3kV-p7LfIY7Z9h9tg" style="width: 80%" />
+# An image is not a container
+
+.cards.cols-2[
+.card[
+.section-icon.corner[<i class="fa-solid fa-box-archive"></i>]
+
+.kicker[on disk, read-only]
+
+### Image
+
+A stack of **layers** plus metadata. Built once, pushed, pulled, identical everywhere.
+
+.foot[`docker image ls` &mdash; what you have. `docker image history` &mdash; how it got that way.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-play"></i>]
+
+.kicker[running, writable, disposable]
+
+### Container
+
+One **process tree** started from an image, with a thin writable layer on top.
+
+.foot[`docker ps` &mdash; what is alive. `docker ps -a` &mdash; what died and is still lying there.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> One image, many containers. Delete a container and the image is untouched &mdash; which is why `--rm` is safe.
 ]
 
 ???
@@ -401,6 +441,7 @@ Whalesay works the same in all your computers.
 FROM alpine
 RUN apk add --no-cache perl
 COPY cowsay /usr/local/bin/cowsay
+COPY *.cow /usr/local/share/cows/
 COPY docker.cow /usr/local/share/cows/default.cow
 ENTRYPOINT ["/usr/local/bin/cowsay"]
 ```
@@ -422,8 +463,13 @@ How this recipe translates into natural language:
 > Start with an alpine linux distribution.
 > Install perl without caching installation files (to save space)
 > Copy the `cowsay` perl script into the image, at `/usr/local/bin/cowsay`
-> Copy the `docker.cow` with the cow template in the image, at the right path
+> Copy every `.cow` template in the build context into the image, at the right path
+> Copy the Docker whale a second time, under the name `cowsay` reaches for when you do not name one
 > Tell the Docker runtime to execute `/usr/local/bin/cowsay` when it is invoked.
+
+The glob on the fourth line is the one to point at: it is why dropping a new
+`.cow` file into the repo and rebuilding is enough, with no edit to the
+`Dockerfile` at all. That is what round 1 depends on.
 
 ---
 
@@ -444,7 +490,7 @@ images.
 ---
 
 .boxed-content[
-<div class="asciicast" id="docker-build" style="padding-top: 25px"></div>
+<div class="asciicast" id="docker-build" data-speed="8" style="padding-top: 25px"></div>
 ]
 
 ???
@@ -472,11 +518,48 @@ afdf7ad851ab   5 days ago     /bin/sh -c #(nop)  ENTRYPOINT "/usr/local/bi…   
 ???
 
 ---
+class: vcenter
 
-# Docker containers vs. images
+# Compose .gray-text[several containers that know each other]
 
-.boxed-content.center[
-<img src="https://miro.medium.com/v2/resize:fit:720/format:webp/0*HoxAZTZ2b2C7AM--" style="width: 70%" />
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-cubes"></i>]
+
+.kicker[`services:`]
+
+### One block per container
+
+`build:` to build it here, `image:` to pull one that already exists.
+
+.foot[`docker compose up -d`, `ps`, `logs -f`, `down`.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-diagram-project"></i>]
+
+.kicker[one network, by name]
+
+### The service name *is* the hostname
+
+Compose puts every service on a network of its own and gives each a DNS name.
+
+.foot[`http://cows:4000` works. No IP address appears in the file.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-hard-drive"></i>]
+
+.kicker[`volumes:`]
+
+### What outlives the container
+
+A named volume survives `down`; a bind mount puts a host path inside the container.
+
+.foot[Monday&apos;s sheet, box 2: *Docker root dir* is where a named volume lands.]
+]
+]
+
+.admonition.warning[
+<i class="fa-solid fa-triangle-exclamation"></i> Mounting `/var/run/docker.sock` hands a container **the daemon** &mdash; root on the host under another name. We do it once, on your own laptop, because one container has to start another. Never on a shared machine. **Topic 8**, Thu 24, takes it apart.
 ]
 
 ---
@@ -486,24 +569,110 @@ seed: 18.09.2026
 
 <br />
 
-# **&micro;Lab**
+# Your groups for today
 
 .boxed-content[
-.text-gray.large[
-Edit the example to create the coolest *chatty cow*.
-]
-.larger[
-1. Fork the example: https://github.com/oesteban/whalesay/fork
-
-2. Send a pull-request with your group's cow, including a new file `group-N.cow`.
+.large[
+These five stand for all three rounds. Photograph the screen now &mdash; the draw is
+redrawn from the same seed, but the overlay disappears when we leave this slide.
 ]
 ]
 
 ???
 
-Tip: existing cows: https://github.com/paulkaefer/cowsay-files/tree/main/cows
+---
+class: vcenter
 
-Bonus: use mounting to change the cow at run time.
+# Three seats, three jobs
+
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-keyboard"></i>]
+
+.kicker[one per round]
+
+### Driver
+
+Types. Runs the commands. Does not read over the mapper&apos;s shoulder.
+
+.foot[Round 1 the first name, round 2 the second, round 3 the third.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-map"></i>]
+
+.kicker[one per round]
+
+### Mapper
+
+Reads, searches, decides where to go next. **Never touches the keyboard.**
+
+.foot[Always the seat below the driver.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-clipboard-check"></i>]
+
+.kicker[everyone else]
+
+### Referee
+
+Silent. Fills one grid per round, and writes down what the round asks for.
+
+.foot[You referee your own group, and you rotate into driving.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Shift down one seat per round, wrapping around. Over three rounds everyone drives or maps at least once.
+]
+
+---
+
+# **&micro;Lab 1** .gray-text[· a cow of your own]
+
+.cards.cols-2.tight[
+.card[
+.kicker[step 1]
+
+### Take the template
+
+Open the repo and press **Use this template** &rarr; *Create a new repository*, under
+**your own** account. Not a fork.
+
+.foot[[github.com/oesteban/whalesay](https://github.com/oesteban/whalesay)]
+]
+.card[
+.kicker[step 2]
+
+### Branch, and add your cow
+
+`git checkout -b group-N`, write `group-N.cow`, commit, push.
+
+.foot[Cow templates: [paulkaefer/cowsay-files](https://github.com/paulkaefer/cowsay-files)]
+]
+.card[
+.kicker[step 3]
+
+### Build it and make it talk
+
+`docker build -t my_whale .` then
+`docker run --rm my_whale -f group-N "hi from group N"`.
+
+]
+.card[
+.kicker[step 4]
+
+### Open the pull request
+
+Against `main` **in your own repository**. Then watch the *Actions* tab.
+
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** your cow prints from a container you built, and the PR is open with a green check. Referee writes the repository name and the check&apos;s duration.
+]
+
+???
 
 ---
 
@@ -514,45 +683,141 @@ Bonus: use mounting to change the cow at run time.
 ]
 
 ---
+class: vcenter
 
-# Docker compose
+# Nobody built that on their laptop
 
-.boxed-content[
-<img src="https://assets.community.aws/a/2rZiFKvUe94JUmTTO2we7sJa4Pi/1_Iz.webp?imgSize=1400x635" style="width: 100%" />
-.small[https://builder.aws.com/content/2qi9qQstGnCWguDzgLg1NgP8lBF/file-structure-of-docker-composeyml-file]
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-bolt"></i>]
+
+.kicker[`on:`]
+
+### A trigger
+
+An event in the repository &mdash; a push, a pull request, a tag, a schedule.
+
+.foot[Your PR was the event. You did not start the run.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-robot"></i>]
+
+.kicker[`jobs:`]
+
+### A fresh machine
+
+GitHub starts a clean runner, checks out your code, and runs the steps. Every time.
+
+.foot[Nothing of yours is on it. That is the point.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-box-open"></i>]
+
+.kicker[`ghcr.io`]
+
+### Somewhere to put the result
+
+A registry attached to the repository, so the image outlives the runner.
+
+.foot[`ghcr.io/&lt;you&gt;/whalesay`]
+]
 ]
 
-???
-
+.admonition[
+<i class="fa-solid fa-circle-right"></i> One file, `.github/workflows/image.yml`, already in the template. **Topic 3**, Monday 21, takes it apart: caching, matrices, and building for two architectures at once.
+]
 
 ---
-class: group-roulette
-groups: 5
-seed: 18.09.2026
 
-<br />
+# The same file, two behaviours
 
-# **&micro;Lab**
+.boxed-content.large[
+```yaml
+on:
+  pull_request:        # build only
+  push:
+    branches: [main]   # build AND publish
 
-.boxed-content[
-.large[
-**Problem**: Create a chatty cow web service with two containers:
+permissions:
+  contents: read
+  packages: write      # without this: 403
+```
 
-* Must separate the webserver and the cow content
-* Communication can be: telnet/tcp/http, ssh, socket
-* Bonus: interchangeable cows, multiple response chat, etc.
-* Where to start: [Docker Compose Quickguide](https://docs.docker.com/compose/gettingstarted/)
-]
+.large[Your PR run built. It did **not** publish. Merging is what publishes.]
 ]
 
 ???
 
-- Draw the main paths (data, code, results) on a whiteboard/notebook
-- Play with datalad to get more data
-- Expose the jupyter notebook so changes on the notebook are retained in the host
-- Play with detaching from the container and reconnecting (remove `--rm and -it`)
-- Try to run two containers in parallel (remove `--rm`).
-- Get creative and play
+---
+
+# **&micro;Lab 1** .gray-text[· publish it, then use someone else&apos;s]
+
+.cards.cols-2.tight[
+.card[
+.kicker[step 5]
+
+### Merge your own PR
+
+The second run does publish. Watch it reach `ghcr.io`.
+
+.foot[Packages appear under your profile, not the repository&apos;s front page.]
+]
+.card[
+.kicker[step 6]
+
+### Make the package public
+
+Package settings &rarr; *Change visibility* &rarr; **Public**. Otherwise nobody can pull it.
+
+.foot[This is the step everyone forgets. Do it before step 7.]
+]
+.card[
+.kicker[step 7]
+
+### Run a neighbour&apos;s cow
+
+`docker run --rm ghcr.io/&lt;them&gt;/whalesay -f group-M "moo"`
+
+]
+.card[
+.kicker[step 8]
+
+### Wrap it in Compose
+
+Two services: `cow` uses their **`image:`**, `web` is `nginx:alpine` and proxies to
+`http://cow:4000`.
+
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** `curl localhost:8080` prints a cow your group did not build. Referee writes both image references.
+]
+
+???
+
+---
+
+# &micro;Lab 2 .gray-text[· the brief]
+
+.boxed-content[
+.small[
+> Samira, the most valued employee at your company *We build stuff s.a.r.l.*, left one week ago for Meta.
+> The CTO tried hard to keep her, but the offer was just too good to reject. <br /><br />
+> Now the company is in trouble: the largest client needs splitting Jupyter and the neuroimaging tools
+> in the Docker image.
+> The CTO had discussed this with Samira, and he vaguely remembers a conversation with her... <br />
+> — ... that they could easily use *Docker compose* (whatever that means)... <br />
+> — ... to *orchestrate* a Jupyter container and different *Docker images* with neuroimaging software... <br /><br />
+> The one thing the CTO knows is that **your team has 60 minutes to implement this**.
+]
+
+.large[Afterwards, 3 minutes per team to show progress.]
+]
+
+.admonition[
+<i class="fa-solid fa-download"></i> Start this now, over lunch: `docker pull oesteban/neuropipeline-302`
+]
 
 ---
 
@@ -564,22 +829,53 @@ seed: 18.09.2026
 
 ---
 
-# &micro;Lab
+# **&micro;Lab 2** .gray-text[· one image, two jobs]
 
+.cards.cols-2.tight[
+.card[
+.kicker[step 1]
 
-.boxed-content[
-.small[
-> Samira, the most valued employee at your company *We build stuff s.a.r.l.*, left one week ago for Meta.
-> The CTO tried hard to keep her, but the offer was just too good to reject. <br /><br />
-> Now the company is in trouble: the largest client needs splitting Jupyter and AFNI in the Docker image.
-> The CTO had discussed this with Samira, and he vaguely remembers a conversation with her... <br />
-> — ... that they could easily use *Docker compose* (whatever that means)... <br />
-> — ... to *orchestrate* a Jupyter container and different *Docker images* with neuroimaging software... <br /><br />
-> The one thing the CTO knows is that **your team has 2h to implement this**.
+### Measure what you were given
+
+`docker image ls oesteban/neuropipeline-302`. Write the number down; you will be asked
+for it twice.
+
+.foot[Read its recipe: `docker run --rm oesteban/neuropipeline-302 cat /opt/302/Dockerfile`]
+]
+.card[
+.kicker[step 2]
+
+### Split it in two
+
+`compose.yaml` with `notebook` (Jupyter, port 8888) and `tools` (the neuro image), sharing
+one `./project` mount.
+
+.foot[The notebook renders what the *other* container produced.]
+]
+.card[
+.kicker[step 3]
+
+### Slim the tool half
+
+`tools/Dockerfile`, multi-stage: `COPY --from=` only the executables you actually call,
+onto a thin base. `ldd` says what else must come along.
+
+]
+.card[
+.kicker[step 4]
+
+### Two numbers and a ratio
+
+`docker image ls` again. Fat, slim, and how many times smaller. **Topic 2**, Monday, explains why it works.
+
+]
 ]
 
-.large[After those 2h, your team will have 7-8 minutes to show progress]
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** `docker compose up` brings both services up and you can state the two sizes. Referee writes both numbers.
 ]
+
+???
 
 ---
 
@@ -590,36 +886,160 @@ Proposed project layout:
 
 ```Text
 compose-neuro/
-├─ docker-compose.yml
-├─ .env
+├─ compose.yaml
 ├─ notebook/
-│  └─ Dockerfile  # Extend jupyter/minimal-notebook:python-3.11
+│  └─ Dockerfile   # Jupyter and the viewer
 ├─ project/
-│  ├─ data/       # Installation of ds000005
+│  ├─ data/        # the T1w image
 │  ├─ outputs/
 │  └─ notebooks/
 │     └─ brain_mri_pipeline.ipynb
-└─ afni-slim/
-   └─ Dockerfile  # Remove unnecessary steps and ship only AFNI
+└─ tools/
+   └─ Dockerfile   # the executables only
 ```
 ]
 
 ---
-count: false
-class: group-roulette
-groups: 5
-seed: 18.09.2026
 
-.boxed-content[
-# &micro;Lab
+.section-mark[
+# <i class="fa-solid fa-dharmachakra"></i> Kubernetes
 
-.large[
-Rebuild the `oesteban/neuropipeline-302` example, separating neuroimaging libraries and the Jupyter notebook.
+.large[Start the download now. It runs while I talk.]
+]
 
-**Bonus**: Set up a third service with *Apache Airflow* (they provide a starting docker compose file).
+---
+
+# Both terminals, everyone
+
+.boxed-content.large[
+```console
+$ k3d cluster create hello302 --agents 2 --wait
+$ kubectl get nodes
+```
+
+.small[
+Missing the tools? `brew install k3d kubernetes-cli` (macOS),
+`winget install Kubernetes.kubectl` plus k3d.io (Windows),
+or the install script at k3d.io (Linux).
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** `kubectl get nodes` prints **three** nodes, all `Ready`. Under a minute on a warm laptop. Do not close this terminal.
+]
+
+???
+
+---
+class: vcenter
+
+# What you just started
+
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-server"></i>]
+
+.kicker[three of them]
+
+### Nodes
+
+Machines that run your containers. Yours are three Docker containers pretending to be
+three machines.
+
+.foot[`kubectl get nodes -o wide`]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-file-code"></i>]
+
+.kicker[what you write]
+
+### Manifests
+
+YAML you `kubectl apply -f`. Three nouns today: **Deployment**, **Service**, **Pod**.
+
+.foot[You describe what should be true, not what to do.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-tower-broadcast"></i>]
+
+.kicker[who you talk to]
+
+### The API server
+
+You never address a node. `kubectl` is an HTTP client with a config file.
+
+.foot[Which is why the same file works on a laptop and on a cluster.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> k3d runs **k3s**, the same distribution as the ISC cluster. Which Kubernetes to run is **topic 5**, Monday.
+]
+
+---
+
+# `replicas: 2` is a wish, not a command
+
+.boxed-content.large[
+You never said *start a container*. You said **how many should exist**.
+
+A controller compares what exists against what you asked for, and closes the gap.
+Continuously. Delete a pod and a replacement is serving in about **seven seconds**,
+without you asking for one.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> When something is wrong: `kubectl describe pod &lt;name&gt;` and **read the `Events` block at the bottom**. It is where Kubernetes explains itself.
+]
+
+???
+
+---
+
+# **&micro;Lab 3** .gray-text[· hello, Kubernetes]
+
+.cards.cols-2.tight[
+.card[
+.kicker[step 1]
+
+### Your own namespace
+
+`kubectl create namespace hello-&lt;name&gt;` then make it the default for this context.
+
+.foot[On a shared cluster this is the wall between you and everyone else.]
+]
+.card[
+.kicker[step 2]
+
+### Apply the manifest
+
+`kubectl apply -f hello-k8s.yaml`, then `kubectl get pods -o wide`.
+
+.foot[Two pods, and the `NODE` column should not be the same for both.]
+]
+.card[
+.kicker[step 3]
+
+### Scale, then break it
+
+`kubectl scale deploy/hello --replicas=5`, then delete a pod and `kubectl get pods -w`.
+
+]
+.card[
+.kicker[step 4]
+
+### Everyone&apos;s receipt
+
+**On each laptop**: `kubectl get nodes` &mdash; three `Ready`. Monday morning has no time to fix a cluster; today does.
 
 ]
 ]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** the referee has one `Ready`-node line **per member of the group**, not just the driver&apos;s. Full walkthrough: [`LAB-hello-k8s.md`](../../week2/day2/LAB-hello-k8s.md)
+]
+
+???
 
 ---
 
@@ -641,8 +1061,10 @@ See you next time: 21.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09
 
 [<i class="fa-solid fa-circle-left"></i>](../../week1/day1/index.html)
 [<i class="fa-solid fa-home"></i>](#1)
-[<i class="fa-solid fa-circle-right"></i>](../../week2/day1/index.html)
+[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
 ]
+
+.large.gray-text[Changing hats, slot 1: **C2 is due tonight at 18h00**, and you present on Monday.]
 ]
 
 
