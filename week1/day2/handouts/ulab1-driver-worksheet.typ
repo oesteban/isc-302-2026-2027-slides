@@ -285,75 +285,75 @@
 
 #pagebreak()
 
-// ── 8. the compose stack ──────────────────────────────────────────────────
-// The file is printed in full on purpose. The exercise is not to invent YAML
-// from nothing in forty minutes; it is to see two containers cooperate without
-// ever addressing each other, and to be able to say how.
-#panel("8 · A web front end and a cow back end")[
+// ── 8. the socket ─────────────────────────────────────────────────────────
+// Both files are printed in full. The exercise is not to invent a CGI script in
+// half an hour; it is to watch one container start another, and to be able to
+// say what that cost.
+#panel("8 · A web server that starts containers")[
   #text(size: 8.5pt)[
-    Two containers. `cow` writes a page and stops. `web` serves it and stays up.
-    They never talk to each other: they share one *named volume*, mounted at a
-    different path in each. Put this in `compose.yaml`:
+    A web server with no cowsay in it. Every request it receives, it runs
+    `docker run` and a fresh cow container prints the answer and dies. Two files,
+    in a `web/` directory:
   ]
   #v(4pt)
   #block(inset: (x: 5pt, y: 4pt), fill: luma(245), radius: 2pt, width: 100%)[
+    #text(size: 7.5pt)[`web/Dockerfile`]
+    #v(2pt)
     #text(size: 7.5pt)[
-      ```yaml
-      services:
-        cow:
-          image: my_whale
-          entrypoint: ["/bin/sh", "-c"]
-          command: ["{ echo '<pre>'; cowsay -f group-N 'your words'; echo '</pre>'; } > /srv/index.html"]
-          volumes:
-            - site:/srv
-
-        web:
-          image: nginx:alpine
-          depends_on:
-            cow:
-              condition: service_completed_successfully
-          ports: ["8080:80"]
-          volumes:
-            - site:/usr/share/nginx/html:ro
-
-      volumes:
-        site:
+      ```docker
+      FROM alpine
+      RUN apk add --no-cache busybox-extras docker-cli
+      COPY cgi-bin/ /www/cgi-bin/
+      ENTRYPOINT ["httpd", "-f", "-p", "80", "-h", "/www"]
+      ```
+    ]
+    #v(5pt)
+    #text(size: 7.5pt)[`web/cgi-bin/cow` #text(fill: luma(130))[ — and it must be executable]]
+    #v(2pt)
+    #text(size: 7.5pt)[
+      ```sh
+      #!/bin/sh
+      echo "Content-type: text/html"
+      echo
+      say=$(printf '%s' "$QUERY_STRING" | sed -n 's/^.*message=\([^&]*\).*$/\1/p' | sed 's/+/ /g')
+      [ -z "$say" ] && say="try /?message=hello"
+      echo "<pre>"
+      docker run --rm my_whale -f group-N "$say"
+      echo "</pre>"
       ```
     ]
   ]
   #v(5pt)
-  #text(size: 7.5pt, fill: luma(130))[
-    Four things in there are worth knowing rather than copying. `nginx` serves
-    whatever is in `/usr/share/nginx/html`. `cowsay` writes to the screen, not to
-    a file, so it needs a shell to redirect it — that is what overriding the
-    entrypoint buys. The `<pre>` stops a browser collapsing the artwork. And
-    `service_completed_successfully` is what stops `web` starting before there is
-    anything to serve.
+  #text(size: 8pt)[
+    #raw("chmod +x web/cgi-bin/cow") \
+    #raw("docker build -t cow-web ./web") \
+    #raw("docker run --rm -p 8080:80 -v /var/run/docker.sock:/var/run/docker.sock cow-web")
   ]
-  #v(6pt)
-  #text(size: 8.5pt)[
-    #raw("docker compose up -d") then #raw("curl localhost:8080")
+  #v(5pt)
+  #text(size: 8pt)[
+    #raw("curl \"localhost:8080/cgi-bin/cow?message=hello+302\"")
   ]
   #v(6pt)
   #text(size: 7.5pt, fill: luma(130))[
-    `docker compose ps` does not list `cow`. Where did it go, and which flag from
-    box 4 finds it? #rule(38%)
-  ]
-  #v(6pt)
-  #text(size: 7.5pt, fill: luma(130))[
-    `cow` exited. Is that a failure? Say what would make it one.
+    Before you run it: there is no `cowsay` anywhere in the `web` image. So where
+    does the cow come from?
   ]
   #writing(2)
   #v(6pt)
   #text(size: 7.5pt, fill: luma(130))[
-    `web` never asks `cow` for anything. Trace how the words get from one
-    container to the other, naming each thing they pass through.
+    Open a second terminal, run `docker events`, and load the page twice. Write
+    the sequence of words it prints for one request.
   ]
-  #writing(3)
+  #writing(2)
   #v(6pt)
   #text(size: 7.5pt, fill: luma(130))[
-    Change the words, and run `docker compose up -d` again. Compose recreated one
-    container and left the other alone. Which, and why that one?
+    How many cow containers exist on your machine between two requests?
+    #rule(20mm) #h(4pt) Which flag in the script decided that?  #rule(28%)
+  ]
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    That last command handed the container `/var/run/docker.sock`. Name one thing
+    this web server could now do to your laptop that has nothing to do with cows.
   ]
   #writing(2)
 ]
@@ -361,7 +361,7 @@
 #v(7pt)
 #align(center)[
   #text(size: 7.5pt, fill: luma(140), style: "italic")[
-    Done when `curl localhost:8080` prints your cow, `cow` has exited 0, and `web`
-    is still up.
+    Done when `?message=hello` makes your cow say hello, and `docker events` shows
+    a container created and destroyed on every request.
   ]
 ]

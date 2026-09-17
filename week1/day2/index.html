@@ -583,7 +583,7 @@ Open the repo and press **Use this template** &rarr; *Create a new repository*, 
 ### Branch, and add your cow
 
 ```
-git checkout -b group-N`
+git checkout -b group-N
 ```
 write `group-N.cow`, commit, push.
 
@@ -611,6 +611,10 @@ Against the `main` branch **in your own repository**.
 
 Then watch the build in the *Actions* tab.
 
+### and merge it *if green*.
+
+Then watch the build in the *Actions* tab *again*.
+
 ]
 ]
 
@@ -618,45 +622,56 @@ Then watch the build in the *Actions* tab.
 
 ---
 
-# &micro;Lab 1 .gray-text[· a web front end and a cow back end]
+# &micro;Lab 1 .gray-text[· a web server that starts containers]
 
 .cards.cols-2.tight[
 .card[
-.kicker[the shape]
+.kicker[the idea]
 
-### Two services, one volume
+### One container starts another
 
-`cow` writes a page. `web` serves it. They never talk to each other &mdash; they
-share a **named volume**, and that is the whole interface.
+A tiny web server. Every request it gets, it runs `docker run` &mdash; a fresh cow
+container, which prints and dies.
+
+.foot[Nothing is running between requests.]
 ]
 .card[
-.kicker[the awkward bit]
+.kicker[the image]
 
-### `cowsay` prints and stops
+### `web/Dockerfile`
 
-It is a program, not a server. So override its entrypoint, redirect it into a
-file on the volume, and let it exit.
+```
+FROM alpine
+RUN apk add --no-cache busybox-extras docker-cli
+COPY cgi-bin/ /www/cgi-bin/
+ENTRYPOINT ["httpd","-f","-p","80","-h","/www"]
+```
 ]
 .card[
-.kicker[the ordering]
+.kicker[the script]
 
-### `web` must not start first
+### `web/cgi-bin/cow`
 
-There is nothing to serve until `cow` has finished. Compose can wait:
-`condition: service_completed_successfully`
+Runs once per request; what it prints is the reply. The line that matters:
+
+```
+docker run --rm my_whale -f group-N "$say"
+```
 ]
-.card[
-.kicker[the proof]
+.card.alert[
+.section-icon.corner[<i class="fa-solid fa-triangle-exclamation"></i>]
 
-### Change it and watch it change
+.kicker[read this twice]
 
-`docker compose up`, then `curl localhost:8080`. Edit the message, `up` again,
-`curl` again.
+### How it reaches the daemon
+
+`-v /var/run/docker.sock:/var/run/docker.sock`. That hands the container **the
+daemon**, which is root on your laptop by another name.
 ]
 ]
 
 .admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** `curl localhost:8080` prints your cow, `docker compose ps -a` shows `cow` **exited 0** and `web` **up**, and you can change the words without touching `web`.
+<i class="fa-solid fa-flag-checkered"></i> **Done when** `?message=hello` makes your cow say hello, and `docker events` in a second terminal shows a container **created and destroyed on every request**.
 ]
 
 ???
