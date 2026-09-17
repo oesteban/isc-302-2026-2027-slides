@@ -127,7 +127,7 @@
   ]
   #v(5pt)
   #step("4", "Open the pull request")[
-    Against the default branch, *in your own repository*. Then watch the
+    Against `main`, *in your own repository*. Then watch the
     *Actions* tab.
   ]
 ]
