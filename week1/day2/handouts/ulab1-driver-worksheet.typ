@@ -228,8 +228,7 @@
 #pagebreak()
 
 // ── 6. history and the cache ──────────────────────────────────────────────
-// Observation only. Topic 2 on Monday explains the cache; a group that has
-// already watched CACHED appear has something to hang that talk on.
+// Observation only: they watch the cache behave, and are not told why yet.
 #panel("6 · What the image remembers")[
   #text(size: 8.5pt)[Run `docker image history my_whale`.]
   #v(5pt)

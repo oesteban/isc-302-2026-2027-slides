@@ -729,7 +729,7 @@ jobs:
           tags: |
             ${{ steps.name.outputs.image }}:latest
             ${{ steps.name.outputs.image }}:${{ github.sha }}
-          # One line, two architectures. Ask topic 3 what it costs.
+          # One line, two architectures. It is not free: the build gets slower.
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -933,7 +933,7 @@ You never address a node. `kubectl` is an HTTP client with a config file.
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> k3d runs **k3s**, the same distribution as the ISC cluster. Which Kubernetes to run is **topic 5**, Monday.
+<i class="fa-solid fa-circle-right"></i> k3d runs **k3s**, the same distribution as the ISC cluster. Not a simulator.
 ]
 
 ---

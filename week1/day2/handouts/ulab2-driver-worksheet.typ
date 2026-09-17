@@ -262,10 +262,6 @@
     make it not fine.
   ]
   #writing(2)
-  #v(5pt)
-  #text(size: 7.5pt, fill: luma(130))[
-    *Topic 8, Thursday 24 September, is about exactly this.*
-  ]
 ]
 
 #v(7pt)
