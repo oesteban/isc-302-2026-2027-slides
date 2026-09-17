@@ -60,38 +60,38 @@ layout: true
 ---
 class: vcenter
 
-# By the end of today you can
+# Objectives
 
 .cards.goals[
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-**Say what a container shares with the host, and what it does not**
-.gray-text[and use that to explain why a Linux VM is running on your Mac right now]
+Explain **how containers work** and identify suitable applications for them
+.gray-text[and identify when virtual machines are a better solution]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-**Write a `Dockerfile`, build it, and run your own program from the image**
-.gray-text[&micro;Lab 1: your cow prints from a container you built yourself]
+**Write** a `Dockerfile`, **build** an image, and **run** a container
+.gray-text[In &micro;Lab 1, drivers will build their own image]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-**Make a commit publish an image, without building it yourself**
-.gray-text[&micro;Lab 1: you run a classmate&apos;s image, pulled from a registry]
+**Use CI/CD** to make images build automatically
+.gray-text[and explain a simple CI/CD workflow for GitHub Actions]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-**Split one image into two services that find each other by name**
-.gray-text[&micro;Lab 2: and say how many megabytes the split saved]
+**Orchestrate** two containers using **Docker Compose**
+.gray-text[(split a large image into two small containers that find each other by name)]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-**Run a workload on Kubernetes, and predict what a deleted pod does**
-.gray-text[&micro;Lab 3: three `Ready` nodes, and a replacement nobody asked for]
+**Run a workload on Kubernetes**
+.gray-text[(for which, you will deploy a lightweight K8s implementation)]
 ]
 ]
 
@@ -196,29 +196,39 @@ class: vcenter
 .card[
 .section-icon.corner[<i class="fa-solid fa-cubes"></i>]
 
-.kicker[shares the host kernel]
+.kicker[shares the host's kernel]
 
 ### Container
 
-Isolated *processes*, not an isolated machine. No second kernel, nothing to boot.
+Uses LXC (**Linux Containers**), which enables a Linux system
+share it's **kernel**.
+The container registers isolated *processes* that use the kernel.
 
-.foot[Megabytes. Up in under a second.]
+.foot[
+* Spinning up a container is a matter of seconds,
+* images are relatively small, and
+* they use the hardware directly, at full capacity.]
 ]
 .card[
 .section-icon.corner[<i class="fa-solid fa-server"></i>]
 
-.kicker[brings its own kernel]
+.kicker[requires its own kernel]
 
 ### Virtual machine
 
-A simulated computer running a full OS stack on top of a **hypervisor**.
+A simulated computer (*guest machine*) running a full OS stack on top of a **hypervisor**.
+The hypervisor provides the guest OS with a virtual platform (the virtual hardware).
 
-.foot[Gigabytes. Boots in minutes. Stronger isolation.]
+.foot[
+* Booting the virtual OS takes a minute (or more),
+* images are large,
+* strong isolation, and
+* hardware capacity can be scaled down.]
 ]
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> Box 6 of Monday&apos;s sheet asked what the container does **not** have. It is the kernel. **Topic 1**, Monday 21, brings the measurements.
+.large[<i class="fa-solid fa-circle-right"></i> **Both** run apps on isolated environments]
 ]
 
 ???
@@ -253,46 +263,50 @@ Benefits of VMs vs containers—each VM is fully isolated:
 ---
 class: vcenter
 
-# So what is Docker doing on your Mac?
+# How can containers run on MacOSX or Windows?
 
 .cards.cols-3[
 .card[
 .section-icon.corner[<i class="fa-solid fa-laptop"></i>]
 
-.kicker[the awkward fact]
+.kicker[Containers need LXC]
 
-### macOS has no Linux kernel
+### No Linux kernel
 
-A container shares the host kernel. Your host has the wrong one. Same on Windows.
+Neither MacOSX or Windows have a Linux kernel,
+**they cannot run containers natively**.
 
-.foot[So the thing containers replaced is still here.]
+.foot[Exception: Windows' WSL]
 ]
 .card[
 .section-icon.corner[<i class="fa-solid fa-layer-group"></i>]
 
-.kicker[the workaround]
+.kicker[VMs to the rescue]
 
-### Docker Desktop runs a **VM**
+### Run Linux on a VM
 
-A Linux virtual machine, started for you, that you never see. Your containers live inside it.
+Docker Desktop runs a virtual machine and a Linux on top.
 
 .foot[`docker info` &mdash; the OS it reports is not the one you booted.]
 ]
 .card.alert[
 .section-icon.corner[<i class="fa-solid fa-triangle-exclamation"></i>]
 
-.kicker[Monday, for real]
+.kicker[Tricky question]
 
-### On Apple silicon that VM is arm64
+### Apple's M2 is arm64
 
-An `amd64` image then has to be **emulated**, instruction by instruction. That is why it crawled.
+The VM runs Linux, but on the ARM64 architecture.
+If all or some software in the container image is only compiled for `amd64`,
+the architecture must be **emulated** for the container,
+instruction by instruction.
 
-.foot[An image pins dependencies. It cannot pin a CPU.]
+.foot[Emulate instruction-by-instruction **is very slow**.]
 ]
 ]
 
 .admonition.warning[
-<i class="fa-solid fa-triangle-exclamation"></i> This is the honest limit of &ldquo;it runs the same everywhere&rdquo;. Today&apos;s image is built for **both** architectures, which is why it works on every laptop in this room.
+<i class="fa-solid fa-triangle-exclamation"></i> The promise that containers *run the same everywhere* meets one limitation with varying architectures.
 ]
 
 ???
@@ -378,7 +392,7 @@ count: false
 
 class: vcenter
 
-# An image is not a container
+# Images vs. containers
 
 .cards.cols-2[
 .card[
@@ -390,7 +404,9 @@ class: vcenter
 
 A stack of **layers** plus metadata. Built once, pushed, pulled, identical everywhere.
 
-.foot[`docker image ls` &mdash; what you have. `docker image history` &mdash; how it got that way.]
+.foot[
+* `docker image ls` &mdash; lists pulled images.
+* `docker image history &lt;image&gt;` &mdash; see the layers of an image.]
 ]
 .card[
 .section-icon.corner[<i class="fa-solid fa-play"></i>]
@@ -401,12 +417,15 @@ A stack of **layers** plus metadata. Built once, pushed, pulled, identical every
 
 One **process tree** started from an image, with a thin writable layer on top.
 
-.foot[`docker ps` &mdash; what is alive. `docker ps -a` &mdash; what died and is still lying there.]
+.foot[
+* `docker ps` &mdash; see what's currently running.
+* `docker ps -a` &mdash; see what has been run.
+]
 ]
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> One image, many containers. Delete a container and the image is untouched &mdash; which is why `--rm` is safe.
+.larger[<i class="fa-solid fa-circle-right"></i> Best practice: clear the container after execution adding `--rm` to the `docker run` command.]
 ]
 
 ???
@@ -478,7 +497,7 @@ images.
 ---
 
 .boxed-content[
-<div class="asciicast" id="docker-build" data-speed="8" style="padding-top: 25px"></div>
+<div class="asciicast" id="docker-build" data-speed="4" data-rows="26" data-cols="100" style="padding-top: 25px"></div>
 ]
 
 ???
@@ -506,116 +525,23 @@ afdf7ad851ab   5 days ago     /bin/sh -c #(nop)  ENTRYPOINT "/usr/local/bi…   
 ???
 
 ---
-class: vcenter
-
-# Compose .gray-text[several containers that know each other]
-
-.cards.cols-3[
-.card[
-.section-icon.corner[<i class="fa-solid fa-cubes"></i>]
-
-.kicker[`services:`]
-
-### One block per container
-
-`build:` to build it here, `image:` to pull one that already exists.
-
-.foot[`docker compose up -d`, `ps`, `logs -f`, `down`.]
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-diagram-project"></i>]
-
-.kicker[one network, by name]
-
-### The service name *is* the hostname
-
-Compose puts every service on a network of its own and gives each a DNS name.
-
-.foot[`http://cows:4000` works. No IP address appears in the file.]
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-hard-drive"></i>]
-
-.kicker[`volumes:`]
-
-### What outlives the container
-
-A named volume survives `down`; a bind mount puts a host path inside the container.
-
-.foot[Monday&apos;s sheet, box 2: *Docker root dir* is where a named volume lands.]
-]
-]
-
-.admonition.warning[
-<i class="fa-solid fa-triangle-exclamation"></i> Mounting `/var/run/docker.sock` hands a container **the daemon** &mdash; root on the host under another name. We do it once, on your own laptop, because one container has to start another. Never on a shared machine. **Topic 8**, Thu 24, takes it apart.
-]
-
----
 class: group-roulette
 groups: 5
 seed: 18.09.2026
 
-<br />
-
-# Your groups for today
-
 .boxed-content[
-.large[
-These five stand for all three rounds. Photograph the screen now &mdash; the draw is
-redrawn from the same seed, but the overlay disappears when we leave this slide.
+# &micro;Lab
+
+.large[Building your first Docker image + CI/CD]
 ]
-]
+
 
 ???
 
----
-class: vcenter
-
-# Three seats, three jobs
-
-.cards.cols-3[
-.card[
-.section-icon.corner[<i class="fa-solid fa-keyboard"></i>]
-
-.kicker[one per round]
-
-### Driver
-
-Types. Runs the commands. Does not read over the mapper&apos;s shoulder.
-
-.foot[Round 1 the first name, round 2 the second, round 3 the third.]
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-map"></i>]
-
-.kicker[one per round]
-
-### Mapper
-
-Reads, searches, decides where to go next. **Never touches the keyboard.**
-
-.foot[Always the seat below the driver.]
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-clipboard-check"></i>]
-
-.kicker[everyone else]
-
-### Referee
-
-Silent. Fills one grid per round, and writes down what the round asks for.
-
-.foot[You referee your own group, and you rotate into driving.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Shift down one seat per round, wrapping around. Over three rounds everyone drives or maps at least once.
-]
 
 ---
 
-# **&micro;Lab 1** .gray-text[· a cow of your own]
+# &micro;Lab 1 .gray-text[· Building an image locally and CI/CD]
 
 .cards.cols-2.tight[
 .card[
@@ -633,31 +559,36 @@ Open the repo and press **Use this template** &rarr; *Create a new repository*, 
 
 ### Branch, and add your cow
 
-`git checkout -b group-N`, write `group-N.cow`, commit, push.
+```
+git checkout -b group-N`
+```
+write `group-N.cow`, commit, push.
 
-.foot[Cow templates: [paulkaefer/cowsay-files](https://github.com/paulkaefer/cowsay-files)]
 ]
 .card[
 .kicker[step 3]
 
 ### Build it and make it talk
 
-`docker build -t my_whale .` then
-`docker run --rm my_whale -f group-N "hi from group N"`.
+```
+docker build -t my_whale .
+```
+Then:
+```
+docker run --rm my_whale -f group-N "hi from group N"
+```
 
 ]
 .card[
 .kicker[step 4]
 
-### Open the pull request
+### Open a pull request
 
-Against `main` **in your own repository**. Then watch the *Actions* tab.
+Against the `main` branch **in your own repository**.
+
+Then watch the build in the *Actions* tab.
 
 ]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** your cow prints from a container you built, and the PR is open with a green check. Referee writes the repository name and the check&apos;s duration.
 ]
 
 ???
