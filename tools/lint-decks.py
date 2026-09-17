@@ -152,8 +152,19 @@ def lint(deck: Path, tracked: set[str], subs: list[str]) -> list[str]:
                       "so the markup renders and does nothing")
 
     # 5. property lines that are not opening a slide
+    #
+    # Fenced code is exempt. A workflow file, a compose file or any other YAML
+    # on a slide legitimately starts with `name:`, and flagging that would push
+    # authors into contorting real file contents to please the linter.
+    fenced, in_fence = set(), False
     for i, line in enumerate(lines):
-        if not PROPERTY.match(line):
+        if line.lstrip().startswith('```'):
+            in_fence = not in_fence
+            fenced.add(i)
+        elif in_fence:
+            fenced.add(i)
+    for i, line in enumerate(lines):
+        if i in fenced or not PROPERTY.match(line):
             continue
         j = i - 1
         while j >= 0 and (PROPERTY.match(lines[j]) or not lines[j].strip()):
