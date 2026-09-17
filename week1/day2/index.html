@@ -60,50 +60,38 @@ layout: true
 ---
 class: vcenter
 
-# Objectives
+# By the end of today you can
 
 .cards.goals[
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Solve problems with  **containers**
-.gray-text[and describe the differences with virtual machines]
+**Say what a container shares with the host, and what it does not**
+.gray-text[and use that to explain why a Linux VM is running on your Mac right now]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Explain the *Docker* **containers** and **images**
-.gray-text[including layers, Dockerfile, and registries]
+**Write a `Dockerfile`, build it, and run your own program from the image**
+.gray-text[&micro;Lab 1: your cow prints from a container you built yourself]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Build *Docker* **images** and edit the `Dockerfile`
-.gray-text[understanding layer caching and multi-stage builds]
+**Make a commit publish an image, without building it yourself**
+.gray-text[&micro;Lab 1: you run a classmate&apos;s image, pulled from a registry]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Execute commands in *Docker* **containers**
-.gray-text[applying volume mounts, networking, and user mapping]
+**Split one image into two services that find each other by name**
+.gray-text[&micro;Lab 2: and say how many megabytes the split saved]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Use *Docker compose* to orchestrate containers
-.gray-text[and enable invoking ``docker run`` from within a container]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-Establish a functional **Docker environment**.
-.gray-text[Execute processing tasks on a laptop given a Docker environment with a prepared Jupyter notebook.]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-Publish an image from **CI**, and run one on **Kubernetes**
-.gray-text[a workflow that builds and pushes to a registry, and a local cluster running a Deployment]
+**Run a workload on Kubernetes, and predict what a deleted pod does**
+.gray-text[&micro;Lab 3: three `Ready` nodes, and a replacement nobody asked for]
 ]
 ]
 
