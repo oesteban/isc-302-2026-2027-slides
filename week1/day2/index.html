@@ -12,7 +12,30 @@
     <link rel="stylesheet" type="text/css" href="../../remark/ext/roulette.css" />
   </head>
   <body>
-<style>:root { --logo-url: url("../../assets/isc_logo.png"); }</style>
+<style>
+:root { --logo-url: url("../../assets/isc_logo.png"); }
+
+/* A listing taller than the slide. Cap its height and let it scroll, so the
+   type can stay readable instead of shrinking until nobody at the back can
+   read it. Deck-local on purpose: `remark` is the shared engine. */
+/* The scroll lives on the <pre>, so the bar sits inside the dark box rather
+   than floating on the slide beside it. */
+.remark-slide-content .scroll-y pre {
+  max-height: 74%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--accent) rgba(255, 255, 255, 0.14);
+  scrollbar-width: thin;
+}
+.remark-slide-content .scroll-y code { font-size: 11pt; line-height: 1.3; }
+.remark-slide-content .scroll-y pre::-webkit-scrollbar { width: 9px; }
+.remark-slide-content .scroll-y pre::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.14);
+}
+.remark-slide-content .scroll-y pre::-webkit-scrollbar-thumb {
+  background: var(--accent); border-radius: 5px;
+}
+</style>
 <script src="../../remark/vendor/asciinema-player/asciinema-player.min.js"></script>
 <script src="https://kit.fontawesome.com/015d4b01de.js" crossorigin="anonymous"></script>
 
@@ -604,46 +627,56 @@ Then watch the build in the *Actions* tab.
 ---
 class: vcenter
 
-# Nobody built that on their laptop
+# The CI/CD workflow
 
-.cards.cols-3[
-.card[
-.section-icon.corner[<i class="fa-solid fa-bolt"></i>]
+.boxed-content.scroll-y[
+```
+name: image
 
-.kicker[`on:`]
+on:
+  pull_request:
+  push:
+    # Both names, so this works whatever your default branch is called.
+    branches: [main, master]
 
-### A trigger
+permissions:
+  contents: read
+  packages: write        # without this the publish step fails with a 403
 
-An event in the repository &mdash; a push, a pull request, a tag, a schedule.
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-.foot[Your PR was the event. You did not start the run.]
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-robot"></i>]
+      # ghcr.io rejects uppercase, and GitHub usernames keep their case.
+      - name: Work out the image name
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-.kicker[`jobs:`]
+      - uses: docker/setup-buildx-action@v3
 
-### A fresh machine
+      - name: Sign in to the registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-GitHub starts a clean runner, checks out your code, and runs the steps. Every time.
-
-.foot[Nothing of yours is on it. That is the point.]
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-box-open"></i>]
-
-.kicker[`ghcr.io`]
-
-### Somewhere to put the result
-
-A registry attached to the repository, so the image outlives the runner.
-
-.foot[`ghcr.io/&lt;you&gt;/whalesay`]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> One file, `.github/workflows/image.yml`, already in the template. **Topic 3**, Monday 21, takes it apart: caching, matrices, and building for two architectures at once.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          # On a pull request this is false: the image is built and thrown away.
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ${{ steps.name.outputs.image }}:latest
+            ${{ steps.name.outputs.image }}:${{ github.sha }}
+          # One line, two architectures. Ask topic 3 what it costs.
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+```
 ]
 
 ---
@@ -989,6 +1022,12 @@ See you next time: 21.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+    <script>
+      // This deck has a listing that scrolls. remark's scroll navigation would
+      // eat the wheel and change slides instead, so turn it off here: arrows,
+      // space and the clicker all still work.
+      window.remarkEngineConfig = { navigation: { scroll: false } };
+    </script>
     <script src="../../remark/core/engine.js"></script>
     <script src="../../remark/ext/svg-theme.js"></script>
     <script src="../../remark/ext/nav-controls.js"></script>
