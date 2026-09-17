@@ -75,7 +75,7 @@ days:
     date: 2026-09-18
     replaces: 2026-09-18
     start: "08:15"
-    title: "DevOps, Docker and Compose"
+    title: "DevOps and Docker"
 
   # week2/day2 and week2/day1 are listed here in DELIVERY order, not directory
   # order: the printed plan puts container orchestration on the Monday and Flyte

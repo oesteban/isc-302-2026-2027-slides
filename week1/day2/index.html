@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>DevOps, Docker and Compose | 18.09.2026</title>
+    <title>DevOps and Docker | 18.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
@@ -58,7 +58,7 @@ counter: false
 <br />
 <br />
 
-## DevOps, Docker and Compose
+## DevOps and Docker
 
 Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
@@ -76,7 +76,7 @@ layout: true
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">DevOps, Docker and Compose (18.09.2026)</span>
+  <span style="padding-left: 10px; font-weight: 600;">DevOps and Docker (18.09.2026)</span>
 </p>
 ]
 
@@ -107,8 +107,8 @@ Explain **how containers work** and identify suitable applications for them
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-**Orchestrate** two containers using **Docker Compose**
-.gray-text[(split a large image into two small containers that find each other by name)]
+**Split one image in two**, and let one container start the other
+.gray-text[(a notebook that holds no tools, and runs them through the Docker socket)]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
@@ -126,11 +126,11 @@ Explain **how containers work** and identify suitable applications for them
 | Time | Content |
 |:--:|:--|
 | 8h35 | **Roulette**: What do you know/want to know about containers? |
-| 8h55 | Containers, virtual machines, images, layers, Compose |
-| 9h30 | **&micro;Lab 1**: a cow of your own |
-| 10h10 | .gray-text[Short break] |
-| 10h25 | **Intro**: what built your image while you watched |
-| 10h45 | **&micro;Lab 1**: publish it, then use someone else's |
+| 8h55 | Containers, virtual machines, images, layers |
+| 9h30 | **&micro;Lab 1**: build it, and let CI publish it |
+| 10h15 | **&micro;Lab 1**: a web server that starts containers |
+| 11h00 | .gray-text[Short break] |
+| 11h15 | **Intro**: what built your image while you watched |
 | 11h35 | &micro;Lab 2 brief .gray-text[start the download] |
 | 11h45 | .gray-text[Lunch break] |
 | | |
@@ -670,9 +670,6 @@ daemon**, which is root on your laptop by another name.
 ]
 ]
 
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** `?message=hello` makes your cow say hello, and `docker events` in a second terminal shows a container **created and destroyed on every request**.
-]
 
 ???
 
@@ -772,8 +769,8 @@ permissions:
 > Now the company is in trouble: the largest client needs splitting Jupyter and the neuroimaging tools
 > in the Docker image.
 > The CTO had discussed this with Samira, and he vaguely remembers a conversation with her... <br />
-> — ... that they could easily use *Docker compose* (whatever that means)... <br />
-> — ... to *orchestrate* a Jupyter container and different *Docker images* with neuroimaging software... <br /><br />
+> — ... that the notebook did not have to *contain* the neuroimaging tools... <br />
+> — ... that it could just *start* them, the way you started cows this morning... <br /><br />
 > The one thing the CTO knows is that **your team has 60 minutes to implement this**.
 ]
 
@@ -802,42 +799,44 @@ permissions:
 
 ### Measure what you were given
 
-`docker image ls oesteban/neuropipeline-302`. Write the number down; you will be asked
-for it twice.
+`docker image ls oesteban/neuropipeline-302`. Write the number down.
 
-.foot[Read its recipe: `docker run --rm oesteban/neuropipeline-302 cat /opt/302/Dockerfile`]
+.foot[Its recipe is inside it: `docker run --rm oesteban/neuropipeline-302 cat /opt/302/Dockerfile`]
 ]
 .card[
 .kicker[step 2]
 
-### Split it in two
+### Build the notebook half
 
-`compose.yaml` with `notebook` (Jupyter, port 8888) and `tools` (the neuro image), sharing
-one `./project` mount.
-
-.foot[The notebook renders what the *other* container produced.]
+Jupyter and the viewer, plus `docker-cli`, and **none** of the neuroimaging stack.
+Measure that one too.
 ]
 .card[
 .kicker[step 3]
 
-### Slim the tool half
+### Give it the socket and a volume
 
-`tools/Dockerfile`, multi-stage: `COPY --from=` only the executables you actually call,
-onto a thin base. `ldd` says what else must come along.
-
+```
+docker volume create project
+docker run -p 8888:8888 -v project:/work \
+  -v /var/run/docker.sock:/var/run/docker.sock notebook
+```
 ]
 .card[
 .kicker[step 4]
 
-### Two numbers and a ratio
+### Drive the tools from a cell
 
-`docker image ls` again. Fat, slim, and how many times smaller. **Topic 2**, Monday, explains why it works.
-
+```
+!docker run --rm -v project:/project \
+  oesteban/neuropipeline-302 mri_synthstrip \
+  -i /project/T1w.nii.gz -o /project/brain.nii.gz
+```
 ]
 ]
 
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** `docker compose up` brings both services up and you can state the two sizes. Referee writes both numbers.
+.admonition.warning[
+<i class="fa-solid fa-triangle-exclamation"></i> Use a **named volume**, not a path. `-v /some/dir:/project` is resolved by the *daemon*, not inside your notebook &mdash; so a directory that exists only in your container arrives **empty**, with no error.
 ]
 
 ???
@@ -850,17 +849,13 @@ onto a thin base. `ldd` says what else must come along.
 Proposed project layout:
 
 ```Text
-compose-neuro/
-├─ compose.yaml
-├─ notebook/
-│  └─ Dockerfile   # Jupyter and the viewer
-├─ project/
-│  ├─ data/        # the T1w image
-│  ├─ outputs/
-│  └─ notebooks/
-│     └─ brain_mri_pipeline.ipynb
-└─ tools/
-   └─ Dockerfile   # the executables only
+neuro-split/
+└─ notebook/
+   ├─ Dockerfile              # Jupyter + viewer + docker-cli
+   └─ brain_mri_pipeline.ipynb
+
+the tools image:  oesteban/neuropipeline-302   (pulled, not built)
+the shared state: a named volume, `project`
 ```
 ]
 
