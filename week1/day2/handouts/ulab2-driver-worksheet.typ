@@ -7,7 +7,7 @@
 //
 // The roles rotate between rounds: whoever drove µLab 1 is not driving this one.
 //
-// Box 4 is a failure on purpose. The bind mount is the mistake every group makes
+// Box 5 is a failure on purpose. The bind mount is the mistake every group makes
 // with the Docker socket, it produces no error, and being made to do it once
 // deliberately is cheaper than losing twenty minutes to it by accident.
 //
@@ -149,11 +149,84 @@
 
 #pagebreak()
 
-// ── 4. the trap, on purpose ───────────────────────────────────────────────
+// ── 4. the two kinds of COPY ──────────────────────────────────────────────
+// This box is the (??) on the hint slide. COPY without --from reads the build
+// context; COPY --from reads an image. Same instruction, two different places,
+// and only the second one explains how a 44 MB client lands in an image that
+// never installed it. The measurement is the point: the source image is ~237 MB
+// and the layer it hands over is the size of one binary.
+#panel("4 · Two kinds of COPY")[
+  #text(size: 8.5pt)[
+    `COPY` has two sources. Plain, it takes files from the *build context*: the
+    directory you handed to `docker build`, on your own filesystem. With
+    `--from`, it takes them out of an *image* instead, either one built earlier
+    in the same `Dockerfile` (a *stage*) or one that already exists, like
+    `docker:29-cli` here. Building an image out of pieces of other images is
+    what makes a build *multi-stage*, and only the pieces you name cross over.
+  ]
+  #v(4pt)
+  #block(inset: (x: 5pt, y: 4pt), fill: luma(245), radius: 2pt, width: 100%)[
+    #text(size: 7.5pt)[`notebook/Dockerfile`]
+    #v(2pt)
+    #text(size: 7.5pt)[
+      ```docker
+      FROM python:3.12-slim-trixie
+
+      # Copy from another image (??) the docker command line client
+      COPY --from=docker:29-cli /usr/local/bin/docker /usr/local/bin/docker
+
+      RUN pip install --no-cache-dir ipyniivue jupyter notebook
+
+      WORKDIR /work
+      COPY brain_mri_pipeline.ipynb .
+
+      EXPOSE 8888
+      CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser"]
+      ```
+    ]
+  ]
+  #v(5pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Two `COPY` lines, one of each kind. For each, say where that file sat before
+    the build started, and whether that place was on your laptop.
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 8.5pt)[Now measure what the `--from` line cost you:]
+  #v(3pt)
+  #text(size: 8pt)[
+    #raw("docker image pull docker:29-cli && docker image ls docker") \
+    #raw("docker image history notebook") #text(fill: luma(140))[← find the `COPY --from` line]
+  ]
+  #v(4pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 5pt, align: bottom,
+    text(size: 8pt)[The whole `docker:29-cli` image], rule(100%),
+    text(size: 8pt)[The layer it gave you], rule(100%),
+  )
+  #v(7pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Those two numbers are nowhere near each other. Say what crossed over and what
+    stayed behind, and why `docker:29-cli` never runs on your machine.
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Break it on purpose: comment that `COPY --from` line out, rebuild, and run
+    `!docker ps` in a cell.
+  ]
+  #v(4pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    What comes back? #rule(45%) #h(6pt) Then put the line back.
+  ]
+]
+
+#v(7pt)
+
+// ── 5. the trap, on purpose ───────────────────────────────────────────────
 // -v <path> inside a container is resolved by the DAEMON, on the host. A path
 // that exists only in the notebook arrives empty, with no error and no clue.
 // Every group meets this. Meeting it deliberately costs two minutes.
-#panel("4 · Get it wrong first, on purpose")[
+#panel("5 · Get it wrong first, on purpose")[
   #text(size: 8.5pt)[
     From inside the notebook, make a directory and put a file in it. Then start a
     container mounting *that path* and look at what arrived:
@@ -183,8 +256,8 @@
 
 #v(7pt)
 
-// ── 5. the pipeline ───────────────────────────────────────────────────────
-#panel("5 · Driving the tools from a cell")[
+// ── 6. the pipeline ───────────────────────────────────────────────────────
+#panel("6 · Driving the tools from a cell")[
   #text(size: 8.5pt)[
     Put the data in the volume first, then one container per step. Every line
     below starts a container, and every container is gone before the next begins.
@@ -219,10 +292,8 @@
   #writing(3)
 ]
 
-#pagebreak()
-
-// ── 6. what it cost ───────────────────────────────────────────────────────
-#panel("6 · What the split cost, and what it bought")[
+// ── 7. what it cost ───────────────────────────────────────────────────────
+#panel("7 · What the split cost, and what it bought")[
   #text(size: 7.5pt, fill: luma(130))[
     Run `docker ps` in another terminal while a step is running, and again two
     seconds later. What is different, and what does that tell you about where
@@ -245,8 +316,8 @@
 
 #v(7pt)
 
-// ── 7. the socket, again ──────────────────────────────────────────────────
-#panel("7 · The thing you handed over")[
+// ── 8. the socket, again ──────────────────────────────────────────────────
+#panel("8 · The thing you handed over")[
   #text(size: 8.5pt)[
     You gave a notebook `/var/run/docker.sock`. A notebook that runs whatever
     anyone types into it.

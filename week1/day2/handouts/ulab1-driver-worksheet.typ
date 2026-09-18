@@ -113,12 +113,11 @@
 #panel("2 · The first half, in four steps")[
   #step("1", "Take the template")[
     Open #raw("github.com/oesteban/whalesay") and press *Use this template* →
-    *Create a new repository*, under *your own* account. Not a fork.
+    *Create a new repository*, under *your own* account.
   ]
   #v(5pt)
   #step("2", "Branch, and add your cow")[
     #raw("git checkout -b group-N") · write #raw("group-N.cow") · commit · push.
-    Cows to steal: #raw("github.com/paulkaefer/cowsay-files")
   ]
   #v(5pt)
   #step("3", "Build it and make it talk")[
@@ -225,7 +224,6 @@
   ]
 ]
 
-#pagebreak()
 
 // ── 6. history and the cache ──────────────────────────────────────────────
 // Observation only: they watch the cache behave, and are not told why yet.
@@ -282,7 +280,6 @@
   #writing(2)
 ]
 
-#pagebreak()
 
 // ── 8. the socket ─────────────────────────────────────────────────────────
 // Both files are printed in full. The exercise is not to invent a CGI script in
@@ -353,6 +350,155 @@
   #text(size: 7.5pt, fill: luma(130))[
     That last command handed the container `/var/run/docker.sock`. Name one thing
     this web server could now do to your laptop that has nothing to do with cows.
+  ]
+  #writing(2)
+]
+
+#v(7pt)
+
+// ── 9. reading the Dockerfile ─────────────────────────────────────────────
+// Four instructions, four different kinds of thing: a base to start from, a
+// package install, a copy out of the build context, and the process the
+// container exists to run. They have already watched all four take effect in
+// boxes 3, 5 and 6; this is where they have to say what each one actually did.
+#panel("9 · Four lines, four layers")[
+  #text(size: 8.5pt)[
+    Go back to the `web/Dockerfile` in box 8 and take its four instructions one
+    at a time. In your own words: what did each one put in the image?
+  ]
+  #v(5pt)
+  #text(size: 8pt)[#raw("FROM alpine")]
+  #v(2pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    What is in the image after this line and before the next one runs, and where
+    did it come from? Then: why `alpine` rather than, say, `ubuntu`? Box 3
+    measured your evidence.
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 8pt)[#raw("RUN apk add --no-cache busybox-extras docker-cli")]
+  #v(2pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    One of these two packages is the web server, the other is the `docker`
+    command. Which is which — and is the Docker *daemon* in this image?
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 8pt)[#raw("COPY cgi-bin/ /www/cgi-bin/")]
+  #v(2pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Where does `cgi-bin/` live before this line runs, and where does it live
+    afterwards? Name both places precisely enough that someone could go and look.
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 8pt)[#raw("ENTRYPOINT [\"httpd\", \"-f\", \"-p\", \"80\", \"-h\", \"/www\"]")]
+  #v(2pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Three flags: `-f`, `-p 80`, `-h /www`. Which one keeps the container alive,
+    and what did box 5 have to do for a command that lacked it? And `80` turns up
+    again in the `docker run` line as `8080:80` — say which of those two it is.
+  ]
+  #writing(3)
+]
+
+#v(7pt)
+
+// ── 10. the build context ─────────────────────────────────────────────────
+// The file is one line; the lesson is that `docker build .` ships the whole
+// directory to the daemon before it reads a single instruction. The junk file
+// is there because the honest difference on this project is a few hundred
+// bytes, which nobody would notice. The last question is the one they get
+// wrong: ignoring web/ at the root does not touch the frontend build, because
+// that build's context IS web/.
+#panel("10 · Hiding contents from the build context")[
+  #text(size: 8.5pt)[
+    At the root of your repository, next to the `Dockerfile` and *not* inside
+    `web/`, create a file called `.dockerignore` holding one line:
+  ]
+  #v(3pt)
+  #text(size: 8pt)[#raw("web/")]
+  #v(5pt)
+  #text(size: 8.5pt)[
+    Two small files make a difference nobody can see, so put something heavy in
+    there first, then build the cow image twice: once as it is, once with the
+    `web/` line commented out (`#` starts a comment).
+  ]
+  #v(3pt)
+  #text(size: 8pt)[
+    #raw("dd if=/dev/urandom of=web/junk bs=1024 count=20000") \
+    #raw("docker build -t my_whale .") #text(fill: luma(140))[← read the line about the build context]
+  ]
+  #v(5pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Read that first command before you run it, because you are about to quote its
+    result as a measurement. `dd` copies blocks: `bs` is the size of one block in
+    bytes, `count` is how many of them.
+  ]
+  #v(4pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 5pt, align: bottom,
+    text(size: 8pt)[So `web/junk` will be], rule(100%),
+    text(size: 8pt)[and `ls -l` says], rule(100%),
+  )
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    And what is in it? `/dev/urandom` is not a file sitting on your disk. Say what
+    it is and what you therefore just wrote into `web/`.
+  ]
+  #writing(2)
+  #v(6pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 5pt, align: bottom,
+    text(size: 8pt)[Context with `web/` ignored], rule(100%),
+    text(size: 8pt)[and without], rule(100%),
+  )
+  #v(7pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Your `Dockerfile` copies `cowsay`, `*.cow` and `docker.cow` by name, so
+    nothing in `web/` was ever going to end up inside `my_whale`. What did
+    carrying it cost you, then, and who was it being carried to?
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Put the line back and delete `web/junk`, or the frontend build would carry it. Which is the question: you just told Docker to ignore `web/`, so
+    why does #raw("docker build -t cow-web ./web") still work at all?
+  ]
+  #writing(2)
+]
+
+#v(7pt)
+
+// ── 11. the extra mile ─────────────────────────────────────────────────────
+// No solution printed: the script already parses one parameter, and the second
+// one is that same line written twice. What the box is really for is the
+// question underneath it — the request now picks an argument to `docker run`,
+// and only one of the two parameters can make that command fail.
+#panel("11 · Extra mile · let the request pick the cow")[
+  #text(size: 8.5pt)[
+    Same server, one more parameter: the cow comes from the URL instead of being
+    fixed in the script.
+  ]
+  #v(4pt)
+  #text(size: 8pt)[
+    #raw("curl \"localhost:8080/cgi-bin/cow?message=hello+302&cow=group-N\"")
+  ]
+  #v(5pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    One line of the script already does this for `message`. Write the line you
+    added for `cow`, and what it falls back to when nobody asks for one.
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Ask for a cow the image does not have (`&cow=nonesuch`). What does the page
+    show, and which of the two containers produced that text?
+  ]
+  #writing(2)
+  #v(6pt)
+  #text(size: 7.5pt, fill: luma(130))[
+    Both values now come from the request, but only one of them can make
+    `docker run` fail. Which one, and what does that say about the difference
+    between them?
   ]
   #writing(2)
 ]

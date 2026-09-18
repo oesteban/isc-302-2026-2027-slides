@@ -127,14 +127,13 @@ Explain **how containers work** and identify suitable applications for them
 |:--:|:--|
 | 8h35 | **Roulette**: What do you know/want to know about containers? |
 | 8h55 | Containers, virtual machines, images, layers |
-| 9h30 | **&micro;Lab 1**: build it, and let CI publish it |
-| 10h15 | **&micro;Lab 1**: a web server that starts containers |
+| 9h30 | **&micro;Lab 1**: first steps authoring images and containers |
+| 10h40 | Conclusions from &micro;Lab 1 |
 | 11h00 | .gray-text[Short break] |
-| 11h15 | **Intro**: what built your image while you watched |
-| 11h35 | &micro;Lab 2 brief .gray-text[start the download] |
+| 11h10 | **&micro;Lab 2**: redesigining the neuropipeline |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **&micro;Lab 2**: one image, two jobs |
+| 12h45 | Continuation of &micro;Lab 2 |
 | 14h00 | **Intro**: Kubernetes |
 | 14h20 | **&micro;Lab 3**: hello, Kubernetes |
 | 15h20 | **Quiz** & Individual time |
@@ -145,10 +144,6 @@ Explain **how containers work** and identify suitable applications for them
 
 .section-mark[
 # Quick quiz
-
-.large[Opens **8h15**, closes **8h45**.]
-
-.large[.gray-text[ISC Learn opens and closes it.]]
 ]
 
 ---
@@ -317,10 +312,10 @@ Docker Desktop runs a virtual machine and a Linux on top.
 
 .kicker[Tricky question]
 
-### Apple's M2 is arm64
+### Apple's M2 is ARM64
 
 The VM runs Linux, but on the ARM64 architecture.
-If all or some software in the container image is only compiled for `amd64`,
+If all or some software in the container image is only compiled for AMD64,
 the architecture must be **emulated** for the container,
 instruction by instruction.
 
@@ -622,16 +617,21 @@ Then watch the build in the *Actions* tab *again*.
 
 ---
 
-# &micro;Lab 1 .gray-text[· a web server that starts containers]
+# &micro;Lab 1 .gray-text[· A web server that starts containers]
 
 .cards.cols-2.tight[
 .card[
 .kicker[the idea]
 
-### One container starts another
+### Tiny frontend + whalesay backend
 
-A tiny web server. Every request it gets, it runs `docker run` &mdash; a fresh cow
-container, which prints and dies.
+**Target**: A tiny web server that passes the HTTP arguments
+to a whalesay contaners: 
+.small[
+```
+http://localhost:8080/cgi-bin/cow?message=hello+302
+```
+]
 
 .foot[Nothing is running between requests.]
 ]
@@ -640,12 +640,14 @@ container, which prints and dies.
 
 ### `web/Dockerfile`
 
+.small[
 ```
 FROM alpine
 RUN apk add --no-cache busybox-extras docker-cli
 COPY cgi-bin/ /www/cgi-bin/
 ENTRYPOINT ["httpd","-f","-p","80","-h","/www"]
 ```
+]
 ]
 .card[
 .kicker[the script]
@@ -654,18 +656,26 @@ ENTRYPOINT ["httpd","-f","-p","80","-h","/www"]
 
 Runs once per request; what it prints is the reply. The line that matters:
 
+.smaller[
 ```
 docker run --rm my_whale -f group-N "$say"
 ```
 ]
+]
 .card.alert[
 .section-icon.corner[<i class="fa-solid fa-triangle-exclamation"></i>]
 
-.kicker[read this twice]
+.kicker[Security hazard]
 
 ### How it reaches the daemon
 
-`-v /var/run/docker.sock:/var/run/docker.sock`. That hands the container **the
+.smaller[
+```
+-v /var/run/docker.sock:/var/run/docker.sock
+```
+]
+
+That hands the container **the
 daemon**, which is root on your laptop by another name.
 ]
 ]
@@ -675,10 +685,52 @@ daemon**, which is root on your laptop by another name.
 
 ---
 
-.section-mark[
-# Short break
+# Hint 1
 
-.large[We reconvene .timer[in 10 minutes].]
+.boxed-content.large[
+Proposed project layout to include the frontend:
+
+```Text
+whalesay/                       # your repo checkout
+├─ .dockerignore                # web/ stays out of the context
+├─ .github/workflows/image.yml  # CI/CD workflow
+├─ Dockerfile                   # alpine + perl + cows
+├─ group-N.cow
+└─ web/
+   ├─ Dockerfile                # httpd (web server) + docker-cli
+   └─ cgi-bin/cow               # chmod +x
+```
+
+* Two images: `my_whale` from the root, `cow-web` from `web/`
+* They communicate through `/var/run/docker.sock`
+]
+
+---
+
+# Hint 2
+
+.boxed-content[
+## Frontend's `Dockerfile`
+
+```
+FROM alpine
+RUN apk add --no-cache busybox-extras docker-cli
+COPY cgi-bin/ /www/cgi-bin/
+ENTRYPOINT ["httpd", "-f", "-p", "80", "-h", "/www"]
+```
+
+## The script (`web/cgi-bin/cow`)
+```
+#!/bin/sh
+echo "Content-type: text/html"
+echo
+say=$(printf '%s' "$QUERY_STRING" | sed -n 's/^.*message=\([^&]*\).*$/\1/p' | sed 's/+/ /g')
+[ -z "$say" ] && say="try /?message=hello"
+echo "<pre>"
+docker run --rm my_whale -f group-N "$say"
+echo "</pre>"
+```
+
 ]
 
 ---
@@ -757,10 +809,72 @@ permissions:
 
 ???
 
+---
+class: vcenter
+
+# Build context &amp; `.dockerignore`
+
+.cards.cols-2[
+.card[
+.section-icon.corner[<i class="fa-solid fa-box"></i>]
+
+.kicker[Build context]
+
+### Docker packs up the folder
+
+Note the trailing `.` (= *current working directory*) in
+
+```
+docker build -t my_whale .
+```
+
+
+Docker hands the daemon **all the content in `.`** before reading a single instruction.
+
+.foot[In &micro;Lab 1, that passes `web/` too.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-scissors"></i>]
+
+.kicker[Excluding content from the context]
+
+* `.dockerignore` sits next to the `Dockerfile`,
+* `.dockerignore` allows one pattern per line,
+* adding `web/` in it, Docker stops carrying `web/` on every build.
+
+.foot[Watch the `transferring context` line to see it.]
+]
+]
+
+.admonition[
+.large[<i class="fa-solid fa-circle-right"></i> In this case, `my_whale`'s size does not change (because nothing from `web/` was *added* into the image).]
+]
+
+???
+
+Two things worth saying out loud, but not worth a card:
+
+* The GitHub Actions run does the same thing. `docker/build-push-action` is
+  given `context: .`, so the workflow you watched earlier also ships the whole
+  repository, and it also reads `.dockerignore`.
+
+* Ignoring `web/` does not break `docker build -t cow-web ./web`. That build
+  passes `web/` **as** the context, and `.dockerignore` is read from the root of
+  whatever context you passed: here that would be `web/.dockerignore`, which
+  does not exist.
 
 ---
 
-# &micro;Lab 2 .gray-text[· the brief]
+.section-mark[
+# Short break
+
+.large[We reconvene .timer[in 10 minutes].]
+]
+
+---
+class: vcenter
+
+# &micro;Lab 2 .gray-text[· Coordinating containers]
 
 .boxed-content[
 .small[
@@ -774,64 +888,61 @@ permissions:
 > The one thing the CTO knows is that **your team has 60 minutes to implement this**.
 ]
 
-.large[Afterwards, 3 minutes per team to show progress.]
-]
-
-.admonition[
-<i class="fa-solid fa-download"></i> Start this now, over lunch: `docker pull oesteban/neuropipeline-302`
 ]
 
 ---
 
-.section-mark[
-# Lunch break
-
-.large[We reconvene in <span class="timer">1 hour</span>.]
-]
-
----
-
-# **&micro;Lab 2** .gray-text[· one image, two jobs]
+# &micro;Lab 2 .gray-text[· Coordinating containers]
 
 .cards.cols-2.tight[
 .card[
 .kicker[step 1]
 
-### Measure what you were given
+### Inspect the image
 
-`docker image ls oesteban/neuropipeline-302`. Write the number down.
+.smaller[
+```
+docker image ls oesteban/neuropipeline-302
+```
+]
 
-.foot[Its recipe is inside it: `docker run --rm oesteban/neuropipeline-302 cat /opt/302/Dockerfile`]
+.foot[The `Dockerfile` is inside the image at `/opt/302/Dockerfile`.]
 ]
 .card[
 .kicker[step 2]
 
-### Build the notebook half
+### Build a Jupyter gateway
 
-Jupyter and the viewer, plus `docker-cli`, and **none** of the neuroimaging stack.
-Measure that one too.
+An app that provides Jupyter and the *Niivue* Python viewer *and* `docker-cli`.
+
+**No neuroimaging stack**.
+
 ]
 .card[
 .kicker[step 3]
 
 ### Give it the socket and a volume
 
+.small[
 ```
 docker volume create project
 docker run -p 8888:8888 -v project:/work \
   -v /var/run/docker.sock:/var/run/docker.sock notebook
 ```
 ]
+]
 .card[
 .kicker[step 4]
 
-### Drive the tools from a cell
+### Use Docker from the notebook
 
+.small[
 ```
 !docker run --rm -v project:/project \
   oesteban/neuropipeline-302 mri_synthstrip \
   -i /project/T1w.nii.gz -o /project/brain.nii.gz
 ```
+]
 ]
 ]
 
@@ -843,7 +954,7 @@ docker run -p 8888:8888 -v project:/work \
 
 ---
 
-# Hint
+# Hint 1
 
 .boxed-content.large[
 Proposed project layout:
@@ -853,10 +964,54 @@ neuro-split/
 └─ notebook/
    ├─ Dockerfile              # Jupyter + viewer + docker-cli
    └─ brain_mri_pipeline.ipynb
-
-the tools image:  oesteban/neuropipeline-302   (pulled, not built)
-the shared state: a named volume, `project`
 ```
+
+* The tools image:  `oesteban/neuropipeline-302`
+* The shared state: a named volume, `project`
+]
+
+---
+
+# Hint 2
+
+.boxed-content[
+## Notebook's `Dockerfile`
+
+```
+FROM python:3.12-slim-trixie
+
+# Copy from another image (??) the docker command line client
+COPY --from=docker:29-cli /usr/local/bin/docker /usr/local/bin/docker
+
+RUN pip install --no-cache-dir ipyniivue jupyter notebook
+
+WORKDIR /work
+COPY brain_mri_pipeline.ipynb .
+
+EXPOSE 8888
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser"]
+```
+
+.admonition[
+.large[<i class="fa-solid fa-circle-exclamation"></i> No neuroimaging stack (only the viewer for Jupyter notebooks).]
+]
+]
+
+???
+
+It runs as root, and that is what lets it read the socket you mounted. Naming a
+user here is the next thing that breaks the lab.
+
+`COPY --from=docker:29-cli` is a build stage they have not been taught yet, and
+does not need explaining to be used: it lifts one static binary out of another
+image.
+
+---
+
+.section-mark[
+# Lunch break
+
+.large[We reconvene in <span class="timer">1 hour</span>.]
 ]
 
 ---
