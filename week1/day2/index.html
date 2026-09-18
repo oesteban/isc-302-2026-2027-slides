@@ -81,6 +81,12 @@ layout: true
 ]
 
 ---
+
+.section-mark[
+# Quiz (before)
+]
+
+---
 class: vcenter
 
 # Objectives
@@ -140,11 +146,6 @@ Explain **how containers work** and identify suitable applications for them
 | 16h10 | .gray-text[End] |
 ]
 
----
-
-.section-mark[
-# Quick quiz
-]
 
 ---
 class: roulette
@@ -208,25 +209,9 @@ Examples of why:
 ---
 class: vcenter
 
-# Containers vs. virtual machines
+# Virtual machines vs. containers
 
 .cards.cols-2[
-.card[
-.section-icon.corner[<i class="fa-solid fa-cubes"></i>]
-
-.kicker[shares the host's kernel]
-
-### Container
-
-Uses LXC (**Linux Containers**), which enables a Linux system
-share it's **kernel**.
-The container registers isolated *processes* that use the kernel.
-
-.foot[
-* Spinning up a container is a matter of seconds,
-* images are relatively small, and
-* they use the hardware directly, at full capacity.]
-]
 .card[
 .section-icon.corner[<i class="fa-solid fa-server"></i>]
 
@@ -242,6 +227,22 @@ The hypervisor provides the guest OS with a virtual platform (the virtual hardwa
 * images are large,
 * strong isolation, and
 * hardware capacity can be scaled down.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-cubes"></i>]
+
+.kicker[shares the host's kernel]
+
+### Container
+
+Uses LXC (**Linux Containers**), which enables a Linux system
+share it's **kernel**.
+The container registers isolated *processes* that use the kernel.
+
+.foot[
+* Spinning up a container is a matter of seconds,
+* images are relatively small, and
+* they use the hardware directly, at full capacity.]
 ]
 ]
 
@@ -277,6 +278,33 @@ Main caveats of VMs vs containers—each VM needs a full OS:
 
 Benefits of VMs vs containers—each VM is fully isolated:
 * More secure (stronger isolation)
+
+---
+
+# Virtual machines vs. containers
+
+.boxed-content.center[
+<img src="https://wac-cdn.atlassian.com/dam/jcr:92adde69-f728-4cfc-8bab-ba391c25ae58/SWTM-2060_Diagram_Containers_VirtualMachines_v03.png" style="width: 100%; padding-top: 20px;"/>
+
+.align-right.small[
+Source: [Atlassian](https://www.atlassian.com/microservices/cloud-computing/containers-vs-vms)
+]
+]
+
+--
+count: false
+
+.admonition[
+.large[<i class="fa-solid fa-quote-left"></i> *It works on my (virtual) machine*]
+]
+
+???
+
+* Containers share the host OS kernel, and isolate the application processes from the rest of the system.
+* Virtual machines simulate the physical hardware and install a full OS stack with its own kernel.
+
+The second step is the callback to the roulette quote. The VM column is the old
+answer to exactly the same problem, and it is the expensive one.
 
 ---
 class: vcenter
@@ -331,7 +359,7 @@ instruction by instruction.
 
 ---
 
-# Containers vs. virtual machines
+# Virtual machines vs. containers
 
 
 .pull-left.large[
@@ -1023,6 +1051,99 @@ image.
 ]
 
 ---
+class: vcenter
+
+# You have been the scheduler all day
+
+.cards.cols-2[
+.card[
+.section-icon.corner[<i class="fa-solid fa-hand"></i>]
+
+.kicker[all day so far]
+
+### You decided what ran
+
+You typed `docker run`, and a container started. You wanted a second one, you
+typed it again. One died, and you found out when the page stopped answering.
+
+.foot[One laptop, one pair of hands, one thing at a time.]
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-robot"></i>]
+
+.kicker[the rest of the afternoon]
+
+### You write down what should be true
+
+*Two of these should be running.* Something else compares that against reality,
+over and over, and closes the gap without being asked.
+
+.foot[Across several machines, not one laptop.]
+]
+]
+
+.admonition[
+.large[<i class="fa-solid fa-circle-right"></i> That something else is **Kubernetes**. You are about to hand it the job you have been doing by hand since this morning.]
+]
+
+???
+
+---
+
+# Start this now: `k3d` and `kubectl`
+
+.boxed-content.small[
+## macOS
+```
+brew install k3d kubernetes-cli
+```
+
+## Windows
+```
+winget install -e --id Kubernetes.kubectl
+choco install k3d                      # no Chocolatey? scoop install k3d
+```
+
+## Linux
+```
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+sudo snap install kubectl --classic    # no snap? kubernetes.io/docs/tasks/tools
+```
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> **Docker Desktop has to be running.** `k3d` builds the cluster out of Docker containers, so it talks to the same daemon you have been using all day. Check with `k3d version` and `kubectl version --client`.
+]
+
+???
+
+Neither tool has a winget package for k3d, which is why Windows needs Chocolatey
+or Scoop. The fallback for anyone with neither is the `.exe` on the k3d releases
+page, dropped somewhere on PATH.
+
+---
+
+# One command, unpacked
+
+.boxed-content.large[
+```console
+$ k3d cluster create hello302 --agents 2 --wait
+```
+]
+
+.boxed-content.no-bullet[
+* .large[<i class="fa-solid fa-circle-right"></i> `k3d` builds a Kubernetes cluster **out of Docker containers**, and `hello302` is the name you give it. You already have Docker, and that is the whole reason this works on a laptop.]
+
+* .large[<i class="fa-solid fa-circle-right"></i> `--agents 2` asks for **two worker machines**. A third one runs the cluster itself. Keep that number in mind for the next slide.]
+
+* .large[<i class="fa-solid fa-circle-right"></i> `--wait` means *do not give the prompt back until it is really up*.]
+
+* .large[<i class="fa-solid fa-circle-right"></i> `kubectl` is the command that talks to a cluster. From here on, it is the only one you type.]
+]
+
+???
+
+---
 
 # Both terminals, everyone
 
@@ -1031,12 +1152,6 @@ image.
 $ k3d cluster create hello302 --agents 2 --wait
 $ kubectl get nodes
 ```
-
-.small[
-Missing the tools? `brew install k3d kubernetes-cli` (macOS),
-`winget install Kubernetes.kubectl` plus k3d.io (Windows),
-or the install script at k3d.io (Linux).
-]
 ]
 
 .admonition[

@@ -173,8 +173,9 @@ def lint(deck: Path, tracked: set[str], subs: list[str]) -> list[str]:
                 break
             j -= 1
         # valid if it opens a slide, or opens the source (the first slide has
-        # no separator above it)
-        if j >= 0 and lines[j].strip() != '---':
+        # no separator above it). `--` counts: an incremental step takes its own
+        # property block, which is how a step carries `count: false`.
+        if j >= 0 and lines[j].strip() not in ('---', '--'):
             say(i, f"property line outside a property block: {line.strip()!r}")
 
     # 6 and 7. assets
