@@ -355,11 +355,17 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
   #v(4pt)
   #step("4", "Look at the pods the controller made for you")[
     #raw("kubectl get pods", lang: "console") — once straight away, once about a minute later.
-    #v(1pt)
+    #v(3pt)
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("get"),
+      text(size: 7.8pt)[List objects, one line each. No name given, so it lists them all.],
+      raw("pods"),
+      text(size: 7.8pt)[The kind to list. #raw("pod"), #raw("pods") and the short #raw("po") all work. Try #raw("kubectl get deployments") and #raw("kubectl get jobs") too.],
+    )
+    #v(2pt)
     #text(size: 8pt)[
-      This lists the *pods* the Deployment created on your behalf. Two columns
-      matter: *STATUS*, what the pod is doing right now, and *RESTARTS*, how many
-      times the container inside it has been started again.
+      Two columns matter: *STATUS*, what the pod is doing right now, and *RESTARTS*, how
+      many times the container inside it has been started again.
     ]
     #v(2pt)
     #text(size: 7.8pt, fill: luma(120))[
@@ -370,20 +376,26 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
   #v(4pt)
   #step("5", "Ask for the same image to run once, instead of forever")[
     #raw("kubectl create job whale --image=ghcr.io/oesteban/whalesay -- cowsay 'a cluster ran me'", lang: "console")
-    #v(1pt)
-    #text(size: 8pt)[
-      A *Job* says: run this to completion, once. Same image, same cluster, same
-      command — only the kind of object is different.
-    ]
+    #v(3pt)
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("job"),
+      text(size: 7.8pt)[The kind. Everything else on this line is the same as step 3; only the kind changed.],
+      raw("--"),
+      text(size: 7.8pt)[*Ends kubectl's own arguments.* Whatever follows is not for kubectl: it is the command to run inside the container, and it replaces the one built into the image. The same idea as #raw("--entrypoint") in step 2, and of #raw("ENTRYPOINT") in a Dockerfile.],
+      raw("cowsay 'a cluster ran me'"),
+      text(size: 7.8pt)[That command and its one argument. #raw("cowsay") is the program inside the image; the quoted text is what it prints.],
+    )
   ]
   #v(4pt)
   #step("6", "Read what it printed")[
     #raw("kubectl logs job/whale", lang: "console")
-    #v(1pt)
-    #text(size: 8pt)[
-      #raw("kubectl logs") prints whatever a container wrote to its output. You did not
-      have to find the pod: naming the Job was enough.
-    ]
+    #v(3pt)
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("logs"),
+      text(size: 7.8pt)[Print what a container wrote to its output. Containers have no screen; this is the screen.],
+      raw("job/whale"),
+      text(size: 7.8pt)[*KIND/NAME.* A Job does not have logs — its *pod* does. Naming the Job is enough: kubectl finds the pod it made. #raw("deploy/whale") works the same way, and a bare pod name also works.],
+    )
   ]
 ]
 
@@ -541,6 +553,12 @@ The container did not crash. It printed its whale and exited *successfully*.
   ]
   #v(2pt)
   #raw("kubectl get events --sort-by=.lastTimestamp | tail -8", lang: "console")
+  #v(2pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    #raw("events") is a kind of object like #raw("pods"): the cluster records one every time it
+    decides something. #raw("--sort-by") takes a field of the object, oldest first, so
+    #raw("tail -8") leaves the eight most recent.
+  ]
   #v(4pt)
   #text(size: 8.5pt)[
     Nobody wrote this log. Who did, and what is it a record of — what you asked for,
@@ -575,6 +593,12 @@ The container did not crash. It printed its whale and exited *successfully*.
   #text(size: 8.5pt)[
     #raw("kubectl scale deployment whale --replicas=5", lang: "console"), wait, then
     #raw("kubectl scale deployment whale --replicas=0", lang: "console"). Count the pods after each.
+    #v(2pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      #raw("scale") edits one field of a request that already exists — here #raw("replicas") —
+      rather than creating anything. #raw("deployment whale") is KIND then NAME, the long form
+      of #raw("deploy/whale").
+    ]
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
