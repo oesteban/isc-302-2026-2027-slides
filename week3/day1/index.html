@@ -505,15 +505,6 @@ Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 ]
 
 ---
-class: group-roulette
-groups: 5
-seed: 21.09.2026
-
-<br />
-
-# &micro;Lab: Deploy Spark locally with Docker
-
----
 
 .section-mark[
 # Word count in Spark
@@ -550,7 +541,39 @@ any info would be great. Thanks.
 
 ---
 
-# Script *PySpark* (3)
+# Transformations and actions
+
+.cards.cols-2[
+.card[
+.kicker[builds the plan]
+
+### Transformation
+
+`select`, `filter`, `groupBy`, `orderBy`, `join`. Returns a new DataFrame. Reads
+nothing.
+]
+.card[
+.kicker[runs the plan]
+
+### Action
+
+`show`, `take`, `count`, `collect`, `write`. Submits a job and returns data.
+]
+]
+
+.boxed-content.small[
+```console
+>>> counts = words.groupBy("word").count().orderBy(desc("count"))   # returns at once
+>>> counts.take(15)                                                 # 11 s of actual work
+```
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> `explain()` prints the plan **without running it**. That is why, in your output, the plan appears above the words.
+]
+---
+
+# Filter, group, order, show
 
 .boxed-content.larger[
 ```python
@@ -582,6 +605,76 @@ if __name__ == "__main__":
 
 ---
 
+# Reading the execution plan
+
+.boxed-content.small[
+```text
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Sort [count#8L DESC NULLS LAST], true, 0
+   +- Exchange rangepartitioning(count#8L DESC NULLS LAST, 200), ENSURE_REQUIREMENTS
+      +- HashAggregate(keys=[word#3], functions=[count(1)])
+         +- Exchange hashpartitioning(word#3, 200), ENSURE_REQUIREMENTS
+            +- HashAggregate(keys=[word#3], functions=[partial_count(1)])
+               +- Filter (length(word#3) >= 3)
+                  +- Generate explode(split(lower(value#0), \W+, -1)), false, [word#3]
+                     +- FileScan text [value#0] ... InMemoryFileIndex(18846 paths)
+```
+]
+
+.boxed-content.no-bullet[
+* Read it **bottom-up**. `FileScan` happens first, `Sort` last.
+* **`Exchange` is a shuffle**: rows move between partitions. On a cluster, across the network.
+* `HashAggregate` twice &rarr; count within each partition, then combine.
+]
+---
+
+# &micro;Lab 2 .gray-text[· the four steps]
+
+.cards.cols-2.tight[
+.card[
+.kicker[step 1]
+
+### Get the repo
+
+`git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab`
+
+.foot[Then `cd` into it. Every command runs from there.]
+]
+.card[
+.kicker[step 2]
+
+### Count with DataFrames
+
+`make df`
+
+.foot[Record `elapsed` and `input partitions`.]
+]
+.card[
+.kicker[step 3]
+
+### Count with RDDs
+
+`make rdd`
+
+.foot[Same two numbers. Start it, then read the step-2 plan while it runs.]
+]
+.card[
+.kicker[step 4]
+
+### Find the shuffle
+
+In the DataFrame plan, point at the line where rows move between partitions.
+
+.foot[There is more than one.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Core by 13h30**: both counts run, both plans printed, the shuffle identified. **Then**: `.cache()` the filtered words, count twice, explain the difference.
+]
+---
+
 # RDD vs. DataFrame
 
 .boxed-content[
@@ -610,14 +703,6 @@ if __name__ == "__main__":
     # 7. Retrieve the top 15 by descending frequency
     top_15 = word_counts.takeOrdered(15, key=lambda x: -x[1])
 ```
-]
-
-???
-
----
-
-.boxed-content[
-<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
 ]
 
 ???
@@ -671,23 +756,99 @@ god	5062
 ???
 
 ---
-class: group-roulette
-groups: 5
-seed: 21.09.2026
 
-<br />
+# Stages and tasks
+
+.boxed-content.large[
+A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
+plan is a stage boundary.
+
+Within a stage, Spark runs **one task per partition**.
+]
+
+.boxed-content.large.no-bullet[
+* Before the shuffle: **589 tasks**, one per input partition.
+* After it: **27 tasks**, because Spark sized the next stage to the data it actually got.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
+]
+---
+
+# The same count on a 32-core cluster
+
 .boxed-content[
-# &micro;Lab: scale up the word count with Spark & Airflow
+<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
+]
+---
 
-.large[
-Instead of counting the words in 20 Newsgroups, we scale to a much larger dataset (Wikipedia dump).
+# Where the core-time went
 
-Link: https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2
+.boxed-content.small[
+```text
+Job Wall-clock time: 00:00:55
+Cores per node: 8          (four nodes, 32 cores)
+
+CPU Efficiency:    27.27% of 00:29:20 core-walltime
+Memory Efficiency:  3.68% of 128.00 GB (4.00 GB/core)
+```
+]
+
+.boxed-content.large.no-bullet[
+* 32 cores held for 55 seconds is **29 minutes of core-time**. About **8 minutes** of it did work.
+* The scheduler ran **10 000 tasks** over 20 000 small files.
+* Three quarters of the reservation went on starting, shipping and collecting tasks.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> This is the same mistake `make rdd` made on your laptop: one partition per file.
+]
+---
+
+# &micro;Lab 3 .gray-text[· the four steps]
+
+.cards.cols-2.tight[
+.card[
+.kicker[step 1]
+
+### One core
+
+`make slow1`
+
+.foot[Three partition counts: 8, 800, 8000.]
+]
+.card[
+.kicker[step 2]
+
+### All your cores
+
+`make slow`
+
+.foot[The same three, on whatever Docker gives you.]
+]
+.card[
+.kicker[step 3]
+
+### Record six numbers
+
+Six wall clocks, and the `distinct words` column beside each.
+
+.foot[That column should never change.]
+]
+.card[
+.kicker[step 4]
+
+### Explain the shape
+
+More cores: every row falls. More partitions: every column rises. Say why, in
+one sentence.
 ]
 ]
 
-
-
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Core by 14h50**: the six numbers and the sentence. **Then**: find the partition count that is fastest on your laptop, and say what it depends on.
+]
 ---
 
 .section-mark[
@@ -720,6 +881,33 @@ See you next time: 24.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09
 
 .large[Material kept out of the 21.09 delivery, not out of the deck.]
 ]
+
+---
+class: group-roulette
+groups: 5
+seed: 21.09.2026
+
+<br />
+
+# &micro;Lab: Deploy Spark locally with Docker
+
+---
+class: group-roulette
+groups: 5
+seed: 21.09.2026
+
+<br />
+.boxed-content[
+# &micro;Lab: scale up the word count with Spark & Airflow
+
+.large[
+Instead of counting the words in 20 Newsgroups, we scale to a much larger dataset (Wikipedia dump).
+
+Link: https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2
+]
+]
+
+
 
 ---
 
