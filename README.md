@@ -149,6 +149,8 @@ and the built PDFs are committed so that printing needs no toolchain:
 | `week1/day2/handouts/ulab1-driver-worksheet.typ` | 5 pages, the driver's sheet, µLab 1 of day 2 |
 | `week1/day2/handouts/ulab2-driver-worksheet.typ` | 3 pages, the driver's sheet, µLab 2 of day 2 |
 | `week2/day1/handouts/ulab1-driver-worksheet.typ` | 8 pages, Kubernetes in one container |
+| `week2/day1/handouts/ulab2-driver-worksheet.typ` | 6 pages, deploying Spark on that cluster |
+| `week2/day1/handouts/ulab3-driver-worksheet.typ` | 6 pages, counting words with DataFrames and with RDDs |
 
 Rebuild with `typst compile <file>.typ` and stage the PDF with the source;
 `lint-handouts.py` fails on a PDF older than its `.typ`. The topics are data,
