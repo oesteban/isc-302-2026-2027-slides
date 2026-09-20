@@ -62,9 +62,9 @@ year-bound; `tools/reyear.py` propagates it into the decks.
 | [Data computing — module overview](https://oesteban.github.io/isc-302-2026-2027-slides/week1/day0/index.html) | Mon 14 Sep 2026 | `week1/day0/` |
 | [Introduction to data pipelines](https://oesteban.github.io/isc-302-2026-2027-slides/week1/day1/index.html) | Mon 14 Sep 2026 | `week1/day1/` |
 | [DevOps and Docker](https://oesteban.github.io/isc-302-2026-2027-slides/week1/day2/index.html) | Fri 18 Sep 2026 | `week1/day2/` |
-| [Container orchestration at scale: Kubernetes and Slurm](https://oesteban.github.io/isc-302-2026-2027-slides/week2/day2/index.html) | Mon 21 Sep 2026 | `week2/day2/` |
-| [Specifying pipelines with Flyte](https://oesteban.github.io/isc-302-2026-2027-slides/week2/day1/index.html) | Thu 24 Sep 2026 | `week2/day1/` |
-| [MapReduce and Apache Spark](https://oesteban.github.io/isc-302-2026-2027-slides/week3/day1/index.html) | Mon 28 Sep 2026 | `week3/day1/` |
+| [MapReduce and Apache Spark](https://oesteban.github.io/isc-302-2026-2027-slides/week3/day1/index.html) | Mon 21 Sep 2026 | `week3/day1/` |
+| [Container orchestration at scale: Kubernetes and Slurm](https://oesteban.github.io/isc-302-2026-2027-slides/week2/day2/index.html) | Thu 24 Sep 2026 | `week2/day2/` |
+| [Specifying pipelines with Flyte](https://oesteban.github.io/isc-302-2026-2027-slides/week2/day1/index.html) | Mon 28 Sep 2026 | `week2/day1/` |
 | [Wrap-up and section test](https://oesteban.github.io/isc-302-2026-2027-slides/week3/day2/index.html) | Thu 01 Oct 2026 | `week3/day2/` |
 
 Navigation: arrow keys, `P` for presenter view, `C` to clone the window onto a

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>MapReduce & Apache Spark | 28.09.2026</title>
+    <title>MapReduce & Apache Spark | 21.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
@@ -41,7 +41,7 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data infrastructures (week 3, day 1) — 28.09.2026
+### 302 Data infrastructures (week 3, day 1) — 21.09.2026
 ]
 
 ???
@@ -54,7 +54,7 @@ counter: true
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">MapReduce & Apache Spark (28.09.2026)</span>
+  <span style="padding-left: 10px; font-weight: 600;">MapReduce & Apache Spark (21.09.2026)</span>
 </p>
 ]
 
@@ -229,18 +229,6 @@ class: stepwise-svg
 ???
 
 ---
-
-# MapReduce (2004)
-
-<object data="images/mapreduce-osdi04.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
-    <embed src="images/mapreduce-osdi04.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/mapreduce-osdi04.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
-
-.gray-text[https://research.google/pubs/mapreduce-simplified-data-processing-on-large-clusters/]
-
----
 name: mr3
 
 # MapReduce — word count (pseudocode)
@@ -251,7 +239,7 @@ name: mr3
 def map(_, line):
     for w in tokenize(line.lower()):
         if w and w not in STOPWORDS:
-            return (w, 1)
+            yield (w, 1)
 
 def shuffle(pairs):
     grouped = defaultdict(list)
@@ -272,10 +260,10 @@ name: hadoop1
 
 .boxed-content.large[
 * Cutting and Cafarella were working on *Nutch* (an open-source web search engine).
-  <br /> .noindent.gray-text[Google published GFS in 2003, MapReduce in 2004.]
+  <br /> .gray-text[Google published GFS in 2003, MapReduce in 2004.]
 
 * In January 2006, D. Cutting was hired by Yahoo!
-  <br /> .noindent.gray-text[By 2016, Hadoop was adopted by Facebook, Twitter, Amazon AWS, Microsoft, LinkedIn, etc.]
+  <br /> .gray-text[By 2016, Hadoop was adopted by Facebook, Twitter, Amazon AWS, Microsoft, LinkedIn, etc.]
 
 * Hadoop re-implements Google's ideas: **HDFS** & **MapReduce**.
 
@@ -351,26 +339,9 @@ name: spark1
 ]
 
 ---
-class: roulette
-seed: 28.09.2026
-time: 120
-
-.section-mark[
-# Spark paper
-
-.large[
-What has called your attention? <br />
-What are RDDs and why they are important? <br />
-What are the main features of RDDs? <br />
-What components can you name in the Spark architecture? <br />
-
-]
-]
-
----
 class: group-roulette
 groups: 5
-seed: 28.09.2026
+seed: 21.09.2026
 
 <br />
 
@@ -413,70 +384,6 @@ any info would be great. Thanks.
 
 ---
 
-# Script *PySpark* (1)
-
-.boxed-content[
-```python
-#!/usr/bin/env python
-"""
-Spark job reading the 20 Newsgroups text files from an NFS path,
-applying a stopword filter, and printing the top 100 most frequent tokens.
-"""
-
-import os
-from pathlib import Path
-from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
-
-DATA_DIR = Path(os.getenv("SCRATCH", str(Path.home()))) / "datasets"
-STOPWORDS_PATH = DATA_DIR / "stopwords.txt"
-NEWSGROUPS_PATH = DATA_DIR / "newsgroups"
-
-# Create a set of stop words we don't want to count such as "the"
-stopword_list = {
-  line.strip().lower()
-  for line in STOPWORDS_PATH.read_text().splitlines() if line.strip()
-}
-
-```
-]
-
-???
-
----
-count: false
-
-# Script *PySpark* (2)
-
-.boxed-content.larger[
-```python
-def main():
-    # 1. Initialize Spark
-    spark = SparkSession.builder \
-        .appName("WordCountOnNFS") \
-        .getOrCreate()
-
-    # 2. Read text files as a DataFrame (one column: "value")
-    text_df = spark.read.text(f"{NEWSGROUPS_PATH}/*.txt")
-
-    # 3. Split each line into tokens, explode into rows
-    words_df = text_df.select(
-        F.explode(
-            F.split(F.col("value"), r"\\W+")
-        ).alias("token")
-    )
-
-    # 4. Convert to lowercase
-    words_df = words_df.select(F.lower(F.col("token")).alias("token"))
-
-```
-]
-
-???
-
----
-count: false
-
 # Script *PySpark* (3)
 
 .boxed-content.larger[
@@ -494,7 +401,7 @@ count: false
     # 7. Get the top 15 words by descending frequency
     top_15 = counts_df.orderBy(F.desc("count")).limit(15)
 
-    # 9. Show results
+    # 8. Show results
     top_15.show(truncate=False)
 
     spark.stop()
@@ -536,6 +443,213 @@ if __name__ == "__main__":
 
     # 7. Retrieve the top 15 by descending frequency
     top_15 = word_counts.takeOrdered(15, key=lambda x: -x[1])
+```
+]
+
+???
+
+---
+
+.boxed-content[
+<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
+]
+
+???
+
+---
+
+# Results
+
+.boxed-content[
+.pull-right[
+.larger[
+<br />
+File `top15_output.txt`:
+
+```Text
+one	14635
+writes	13344
+article	12275
+people	9473
+university	9431
+know	8631
+get	8343
+think	7602
+time	6711
+use	6673
+new	6385
+good	5946
+even	5380
+see	5191
+god	5062
+```
+]
+]
+
+.pull-left.large[
+<br />
+.no-bullet[
+* <i class="fa-solid fa-ranking-star"></i> The most frequent: <br />
+  .indent[*one*, *writes*, *article*]
+
+* <i class="fa-solid fa-pen-nib"></i> *writes* : <br />
+  .indent[probably should be **ignored**]
+
+* <i class="fa-solid fa-graduation-cap"></i> *university* (5<sup>th</sup>): <br />
+  .indent[also **overestimated**]
+]
+]
+
+]
+
+???
+
+---
+
+.section-mark[
+# Lunch break
+
+.large[We reconvene in <span class="timer">1 hour</span>.]
+]
+
+---
+class: group-roulette
+groups: 5
+seed: 21.09.2026
+
+<br />
+.boxed-content[
+# &micro;Lab: scale up the word count with Spark & Airflow
+
+.large[
+Instead of counting the words in 20 Newsgroups, we scale to a much larger dataset (Wikipedia dump).
+
+Link: https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2
+]
+]
+
+
+
+---
+
+.section-mark[
+# Quick quiz (repeat)
+
+.large[Opens **15h20**, closes **15h50**.]
+
+.large[.gray-text[ISC Learn opens and closes it.]]
+]
+
+---
+
+.section-mark[
+# End
+
+.large[
+See you next time: 24.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-24T08:15:00+02:00"></span>)
+
+[<i class="fa-solid fa-circle-left"></i>](../../week1/day2/index.html)
+[<i class="fa-solid fa-home"></i>](#1)
+[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
+]
+]
+
+
+---
+
+.section-mark[
+# Appendix
+
+.large[Material kept out of the 21.09 delivery, not out of the deck.]
+]
+
+---
+
+# MapReduce (2004)
+
+<object data="images/mapreduce-osdi04.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
+    <embed src="images/mapreduce-osdi04.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/mapreduce-osdi04.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
+
+.gray-text[https://research.google/pubs/mapreduce-simplified-data-processing-on-large-clusters/]
+
+---
+class: roulette
+seed: 21.09.2026
+time: 120
+
+.section-mark[
+# Spark paper
+
+.large[
+What has called your attention? <br />
+What are RDDs and why they are important? <br />
+What are the main features of RDDs? <br />
+What components can you name in the Spark architecture? <br />
+
+]
+]
+
+---
+
+# Script *PySpark* (1)
+
+.boxed-content[
+```python
+#!/usr/bin/env python
+"""
+Spark job reading the 20 Newsgroups text files from an NFS path,
+applying a stopword filter, and printing the top 15 most frequent tokens.
+"""
+
+import os
+from pathlib import Path
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+DATA_DIR = Path(os.getenv("SCRATCH", str(Path.home()))) / "datasets"
+STOPWORDS_PATH = DATA_DIR / "stopwords.txt"
+NEWSGROUPS_PATH = DATA_DIR / "newsgroups"
+
+# Create a set of stop words we don't want to count such as "the"
+stopword_list = {
+  line.strip().lower()
+  for line in STOPWORDS_PATH.read_text().splitlines() if line.strip()
+}
+
+```
+]
+
+???
+
+---
+count: false
+
+# Script *PySpark* (2)
+
+.boxed-content.larger[
+```python
+def main():
+    # 1. Initialize Spark
+    spark = SparkSession.builder \
+        .appName("WordCountOnNFS") \
+        .getOrCreate()
+
+    # 2. Read text files as a DataFrame (one column: "value")
+    text_df = spark.read.text(f"{NEWSGROUPS_PATH}/*.txt")
+
+    # 3. Split each line into tokens, explode into rows
+    words_df = text_df.select(
+        F.explode(
+            F.split(F.col("value"), r"\W+")
+        ).alias("token")
+    )
+
+    # 4. Convert to lowercase
+    words_df = words_df.select(F.lower(F.col("token")).alias("token"))
+
 ```
 ]
 
@@ -604,113 +718,6 @@ fi
 ]
 
 ???
-
----
-
-.boxed-content[
-<div class="asciicast" id="spark" style="padding-top: 25px"></div>
-]
-
-???
-
----
-
-# Results
-
-.boxed-content[
-.pull-right[
-.larger[
-<br />
-File `top15_output.txt`:
-
-```Text
-one	14635
-writes	13344
-article	12275
-people	9473
-university	9431
-know	8631
-get	8343
-think	7602
-time	6711
-use	6673
-new	6385
-good	5946
-even	5380
-see	5191
-god	5062
-```
-]
-]
-
-.pull-left.large[
-<br />
-.no-bullet[
-* <i class="fa-solid fa-ranking-star"></i> The most frequent: <br />
-  .indent[*one*, *writes*, *article*]
-
-* <i class="fa-solid fa-pen-nib"></i> *writes* : <br />
-  .indent[probably should be **ignored**]
-
-* <i class="fa-solid fa-graduation-cap"></i> *university* (5<sup>th</sup>): <br />
-  .indent[also **overestimated**]
-]
-]
-
-]
-
-???
-
----
-
-.section-mark[
-# Lunch break
-
-.large[We reconvene in <span class="timer">1 hour</span>.]
-]
-
----
-class: group-roulette
-groups: 5
-seed: 28.09.2026
-
-<br />
-.boxed-content[
-# &micro;Lab: scale up the word count with Spark & Airflow
-
-.large[
-Instead of counting the words in 20 Newsgroups, we scale to a much larger dataset (Wikipedia dump).
-
-Link: https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2
-]
-]
-
-
-
----
-
-.section-mark[
-# Quick quiz (repeat)
-
-.large[Opens **15h20**, closes **15h50**.]
-
-.large[.gray-text[ISC Learn opens and closes it.]]
-]
-
----
-
-.section-mark[
-# End
-
-.large[
-See you next time: 1.10.2026 @ 8h15 (in <span class="timer" data-until="2026-10-01T08:15:00+02:00"></span>)
-
-[<i class="fa-solid fa-circle-left"></i>](../../week2/day2/index.html)
-[<i class="fa-solid fa-home"></i>](#1)
-[<i class="fa-solid fa-circle-right"></i>](../../week3/day2/index.html)
-]
-]
-
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

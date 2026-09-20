@@ -103,7 +103,7 @@ topics:
         url: "https://www.youtube.com/watch?v=R8_veQiYBjI"
 
   - id: 4
-    slot: 1
+    slot: 2
     title: "From Docker Compose to Kubernetes"
     short: "From Compose to Kubernetes"   # the label on the day-0 deck
     question: "Compose already runs several containers that find each other. So what does Kubernetes add?"
@@ -124,7 +124,7 @@ topics:
         url: "https://www.youtube.com/watch?v=2vMEQ5zs1ko"
 
   - id: 5
-    slot: 1
+    slot: 2
     title: "K8s, MicroK8s, K3s, minikube: container orchestration"
     short: "K8s, K3s, MicroK8s, minikube"   # the label on the day-0 deck
     question: "Four things call themselves Kubernetes. What is actually different, and which one is on your laptop?"

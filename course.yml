@@ -77,28 +77,30 @@ days:
     start: "08:15"
     title: "DevOps and Docker"
 
-  # week2/day2 and week2/day1 are listed here in DELIVERY order, not directory
-  # order: the printed plan puts container orchestration on the Monday and Flyte
-  # on the Thursday, the reverse of what the 25-26 shape implied. The decks keep
-  # their directory names (content did not move); only their dates swapped.
-  - id: week2/day2
+  # The last three teaching days rotated on 2026-09-20, and they are listed here
+  # in DELIVERY order, not directory order. Spark came forward to the Monday so
+  # that Kubernetes has a week to settle behind it; Kubernetes took the Thursday;
+  # Flyte went to the following Monday, where its Kubernetes half runs on
+  # Carnaval. The decks keep their directory names: content did not move, only
+  # dates did.
+  - id: week3/day1
     date: 2026-09-21
     replaces: 2026-09-21
     start: "08:15"
-    title: "Container orchestration at scale: Kubernetes and Slurm"
-                                                    # was: Airflow project (self-guided)
+    title: "MapReduce and Apache Spark"             # was: Mon 28.09
 
-  - id: week2/day1
+  - id: week2/day2
     date: 2026-09-24
     replaces: 2026-09-24
     start: "08:15"
-    title: "Specifying pipelines with Flyte"        # was: … & Apache Airflow
+    title: "Container orchestration at scale: Kubernetes and Slurm"
+                                                    # was: Mon 21.09
 
-  - id: week3/day1
+  - id: week2/day1
     date: 2026-09-28
     replaces: 2026-09-28
     start: "08:15"
-    title: "MapReduce and Apache Spark"
+    title: "Specifying pipelines with Flyte"        # was: Thu 24.09
 
   - id: week3/day2
     date: 2026-10-01
