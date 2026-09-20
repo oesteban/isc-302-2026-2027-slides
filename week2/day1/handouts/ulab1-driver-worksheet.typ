@@ -354,36 +354,45 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #v(5pt)
   #step("4", "Watch what the cluster does with it")[
     #text(size: 8pt)[
-      #raw("kubectl get pods") prints the pods once and returns. Adding #raw("--watch") keeps it
-      open instead, printing *one more line every time something changes*. It is not a
-      refreshing table: the lines pile up, oldest at the top, and that record is the point.
+      #raw("kubectl get pods") prints the list once and returns, which is no use for
+      something that changes every few seconds. #raw("watch") runs a command over and over and
+      redraws the screen in place, so the table stays three lines long and the columns change
+      under the eye.
     ]
     #v(2pt)
-    #raw("kubectl get pods --watch", lang: "console")
+    #raw("watch kubectl get pods", lang: "console")
     #v(3pt)
     #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("watch"),
+      text(size: 7.8pt)[Re-runs whatever follows it, every two seconds, redrawing rather than scrolling. #raw("-n 1") makes it every second. *Ctrl-C* ends it. Nothing to do with #raw("kubectl"): it is an ordinary command-line tool.],
       raw("get"),
       text(size: 7.8pt)[List objects, one line each. No name given, so it lists them all.],
       raw("pods"),
       text(size: 7.8pt)[The kind to list. #raw("pod"), #raw("pods") and the short #raw("po") all work. #raw("kubectl get deployments") and #raw("kubectl get jobs") list the other two kinds.],
-      raw("--watch"),
-      text(size: 7.8pt)[Do not exit; report every change as it happens. #raw("-w") is the short form. *Ctrl-C* ends it.],
     )
     #v(3pt)
-    #text(size: 8pt)[Within about a minute the output looks like this:]
+    #text(size: 8pt)[Three pods, one line each, redrawn every two seconds:]
     #v(2pt)
-    #raw("NAME                     READY  STATUS              RESTARTS\nwhale-544548b554-dkrkr   0/1    ContainerCreating   0\nwhale-544548b554-dkrkr   1/1    Running             0\nwhale-544548b554-dkrkr   0/1    Completed           0\nwhale-544548b554-dkrkr   1/1    Running             1 (2s ago)\nwhale-544548b554-dkrkr   0/1    Completed           1 (2s ago)\nwhale-544548b554-dkrkr   0/1    CrashLoopBackOff    1 (11s ago)\nwhale-544548b554-dkrkr   1/1    Running             2 (12s ago)", lang: "console")
+    #raw("Every 2.0s: kubectl get pods                    2026-09-21 09:38:01\n\nNAME                     READY  STATUS      RESTARTS      AGE\nwhale-544548b554-lbrnj   0/1    Completed   2 (21s ago)   23s\nwhale-544548b554-pbc2b   0/1    Completed   2 (21s ago)   23s\nwhale-544548b554-xrkvc   0/1    Completed   2 (21s ago)   23s", lang: "console")
     #v(3pt)
     #text(size: 8pt)[
-      One pod's history, read downwards: created, ran, finished, ran again, finished again.
-      *RESTARTS* counts how many times the container has been started again, and it keeps
-      climbing. Record an early line and a late one in panel 5, then *Ctrl-C*.
+      Watch for two minutes. *STATUS* flickers between #raw("Running"), #raw("Completed") and
+      #raw("CrashLoopBackOff") — the container only runs for a fraction of a second, so
+      #raw("Running") is rarely caught. *RESTARTS* is the column that tells the story: it only
+      ever goes up. Record an early line and a later one in panel 5, then *Ctrl-C*.
     ]
     #v(3pt)
     #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
       #text(size: 8pt)[
-        *To run it again from the beginning:* delete the Deployment and repeat step 3, with
-        #raw("--watch") started first in a second client.
+        *#raw("CrashLoopBackOff") is not a problem here, and nothing needs fixing.* It is the
+        expected result: a container that finishes is being asked to stay running, so it is
+        started again and again, with a growing pause in between. That pause is what the
+        status is reporting.
+      ]
+      #v(3pt)
+      #text(size: 8pt)[
+        *To run the whole thing again from the start:* delete the Deployment, then repeat
+        step 3.
       ]
       #v(2pt)
       #raw("kubectl delete deployment whale", lang: "console")

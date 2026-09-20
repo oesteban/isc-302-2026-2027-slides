@@ -429,9 +429,9 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 
 ### Watch what it does
 
-`kubectl get pods --watch`
+`watch kubectl get pods`
 
-.foot[One line per change. `Running` → `Completed` → `Running`, and `RESTARTS` climbing.]
+.foot[Three lines, redrawn every 2 s. `RESTARTS` only goes up. `CrashLoopBackOff` is expected.]
 ]
 .card.small[
 .kicker[step 5]
