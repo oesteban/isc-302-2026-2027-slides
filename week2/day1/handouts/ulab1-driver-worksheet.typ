@@ -170,7 +170,7 @@
     #v(4pt)
     #text(size: 8.5pt, weight: "bold")[(a) On Linux — install it on your laptop]
     #v(1pt)
-    #raw("sudo snap install kubectl --classic\nexport KUBECONFIG=$PWD/kube/config\nkubectl get nodes", lang: "console")
+    #raw("sudo snap install kubectl --classic\nexport KUBECONFIG=$PWD/kube/config", lang: "console")
     #v(2pt)
     #text(size: 7.8pt, fill: luma(120))[
       It reaches the cluster through the port you published in step 1. This is exactly how
@@ -213,6 +213,26 @@
         address. Which did you pick, (a) or (b)?
         #box(width: 12mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
       ]
+    ]
+    #v(5pt)
+    #text(size: 8.5pt, weight: "bold")[Now check that it reaches the cluster.]
+    #v(1pt)
+    #text(size: 8pt)[
+      #raw("kubectl get nodes") asks the API server for the machines that make up the cluster.
+      There will be exactly one: the container you started in step 1. If this prints a table,
+      your client found the cluster and everything after this will work.
+    ]
+    #v(2pt)
+    #raw("kubectl get nodes", lang: "console")
+    #v(2pt)
+    #text(size: 8pt)[Expect something close to:]
+    #v(1pt)
+    #raw("NAME           STATUS   ROLES           AGE   VERSION\n7c19eb7874a1   Ready    control-plane   11s   v1.36.4+k3s1", lang: "console")
+    #v(3pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      Instead got #raw("The connection to the server localhost:8080 was refused")? Then kubectl
+      never found the config and fell back to a built-in default. Check that #raw("kube/config")
+      exists and is not empty, and that you are running from the folder that contains #raw("kube").
     ]
   ]
 ]
