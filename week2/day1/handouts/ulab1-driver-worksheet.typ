@@ -265,8 +265,11 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     text(size: 8.5pt, weight: "bold")[kubectl],
     text(size: 8pt)[
       The cluster's command-line client. It runs nothing itself: every command becomes an
-      HTTPS request to the cluster's API, and the reply is printed. The same split as the
-      #raw("docker") command and the Docker daemon — one is typed, the other does the work.
+      authenticated HTTPS request to the cluster's API, and the reply is printed. \
+      On an HPC cluster running *Slurm*, work is submitted by first logging in to a *login
+      node* and running #raw("sbatch") there. Kubernetes has no login node. #raw("kubectl")
+      carries the credentials from #raw("kube/config") and authenticates each request on its
+      own, so the machine it runs on is doing the login node's job.
     ],
 
     text(size: 8.5pt, weight: "bold")[pod],
@@ -279,17 +282,23 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 
     text(size: 8.5pt, weight: "bold")[Deployment],
     text(size: 8pt)[
-      *A written request, stored by the cluster,* of the form #emph[keep N copies of image X
+      *A written request, stored by the cluster,* of the form #emph[keep N pods of image X
       running]. Creating one starts no container: the request is sent, the cluster saves it,
-      and the command returns. Pods appear a moment later, started by something else.
+      and the command returns. The pods appear a moment later, started by something else. \
+      Why request it rather than start it? On a real cluster there are many machines, and
+      picking one by hand would mean tracking which has room. Worse, machines and processes
+      fail: a container started by hand stays dead, while a request that is stored can go on
+      being satisfied after the failure.
     ],
 
     text(size: 8.5pt, weight: "bold")[controller],
     text(size: 8pt)[
-      *The program inside the cluster that acts on a stored request.* Given a Deployment
-      asking for three copies, it counts the pods that exist, finds two, and starts one. A
-      second later it counts again, and it never stops counting. \
-      This is why a deleted pod comes back: the pod was removed, the request was not.
+      *A program inside the cluster that reads the stored requests and changes the cluster
+      until they are met.* Take a Deployment that says three pods. The controller counts the
+      pods that exist. Two, so it starts one. Four, and it would stop one. Then it counts
+      again, and it keeps counting for as long as the request is stored. \
+      This is why a deleted pod comes back: deleting a pod changes the count, not the
+      request.
     ],
 
     text(size: 8.5pt, weight: "bold")[Job],
@@ -297,14 +306,6 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       *A different stored request:* #emph[run image X once, until it finishes]. Its
       controller starts one pod, waits for a successful exit, and stops. Nothing is
       replaced.
-    ],
-
-    text(size: 8.5pt, weight: "bold")[CrashLoopBackOff],
-    text(size: 8pt)[
-      *A pod status,* shown when a container keeps stopping and a controller keeps starting
-      it again. The wait between attempts grows: 10s, then 20s, then 40s, doubling to a
-      five-minute ceiling. It does *not* mean the container crashed — only that it stopped
-      again, and the next attempt has not happened yet.
     ],
   )
 ]
@@ -433,6 +434,14 @@ The container did not crash. It printed its whale and exited *successfully*.
     change, in one sentence?
   ]
   #writing(2)
+  #v(4pt)
+  #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
+    #text(size: 7.8pt)[
+      *If STATUS reads #raw("CrashLoopBackOff"):* that is the status shown while a controller
+      waits before starting a stopped container again. The wait grows — 10s, 20s, 40s,
+      doubling to a five-minute ceiling. It does not mean the container crashed.
+    ]
+  ]
   #v(5pt)
   #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
          stroke: 1pt + accent, fill: rgb("#fff0f6"))[
