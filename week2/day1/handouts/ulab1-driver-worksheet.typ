@@ -324,9 +324,9 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     #v(3pt)
     #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
       #text(size: 8pt)[
-        *Read step 4 before typing this one.* The pods start, stop and restart within
-        seconds, so #raw("kubectl get pods") has to follow immediately. Have it ready, or the
-        first reading will be taken too late to show anything.
+        *Read step 4 first.* What happens next happens in seconds, and step 4 is how to see
+        it. Nothing is lost by being slow, but the first few seconds are the interesting
+        ones.
       ]
     ]
     #v(3pt)
@@ -352,42 +352,47 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     ]
   ]
   #v(5pt)
-  #step("4", "Read the pods twice")[
+  #step("4", "Watch what the cluster does with it")[
     #text(size: 8pt)[
-      The Deployment now exists and the cluster is acting on it. This lists the pods it
-      produced.
+      #raw("kubectl get pods") prints the pods once and returns. Adding #raw("--watch") keeps it
+      open instead, printing *one more line every time something changes*. It is not a
+      refreshing table: the lines pile up, oldest at the top, and that record is the point.
     ]
     #v(2pt)
-    #raw("kubectl get pods", lang: "console")
+    #raw("kubectl get pods --watch", lang: "console")
     #v(3pt)
     #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
       raw("get"),
       text(size: 7.8pt)[List objects, one line each. No name given, so it lists them all.],
       raw("pods"),
       text(size: 7.8pt)[The kind to list. #raw("pod"), #raw("pods") and the short #raw("po") all work. #raw("kubectl get deployments") and #raw("kubectl get jobs") list the other two kinds.],
+      raw("--watch"),
+      text(size: 7.8pt)[Do not exit; report every change as it happens. #raw("-w") is the short form. *Ctrl-C* ends it.],
     )
     #v(3pt)
+    #text(size: 8pt)[Within about a minute the output looks like this:]
+    #v(2pt)
+    #raw("NAME                     READY  STATUS              RESTARTS\nwhale-544548b554-dkrkr   0/1    ContainerCreating   0\nwhale-544548b554-dkrkr   1/1    Running             0\nwhale-544548b554-dkrkr   0/1    Completed           0\nwhale-544548b554-dkrkr   1/1    Running             1 (2s ago)\nwhale-544548b554-dkrkr   0/1    Completed           1 (2s ago)\nwhale-544548b554-dkrkr   0/1    CrashLoopBackOff    1 (11s ago)\nwhale-544548b554-dkrkr   1/1    Running             2 (12s ago)", lang: "console")
+    #v(3pt)
     #text(size: 8pt)[
-      *Take the first reading straight away,* then wait about a minute and take a second one.
-      Record both in panel 5. Two columns matter: *STATUS*, what the pod is doing at that
-      instant, and *RESTARTS*, how many times the container inside it has been started again.
+      One pod's history, read downwards: created, ran, finished, ran again, finished again.
+      *RESTARTS* counts how many times the container has been started again, and it keeps
+      climbing. Record an early line and a late one in panel 5, then *Ctrl-C*.
     ]
     #v(3pt)
     #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
       #text(size: 8pt)[
-        *If the first reading already showed every pod as #raw("Completed"),* it was taken too
-        late: the containers had run and stopped before the command did. Delete the
-        Deployment, create it again, and have #raw("get pods") ready this time.
+        *To run it again from the beginning:* delete the Deployment and repeat step 3, with
+        #raw("--watch") started first in a second client.
       ]
       #v(2pt)
       #raw("kubectl delete deployment whale", lang: "console")
       #v(2pt)
       #text(size: 7.8pt, fill: luma(120))[
-        #raw("delete") removes the stored request, and its pods go with it. Then repeat step 3.
+        #raw("delete") removes the stored request, and its pods go with it.
       ]
     ]
   ]
-  #v(5pt)
   #step("5", "Create a Job from the same image")[
     #text(size: 8pt)[
       A Job is the other kind of stored request: run the image once, until it finishes. The
@@ -442,10 +447,10 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 
 #v(5pt)
 
-#panel("5 · The two readings, and the reason")[
+#panel("5 · Two lines from the watch, and the reason")[
   #grid(columns: (1fr, 1fr), column-gutter: 10pt,
     [
-      #text(size: 8pt, weight: "bold")[First reading]
+      #text(size: 8pt, weight: "bold")[An early line]
       #v(2pt)
       #grid(columns: (auto, 1fr), column-gutter: 5pt, row-gutter: 6pt, align: bottom,
         text(size: 8pt)[STATUS], rule(100%),
@@ -453,7 +458,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       )
     ],
     [
-      #text(size: 8pt, weight: "bold")[A minute later]
+      #text(size: 8pt, weight: "bold")[A later line]
       #v(2pt)
       #grid(columns: (auto, 1fr), column-gutter: 5pt, row-gutter: 6pt, align: bottom,
         text(size: 8pt)[STATUS], rule(100%),

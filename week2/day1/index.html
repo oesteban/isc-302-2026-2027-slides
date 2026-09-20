@@ -427,9 +427,11 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 .card[
 .kicker[step 4]
 
-### Look at what it made
+### Watch what it does
 
-`kubectl get pods`, twice, a minute apart. Record `STATUS` and `RESTARTS`.
+`kubectl get pods --watch`
+
+.foot[One line per change. `Running` → `Completed` → `Running`, and `RESTARTS` climbing.]
 ]
 .card.small[
 .kicker[step 5]
