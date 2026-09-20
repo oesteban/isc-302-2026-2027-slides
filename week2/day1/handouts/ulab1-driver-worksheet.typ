@@ -241,59 +241,58 @@
 
 #panel("2 · Some definitions")[
   #text(size: 8.5pt)[
-    At this point you have a Kubernetes cluster running inside one container, and a
-    #raw("kubectl") outside it that can reach the cluster's API. Read this before step 3.
+    Step 1 produced a Kubernetes cluster inside one container. Step 2 produced a
+    #raw("kubectl") outside it that can reach the cluster's API. These are the words the
+    next four steps use.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
 
     text(size: 8.5pt, weight: "bold")[kubectl],
     text(size: 8pt)[
-      The program you type commands into. It runs nothing itself: it turns each command
-      into an HTTPS request to #raw("https://127.0.0.1:6443") and prints the reply. It is the
-      same split as the #raw("docker") command and the Docker daemon — one is the thing you
-      type, the other is the thing that does it.
+      The cluster's command-line client. It runs nothing itself: each command becomes an
+      HTTPS request to #raw("https://127.0.0.1:6443"), and the reply is printed. The same
+      split as the #raw("docker") command and the Docker daemon — one is typed, the other
+      does the work.
     ],
 
     text(size: 8.5pt, weight: "bold")[pod],
     text(size: 8pt)[
-      *A running container, as Kubernetes counts it.* On Friday #raw("docker run") gave you a
-      container; here you get a pod, with the container inside it. (A pod can hold two or
-      three containers that must sit on the same machine and share one IP address. Today
-      each of yours holds one.) *You never start a pod yourself.*
+      *A running container, as Kubernetes counts it.* #raw("docker run") produces a
+      container; Kubernetes produces a pod, with the container inside it. A pod may hold
+      two or three containers that must share a machine and a single IP address; here, each
+      holds one. *Pods are never created directly.*
     ],
 
     text(size: 8.5pt, weight: "bold")[Deployment],
     text(size: 8pt)[
-      *A request you hand in, in writing.* Yours says: #emph[keep three pods of
-      #raw("ghcr.io/oesteban/whalesay") running]. That is all it is. Handing it in starts
-      nothing; it only records what you want.
+      *A request, in writing.* This one says: #emph[keep three pods of
+      #raw("ghcr.io/oesteban/whalesay") running]. Submitting it starts nothing. It records
+      what should be true.
     ],
 
     text(size: 8.5pt, weight: "bold")[controller],
     text(size: 8pt)[
-      *The program inside the cluster that makes your request true.* It reads your
-      Deployment (three wanted), counts the pods that exist (say two), and starts one. A
-      second later it counts again. It never stops counting. \
-      That is why a pod you delete comes straight back: you removed a pod, but you did not
-      change the request.
+      *The program inside the cluster that makes the request true.* It reads the Deployment
+      (three wanted), counts the pods that exist (two), starts one. A second later it counts
+      again, and it never stops counting. \
+      Hence a deleted pod reappears: the pod was removed, the request was not.
     ],
 
     text(size: 8.5pt, weight: "bold")[Job],
     text(size: 8pt)[
-      *A different request in writing:* #emph[run this image once, until it finishes]. Its
-      controller starts one pod, waits for it to exit successfully, and then stops. It does
-      not replace it.
+      *A different request:* #emph[run this image once, until it finishes]. Its controller
+      starts one pod, waits for a successful exit, and stops. Nothing is replaced.
     ],
   )
   #v(5pt)
   #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt, fill: luma(245))[
     #text(size: 8pt)[
-      One more, because it will be on your screen: *CrashLoopBackOff*. Your whale prints and
-      exits, so the controller keeps starting it again. It slows down as it goes — 10s, then
-      20s, then 40s, doubling up to five minutes between tries — and while it is waiting,
-      that is the word it shows. It does *not* mean the container crashed. It means
-      #emph[it stopped again and I am waiting a bit before the next try].
+      One more, because it appears on screen: *CrashLoopBackOff*. The whale prints and exits,
+      so the controller starts it again. The interval grows — 10s, then 20s, then 40s,
+      doubling to a five-minute ceiling — and during the wait, this is the status shown. It
+      does *not* mean the container crashed. It means #emph[stopped again, waiting before
+      the next attempt].
     ]
   ]
 ]
