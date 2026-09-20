@@ -73,9 +73,10 @@ second screen, `?` for the full list.
 ## Checking a deck
 
 ```bash
-python3 tools/lint-decks.py     # all seven, or pass one: week1/day0
-python3 tools/check-topics.py   # the flipped-class topic slide against its YAML
-python3 tools/reyear.py --check # dates and URLs against course.yml
+python3 tools/lint-decks.py      # all seven, or pass one: week1/day0
+python3 tools/check-topics.py    # the flipped-class topic slide against its YAML
+python3 tools/reyear.py --check  # dates and URLs against course.yml
+python3 tools/lint-handouts.py   # handout structure, or pass one: week2/day1
 ```
 
 `lint-decks.py` catches the mistakes that leave a deck looking correct on
@@ -84,6 +85,22 @@ silently merges two slides; an unbalanced content-class bracket, which swallows
 the rest of a slide; a `class:` line that is not opening a slide, so it does
 nothing; and a referenced file that is missing, or present but uncommitted and
 therefore a 404 once published.
+
+`lint-handouts.py` does the same for the Typst sheets, where `typst compile`
+succeeding says nothing about whether the sheet is correct: a cross-reference to
+a panel that was renumbered away, a panel sequence with a hole in it, a built
+PDF older than its source, a template pin that has drifted, and a sheet whose
+banner declares neither that it is committed blank nor that it is handed out.
+It also warns about the writing faults from [`AUTHORING.md`](AUTHORING.md) that
+can be detected mechanically.
+
+## Writing a deck or a handout
+
+[`AUTHORING.md`](AUTHORING.md) is the rule catalogue: titles, explaining command
+arguments, questions that can actually be attempted, definitions, register,
+verifying against a running system, and the shape of a µLab sheet. Every rule
+carries the case that produced it. Rules are numbered so that a review can cite
+one instead of re-arguing it.
 
 ## Running locally
 
@@ -120,21 +137,28 @@ them:
 
 ## Printed handouts
 
-Two instruments are typeset with [Typst](https://typst.app/) against the ISC
-template [`isc-hei-document`](https://github.com/ISC-HEI/isc-hei-typst-templates),
+The printed instruments are typeset with [Typst](https://typst.app/) against the
+ISC template [`isc-hei-document`](https://github.com/ISC-HEI/isc-hei-typst-templates),
 and the built PDFs are committed so that printing needs no toolchain:
 
 | source | output |
 |---|---|
 | `week1/day0/handouts/referee-grid.typ` | 1 page, the mini-lab referee's grid |
 | `week1/day1/handouts/docker-primer-worksheet.typ` | 2 pages, the pair's sheet for the first µLab |
-| `week1/day1/handouts/flipped-worksheets.typ` | 16 pages, one brief per flipped-class topic |
+| `week1/day1/handouts/flipped-worksheets.typ` | 17 pages, one brief per flipped-class topic |
+| `week1/day2/handouts/ulab1-driver-worksheet.typ` | 5 pages, the driver's sheet, µLab 1 of day 2 |
+| `week1/day2/handouts/ulab2-driver-worksheet.typ` | 3 pages, the driver's sheet, µLab 2 of day 2 |
+| `week2/day1/handouts/ulab1-driver-worksheet.typ` | 8 pages, Kubernetes in one container |
 
-Rebuild with `typst compile <file>.typ`. The topics are data, not prose: they
-live in `week1/day1/handouts/flipped-topics.yml` and the document reads them,
-so the worksheets and the deck cannot drift apart. The template renders a
-"fonts not installed" page rather than failing, so check the output has the
-page count above before printing.
+Rebuild with `typst compile <file>.typ` and stage the PDF with the source;
+`lint-handouts.py` fails on a PDF older than its `.typ`. The topics are data,
+not prose: they live in `week1/day1/handouts/flipped-topics.yml` and the
+document reads them, so the worksheets and the deck cannot drift apart. The
+template renders a "fonts not installed" page rather than failing, so check the
+output has the page count above before printing.
+
+Worksheets are committed **blank**. A filled sheet carries student names and
+handles and never enters git; see the roster warning at the top of this file.
 
 ## Publishing
 
