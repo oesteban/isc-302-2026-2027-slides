@@ -212,7 +212,7 @@ def check(cfg: dict) -> int:
     # Session dates are written as DD.MM.YYYY / D.MM.YYYY, or ISO inside data-until.
     date_re = re.compile(r"\b\d{1,2}\.\d{2}\.\d{4}\b|\bdata-until=\"(\d{4}-\d{2}-\d{2})")
     # Only our own hosts; third-party links are none of this script's business.
-    url_re = re.compile(r"https://(?:oesteban\.github\.io|github\.com/oesteban)/[^\"'>) ]*")
+    url_re = re.compile(r"https://(?:oesteban\.github\.io|github\.com/oesteban)/[^\"'>)` ]*")
 
     problems = 0
     for path in sorted(ROOT.glob("week*/day*/index.html")):

@@ -35,6 +35,7 @@ previous_repo_url: "https://github.com/oesteban/isc-302-2026-2027-slides"
 # (lab starting points students fork). reyear.py --check allows these.
 lab_urls:
   - "https://github.com/oesteban/whalesay"
+  - "https://github.com/oesteban/isc-302-2026-2027-spark-lab"
 
 # The module was renamed in the 26-27 plan d'etudes (descriptif v1.0.7+).
 module_name: "302 Data infrastructures"
