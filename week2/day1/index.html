@@ -391,45 +391,63 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 ]
 ---
 
-# &micro;Lab 1 .gray-text[· the four steps]
+# &micro;Lab 1 .gray-text[· the five steps]
 
-.cards.cols-2.tight[
+.cards.cols-3.tight[
 .card[
 .kicker[step 1]
 
-### Start it
+### Start a cluster
 
 `docker run` the k3s line, then `docker exec -it k8s sh`.
 
 .foot[`kubectl get nodes` &rarr; one node, `Ready`.]
 ]
-.card[
+.card.small[
 .kicker[step 2]
 
-### Deploy your cow
+### Keep a whale running
 
-`kubectl create deployment cow --image=ghcr.io/<you>/whalesay --replicas=3`
+`kubectl create deployment whale` `--image=ghcr.io/oesteban/whalesay` `--replicas=3`
 
-.foot[No image of your own? A neighbour's, or `ghcr.io/oesteban/whalesay`.]
+.foot[Your own image from Friday comes later, as the first extension.]
 ]
 .card[
 .kicker[step 3]
 
-### Watch, then explain
+### Look at what it made
 
-`kubectl get pods` twice. Record `STATUS` and `RESTARTS`, and why.
+`kubectl get pods`, twice, a minute apart. Record `STATUS` and `RESTARTS`.
 ]
-.card[
+.card.small[
 .kicker[step 4]
 
-### Run it as a Job
+### Run it once instead
 
-`kubectl create job cow --image=<same> -- cowsay 'moo'`, then `kubectl logs job/cow`.
+`kubectl create job whale` `--image=<same>` `-- cowsay 'a cluster ran me'`
+
+.foot[Same image, same command. Only the kind of object changed.]
+]
+.card[
+.kicker[step 5]
+
+### Read what it printed
+
+`kubectl logs job/whale`
+
+.foot[You never had to find the pod.]
+]
+.card.alert[
+.kicker[then]
+
+### Explain it
+
+Why does the Deployment restart a container that exited **successfully**, and the Job does not?
 ]
 ]
 
 .admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** the referee can say why the same image restarts forever as a Deployment and finishes as a Job.
+<i class="fa-solid fa-flag-checkered"></i> **Core by 09h45**, then the referee ticks your sheet and you carry on with the extensions.
 ]
 ---
 class: vcenter
@@ -494,7 +512,7 @@ Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> `cowsay` exits 0. Pick the wrong one and `RESTARTS` climbs.
+<i class="fa-solid fa-circle-right"></i> The whale prints its line and exits 0. Pick the wrong one and `RESTARTS` climbs.
 ]
 ---
 

@@ -118,29 +118,58 @@
 #v(5pt)
 
 // ══ CORE — ten minutes ════════════════════════════════════════════════════
-#panel("1 · The core, in four steps · ten minutes")[
+#panel("1 · The core, in five steps · ten minutes")[
   #step("1", "Start a cluster")[
     #raw("docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 rancher/k3s:v1.31.5-k3s1 server --disable=traefik", lang: "console")
-    #v(2pt)
+    #v(1pt)
     Then #raw("docker exec -it k8s sh", lang: "console") and stay there: #raw("kubectl")
     is already installed inside.
-  ]
-  #v(4pt)
-  #step("2", "Ask the cluster to keep a cow running")[
-    #raw("kubectl create deployment cow --image=ghcr.io/<you>/whalesay --replicas=3", lang: "console")
-    #v(1pt)
-    #text(size: 7.5pt, fill: luma(130))[No image of your own? A neighbour's handle, or #raw("ghcr.io/oesteban/whalesay").]
-  ]
-  #v(4pt)
-  #step("3", "Watch what it does")[
-    #raw("kubectl get pods", lang: "console") — run it twice, about a minute apart.
-    Write both readings in panel 3.
-  ]
-  #v(4pt)
-  #step("4", "Ask for the same image to run once instead")[
-    #raw("kubectl create job cow --image=<same> -- cowsay 'moo'", lang: "console")
     #v(2pt)
-    then #raw("kubectl logs job/cow", lang: "console").
+    #text(size: 7.5pt, fill: luma(120))[
+      *Why #raw("--disable=traefik")?* k3s normally installs Traefik, an *ingress
+      controller*: the component that takes HTTP traffic arriving from outside and
+      routes it to the right service inside the cluster. It claims ports 80 and 443
+      on your machine and adds time to the start. Nothing today arrives from
+      outside, so we tell k3s to skip it.
+    ]
+  ]
+  #v(4pt)
+  #step("2", "Ask the cluster to keep a whale running")[
+    #raw("kubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3", lang: "console")
+    #v(1pt)
+    #text(size: 8pt)[
+      A *Deployment* says: this many of these should exist, at all times. You do not
+      say when to start anything.
+    ]
+  ]
+  #v(4pt)
+  #step("3", "Look at what the controller made")[
+    #raw("kubectl get pods", lang: "console") — once straight away, once about a minute later.
+    #v(1pt)
+    #text(size: 8pt)[
+      This lists the *pods* the Deployment created on your behalf. Two columns
+      matter: *STATUS*, what the pod is doing right now, and *RESTARTS*, how many
+      times the container inside it has been started again. Write both readings in
+      panel 3.
+    ]
+  ]
+  #v(4pt)
+  #step("4", "Ask for the same image to run once, instead of forever")[
+    #raw("kubectl create job whale --image=ghcr.io/oesteban/whalesay -- cowsay 'a cluster ran me'", lang: "console")
+    #v(1pt)
+    #text(size: 8pt)[
+      A *Job* says: run this to completion, once. Same image, same cluster, same
+      command — only the kind of object is different.
+    ]
+  ]
+  #v(4pt)
+  #step("5", "Read what it printed")[
+    #raw("kubectl logs job/whale", lang: "console")
+    #v(1pt)
+    #text(size: 8pt)[
+      #raw("kubectl logs") prints whatever a container wrote to its output. You did not
+      have to find the pod: naming the Job was enough, and kubectl found it for you.
+    ]
   ]
 ]
 
@@ -179,7 +208,7 @@
     ])
   #v(6pt)
   #text(size: 8.5pt)[
-    The container did not crash. It printed its cow and exited *successfully*.
+    The container did not crash. It printed its whale and exited *successfully*.
     So why is Kubernetes starting it again?
   ]
   #writing(2)
@@ -191,6 +220,32 @@
   #writing(2)
 ]
 
+#v(5pt)
+
+#panel("4 · What the logs will tell you")[
+  #text(size: 8.5pt)[
+    Logs are the first place you look when something is wrong, and they are not
+    only for things that are wrong. Try all four, inside the cluster.
+  ]
+  #v(4pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 5pt, align: (top, top),
+    raw("kubectl logs deploy/whale"),
+    text(size: 8pt)[There are three pods. Which one did it pick, and how do you know?],
+    raw("kubectl logs <pod> --previous"),
+    text(size: 8pt)[The container that *already died*. Why would that ever be the only copy left?],
+    raw("kubectl logs -l app=whale --prefix"),
+    text(size: 8pt)[All three at once. What does the prefix tell you?],
+    raw("kubectl logs <pod> --timestamps"),
+    text(size: 8pt)[Now you can see *when*. How far apart are the restarts?],
+  )
+  #v(5pt)
+  #text(size: 8.5pt)[
+    A pod is gone and you want to know why. Which of those four do you reach for,
+    and what would you have lost if you had waited an hour?
+  ]
+  #writing(2)
+]
+
 #v(6pt)
 
 #checkpoint
@@ -198,7 +253,43 @@
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panel("4 · Make the cluster explain itself")[
+#panel("5 · Now use the image you built on Friday")[
+  #text(size: 8.5pt)[
+    Everything so far ran *someone else's* image. Repeat step 2 with your own, the
+    one your GitHub Actions workflow published on Friday:
+  ]
+  #v(2pt)
+  #raw("kubectl create deployment mine --image=ghcr.io/<your-handle>/whalesay", lang: "console")
+  #v(3pt)
+  #text(size: 8pt)[
+    Your handle #box(width: 45mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+    #h(8pt) Did it pull? #box(width: 20mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+  ]
+  #v(5pt)
+  #text(size: 8.5pt)[
+    If it did not, #raw("kubectl describe pod") will name the reason. Write it down,
+    then fix it.
+  ]
+  #writing(2)
+  #v(4pt)
+  #text(size: 8.5pt)[
+    Nobody told the cluster where #raw("ghcr.io") is, and nobody gave it a password.
+    So: what *is* a registry, and what had to be true of your package for this to
+    work at all?
+  ]
+  #writing(3)
+  #v(4pt)
+  #text(size: 8.5pt)[
+    On Friday you pushed to *GHCR*. When you type #raw("docker pull alpine") you get
+    an image from *Docker Hub*, and you never type a registry name. Where did that
+    default come from, and what is the full name your #raw("alpine") actually has?
+  ]
+  #writing(3)
+]
+
+#v(6pt)
+
+#panel("6 · Make the cluster explain itself")[
   #text(size: 8.5pt)[
     First, the node's NAME from panel 2 is not a hostname anybody chose. Where does
     it come from, and what does that tell you about what a "node" is here?
@@ -206,7 +297,7 @@
   #writing(2)
   #v(4pt)
   #text(size: 8.5pt)[
-    #raw("kubectl describe pod <one of the cow pods>", lang: "console") and read the
+    #raw("kubectl describe pod <one of the whale pods>", lang: "console") and read the
     *Events* block at the very bottom. Copy the two most recent event lines.
   ]
   #writing(2)
@@ -220,31 +311,30 @@
 
 #v(6pt)
 
-#panel("5 · Two image stores, one name")[
+#panel("7 · Two image stores, one name")[
   #text(size: 8.5pt)[
     Inside the cluster: #raw("crictl images", lang: "console"). \
     On your laptop, in another terminal: #raw("docker images", lang: "console").
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
-    text(size: 8pt)[Cow image present in #raw("crictl")?], rule(100%),
+    text(size: 8pt)[whalesay in #raw("crictl")?], rule(100%),
     text(size: 8pt)[in #raw("docker")?], rule(100%),
   )
   #v(6pt)
   #text(size: 8.5pt)[
-    Nobody copied anything from your laptop into the cluster. So how did the
-    image get there, and what would have happened if the package were private?
+    Nobody copied anything from your laptop into the cluster. So how did the image
+    get there?
   ]
   #writing(2)
 ]
 
 #v(6pt)
 
-#panel("6 · A wish is not a command")[
+#panel("8 · A wish is not a command")[
   #text(size: 8.5pt)[
-    #raw("kubectl scale deployment cow --replicas=5", lang: "console"), wait, then
-    #raw("kubectl scale deployment cow --replicas=0", lang: "console").
-    Count the pods after each.
+    #raw("kubectl scale deployment whale --replicas=5", lang: "console"), wait, then
+    #raw("kubectl scale deployment whale --replicas=0", lang: "console"). Count the pods after each.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
@@ -261,7 +351,7 @@
 
 #v(6pt)
 
-#panel("7 · Extra mile · satisfy the Deployment instead of abandoning it")[
+#panel("9 · Extra mile · satisfy the Deployment instead of abandoning it")[
   #text(size: 8.5pt)[
     In step 4 you stopped the restarting by changing the *object*. There is a
     second way that leaves it a Deployment: same image, no rebuild, no re-push,
