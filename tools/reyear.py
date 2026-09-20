@@ -249,8 +249,16 @@ def main() -> int:
         return 1 if check(cfg) else 0
 
     subs = build_substitutions(cfg)
+
+    # A QR payload is built from base_url and the deck's id, not from its date.
+    # Renaming a deck directory therefore changes the QR without changing any
+    # date, so regeneration must not sit behind the date substitutions: that
+    # left every code pointing at the old path, silently.
     if not subs:
-        print("Nothing to do: course.yml is already rolled over.")
+        print("No date substitutions: course.yml is already rolled over.")
+        if not args.no_qr:
+            print("\nQR codes:")
+            regenerate_qr(cfg, args.dry_run)
         return 0
 
     print(f"Rolling over to cohort {cfg['cohort']} ({len(subs)} substitution rules)\n")

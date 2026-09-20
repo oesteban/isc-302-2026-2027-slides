@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>MapReduce & Apache Spark | 21.09.2026</title>
+    <title>Specifying pipelines & Apache Airflow | 28.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
-    <link rel="stylesheet" type="text/css" href="../../remark/vendor/asciinema-player/asciinema-player.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/core/base.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/themes/hes-so.css" />
     <link rel="stylesheet" type="text/css" href="../../remark/ext/nav-controls.css" />
@@ -13,7 +12,6 @@
   </head>
   <body>
 <style>:root { --logo-url: url("../../assets/isc_logo.png"); }</style>
-<script src="../../remark/vendor/asciinema-player/asciinema-player.min.js"></script>
 <script src="https://kit.fontawesome.com/015d4b01de.js" crossorigin="anonymous"></script>
 
 <textarea id="source">
@@ -26,22 +24,22 @@ counter: false
 
 
 .section-mark.center[
-<a href="https://oesteban.github.io/isc-302-2026-2027-slides/week3/day1/index.html">
+<a href="https://oesteban.github.io/isc-302-2026-2027-slides/week2/day1/index.html">
   <object type="image/svg+xml" data="images/qr-talk-url.svg" style="width: 20%"></object>
   <br />
-  https://oesteban.github.io/isc-302-2026-2027-slides/week3/day1/index.html
+  https://oesteban.github.io/isc-302-2026-2027-slides/week2/day1/index.html
 </a>
 
 <br />
 <br />
 
-## MapReduce & Apache Spark
+## Specifying pipelines & Apache Airflow
 
 Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data infrastructures (week 3, day 1) — 21.09.2026
+### 302 Data infrastructures (week 2, day 1) — 28.09.2026
 ]
 
 ???
@@ -49,18 +47,16 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 ---
 name: newsection
 layout: true
-counter: true
 
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">MapReduce & Apache Spark (21.09.2026)</span>
+  <span style="padding-left: 10px; font-weight: 600;">Specifying pipelines & Apache Airflow (28.09.2026)</span>
 </p>
 ]
 
 ---
 class: vcenter
-counter: true
 
 # Objectives
 
@@ -68,47 +64,52 @@ counter: true
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Explain the evolution of large-scale data processing
-.gray-text[from GFS/MapReduce through Hadoop/HDFS to Apache Spark]
+Convert a DAG sketch into a data pipeline specification
+.gray-text[applying *Apache Airflow* as first option]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Decompose a big-data problem into distributed steps
-.gray-text[recognize *MapReduce*, and contextualize it within the evolution of the field]
+Recognize *Apache Airflow*'s main components
+.gray-text[play with the Web UI, describe how its components relate to one another]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Implement and execute a Spark workflow
-.gray-text[20 Newsgroups word count: reporting stage-level latency and interpreting the DAG]
+Deploy *Apache Airflow* on a laptop with *Docker*
+.gray-text[reinforcing the first steps with *Docker compose* from the previous session]
 ]
 .card[
 .marker[<i class="fa-solid fa-circle-right"></i>]
 
-Identify storage sys., compute abstractions, and formats
-.gray-text[HDFS, object stores (storage systems), RDDs, DataFrames, Polars (compute abstractions), CSV, JSON, Parquet (file formats)]
+Create advanced *Apache Airflow*'s DAGs
+.gray-text[applying operators: `BashOperator`, `PythonOperator`, `DockerOperator`]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+Build, orchestrate, and execute the pipeline of Day 1
+.gray-text[Exercise monitoring, logging, and benchmarking]
 ]
 ]
 
 ---
 
-# Schedule
-
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 8h45 | **Class**: Big Data computation, a historical perspective |
-| 10h05 | .gray-text[Break] |
-| 10h15 | **Roulette**: CACM Spark 2016 paper |
-| 10h45 | **&micro;Lab**: Deploy Spark locally with Docker |
-| 11h15 | **Class**: Apache Spark |
+| 8h35 | **&micro;Lab from 18.09**: Group 2 presentation |
+| 9h00 | **Roulette**: what do we expect from Airflow? |
+| 9h15 | **Class**: *Apache Airflow* introduction |
+| 10h05 | .gray-text[Short break] |
+| 10h15 | **&micro;Lab**: Creating a new Bash&Python pipeline |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **&micro;Lab**: scale word count with Spark & Airflow |
+| 12h45 | **&micro;Lab**: neuro-302 with Airflow and Docker compose |
 | 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
+
 
 ---
 
@@ -121,227 +122,453 @@ Identify storage sys., compute abstractions, and formats
 ]
 
 ---
+
+# Housekeeping
+
+<br />
+.boxed-content.large[
+* Please upload your group's repo link to ISC Learn
+
+* Discussion about LLMs' assistance in challenges
+
+* Check Quick quizz results
+]
+
+---
+count: false
 class: group-roulette
 groups: 5
-seed: 21.09.2026
+seed: 18.09.2026
 
+<br />
 .boxed-content[
-# &micro;Lab 1 .gray-text[· Kubernetes in one container]
+# &micro;Labs from last session
 
 .large[
-**20 minutes.** Start a cluster, run one image on it two ways, explain the
-`RESTARTS` column.
+1. Group 2 describes their solution.
+1. Status of groups 1, 3 & 4.
+1. Discussion
+1. Recap of the three challenges.
 ]
 ]
+
 ---
+class: roulette
+time: 45
 
-# Why do we need pipelines?
+.section-mark[
+# Roulette
 
-.boxed-content[
-<object type="image/svg+xml" data="images/big-data-workflow-03.svg" style="width: 100%; padding-top: 20pt;"></object>
+.large[What do you expect from a pipeline framework/engine?]
 ]
 
 ???
 
 ---
-class: stepwise-svg
 
-# Let's jump back to 1998
+.section-mark[
+# Apache Airflow
 
-.boxed-content[
-<object type="image/svg+xml" data="images/big-data-google.svg" style="width: 100%; padding-top: 20pt;"></object>
+.large[First overview]
+]
+
+---
+
+# Why Airflow?
+
+.boxed-content.larger.no-bullet[
+* .large[<i class="fa-solid fa-circle-right"></i> You have a **pipeline**]
+  <br /> .gray-text.indent[You have **multiple steps** that transform data; each depends on prior results.]
+
+* .large[<i class="fa-solid fa-circle-right"></i> You need a powerful **scheduling** system]
+  <br /> .gray-text.indent[Contrarian view: *[Airflow is just cron on steroids](https://www.youtube.com/watch?v=YQ056EKzCyw)*.]
+
+* .large[<i class="fa-solid fa-circle-right"></i> You need easy access to **pipeline management**]
+  <br /> .gray-text.indent[A solid *service* to query status, retries, alerts, logs, timing, lineage.]
+
+* .large[<i class="fa-solid fa-circle-right"></i> You want pipeline **optimization**]
+  <br /> .gray-text.indent[Tools like *Airflow*'s Gantt chart make the critical path obvious.]
+]
+
+.gray-text.large[Airflow focuses on *orchestration* (when/what/where), not the analytics themselves.]
+
+???
+Key idea: instead of humans running scripts in ad-hoc order,
+Airflow coordinates tasks, enforces dependencies, and records outcomes & timings.
+
+---
+
+# Airflow's jargon
+
+<br />
+
+.boxed-content.no-bullet[
+* .large[<i class="fa-solid fa-diagram-project"></i> **DAG** — name for pipelines in *Airflow*]
+  <br /> .indent.gray-text[In fact, you save them under a folder called `dags/`]
+  <br />
+* .large[<i class="fa-solid fa-list-check"></i> **Task** — one node in the DAG]
+  <br /> .indent.gray-text[Tasks are crated with **Operator**s]
+  <br />
+* .large[<i class="fa-solid fa-dharmachakra"></i> **Operator** — Python wrapper to run a kind of work]
+  <br /> .indent.gray-text[We'll work with Bash, Python and Docker operators]
+  <br />
+* .large[<i class="fa-solid fa-object-group"></i> **Task Instance** — A task after execution of the corresponding DAG]
+  <br />
+  <br />
+* .large[<i class="fa-solid fa-flag-checkered"></i> **Run** — a DAG execution]
+]
+
+
+---
+
+# Airflow's Components
+
+<br />
+
+.boxed-content.no-bullet[
+* .large[<i class="fa-solid fa-server"></i> **Webserver** — UI (Graph/Grid view), trigger runs, browse logs]
+  <br />
+  <br />
+* .large[<i class="fa-solid fa-calendar-days"></i> **Scheduler** — decides *what* to run *when*; queues tasks]
+  <br />
+  <br />
+* .large[<i class="fa-solid fa-person-digging"></i> **Workers** — where tasks actually run (processes/containers)]
+  <br />
+  <br />
+* .large[<i class="fa-solid fa-database"></i> **Metadata DB** — persistent state (DAGs, runs, tasks, logs paths)]
+  <br />
+  <br />
+* .large[<i class="fa-solid fa-clapperboard"></i> **Executor** — submits tasks to workers]
+  <br />
+  <br />
+]
+
+---
+
+# Single-machine/single-role deployment
+
+.boxed-content.center[
+<img src="https://airflow.apache.org/docs/apache-airflow/stable/_images/diagram_basic_airflow_architecture.png" style="width: 80%" />
+.center.small[
+From the [official *Airflow*'s documentation](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html#basic-airflow-deployment)
+]
 ]
 
 ???
 
-An important algorithm, that's used to rank web pages by their relative importance, is called PageRank, after Larry Page, who came up with it (I'm serious, the name has nothing to do with web pages).
-It's really a simple and brilliant algorithm, which basically counts how many links from other pages on the web point to a page. The page that has the highest count is ranked the highest (shown on top of search results). Of course, that's not the only method of determining page importance, but it's certainly the most relevant one.
+---
 
-Cutting and Cafarella made an excellent progress. Having Nutch deployed on a single machine (single-core processor, 1GB of RAM, RAID level 1 on eight hard drives, amounting to 1TB, then worth $3 000) they managed to achieve a respectable indexing rate of around 100 pages per second.
+# Cluster/cloud/multi-role deployment
 
-On one side it simplified the operational side of things, but on the other side it effectively limited the total number of pages to 100 million.
+.boxed-content.center[
+<img src="https://airflow.apache.org/docs/apache-airflow/stable/_images/diagram_distributed_airflow_architecture.png" style="width: 82%" />
+.center.small[
+From the [official *Airflow*'s documentation](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html#basic-airflow-deployment)
+]
+]
+
+???
 
 ---
 
-# Growing problems
-.boxed-content.large.no-bullet[
-* .larger[<i class="fa-solid fa-money-bill-trend-up"></i> **Cost**: data **movement** and **materialization**:]
-  * .larger.gray-text[Store **very large files** for cheap.]
-  * .larger.gray-text[**High throughput** over low latency.]
+# First DAG
+
+.boxed-content[
+.large[
+```python
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime
+
+with DAG(
+    dag_id="example",
+    schedule_interval=None,  # on-demand first
+) as dag:
+    a = BashOperator(task_id="a", bash_command="echo A")
+    b = BashOperator(task_id="b", bash_command="echo B")
+    a >> b   # dependency: B requires A to finish first
+```
+]
+]
+
+.large[**schedule_interval**: how often (cron preset like `@daily`, `@hourly`, or [cron](https://crontab.guru/)).]
+
+???
+
+
+---
+count:false
+
+# First DAG
+
+.boxed-content[
+.large[
+```python
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime
+
+with DAG(
+    dag_id="example",
+    schedule_interval=None,  # on-demand first
+) as dag:
+    a = BashOperator(task_id="a", bash_command="echo A")
+    b = BashOperator(task_id="b", bash_command="echo B")
+    a >> b   # dependency: B requires A to finish first
+```
+]
+]
+
+.large[`BashOperator` declares a task executed in *Bash*]
+
+???
+
+- **schedule_interval**: how often (cron preset like `@daily`, `@hourly`, or [cron](https://crontab.guru/)).
+
+---
+count:false
+
+# First DAG
+
+.boxed-content[
+.large[
+```python
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime
+
+with DAG(
+    dag_id="example",
+    schedule_interval=None,  # on-demand first
+) as dag:
+    a = BashOperator(task_id="a", bash_command="echo A")
+    b = BashOperator(task_id="b", bash_command="echo B")
+    a >> b   # dependency: B requires A to finish first
+```
+]
+]
+
+.large[Bitshift operators (`>>`, `<<`) declare dependencies.]
+
+???
+
+
+- **schedule_interval**: how often (cron preset like `@daily`, `@hourly`, or [cron](https://crontab.guru/)).
+
+---
+
+# Operators
+
+.boxed-content.no-bullet[
+* .large[**BashOperator** — run shell commands (e.g., `date`, `sleep`)]
+* .large[**PythonOperator** — run a Python callable]
+* .large[**DockerOperator** — launch a container to do work]
+
+
+.gray-text.larger[*Airflow* has many more via **providers** (e.g., SQL, cloud, filesystems).]
+
+.larger[
+```Python
+from airflow.operators.python import PythonOperator
+
+def prepare_dirs():
+    """Create output folders and clear intermediate outputs from previous runs."""
+    ...
+
+with DAG(dag_id="python-task", schedule_interval=None) as dag:
+    t_prepare = PythonOperator(
+        task_id="prepare_dirs",
+        python_callable=prepare_dirs,
+    )
+
+```
+]
+]
+
+???
+
+---
+
+# Passing data: XCom
+
+.boxed-content.large[
+```python
+from airflow.operators.python import PythonOperator
+
+def produce(**ctx):
+    return "hello"
+
+def consume(**ctx):
+    ti = ctx["ti"]
+    print("Got:", ti.xcom_pull(task_ids="produce"))
+
+p = PythonOperator(task_id="produce", python_callable=produce)
+c = PythonOperator(task_id="consume", python_callable=consume, provide_context=True)
+p >> c
+```
+]
+
+.gray-text.larger[Useful sparingly; for larger data, persist to files/objects and pass **references**.]
+
+---
+
+# Good DAG hygiene (for this course)
+<br />
+.boxed-content.no-bullet[
+* .large[<i class="fa-solid fa-minimize"></i> Keep tasks **small & deterministic**; idempotent if possible]
+
+* .large[<i class="fa-solid fa-map-pin"></i> Prefer **explicit dependencies** (`a >> b`) to hidden coupling]
+
+* .large[<i class="fa-solid fa-file-contract"></i> Use **parameters** and **env vars** instead of hard-coding paths]
+
+* .large[<i class="fa-solid fa-clipboard"></i> Log **inputs/outputs**; keep an eye on **latency**]
+
+* .large[<i class="fa-solid fa-spell-check"></i> Check Python **style**:
+  ```Bash
+  ruff check dags/ --select AIR301 --preview
+  ```
+  ]
+
+]
+
+
+???
+
+In the context of workflows (like Airflow, Luigi, Nextflow, Snakemake, etc.),
+an idempotent task is one that you can run multiple times with the same inputs
+and it will always produce the same effect (same outputs, same state),
+without causing corruption, duplication, or unintended side effects.
+
+## Key ideas
+
+* Deterministic outputs: Given the same inputs, the task always produces the same results.
+* Safe to re-run: If a task is retried after a failure, or triggered again by accident, it won't “double-count” or otherwise break downstream steps.
+* No destructive side effects: It doesn't accumulate garbage
+  (e.g., append duplicates, create different filenames each time) unless that's the intended behavior.
+
+
+---
+
+.section-mark[
+# Setting-up
+
+.large[
+Let's follow the [official guide](https://airflow.apache.org/docs/apache-airflow/2.11.0/howto/docker-compose/index.html) to set-up Airflow with Docker
+]
 ]
 
 ---
 count: false
 
-# Solution
+# Step 1 — Get the official Compose stack
 
-.boxed-content.large.no-bullet[
-* .larger[<i class="fa-solid fa-money-bill-trend-up"></i> **Cost**: data **movement** and **materialization**:]
-  * .larger.gray-text[Store **very large files** for cheap.]
-  * .larger.gray-text[**High throughput** over low latency.]
+.boxed-content[
+```bash
+# In a new, empty directory
+curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.11.0/docker-compose.yaml'
 
-<br />
+# Bind-mount folders Airflow expects
+mkdir -p ./dags ./logs ./plugins ./config
 
-* .larger[<i class="fa-solid fa-folder-tree"></i> Resolved with a new **file system**:]
-  * .larger.gray-text[Running on ***commodity* hardware** (Cheap computers, fast to scale in numbers).]
-  * .larger.gray-text[**Fault tolerance** implemented by software.]
-]
+# (Linux only) Make host UID visible
+echo -e "AIRFLOW_UID=$(id -u)" > .env
 
-???
+# One-time DB & user init (user: airflow / pass: airflow)
+docker-compose up airflow-init
 
-The GFS paper states:
-The system is built from many inexpensive commodity components that often fail. It must constantly monitor itself and detect, tolerate, and recover promptly from component failures on a routine basis.
-
----
-name: gfs1
-
-# GFS (2003)
-
-<object data="images/gfs-sosp2003.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
-    <embed src="images/gfs-sosp2003.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/gfs-sosp2003.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
-
-.gray-text[https://research.google/pubs/the-google-file-system/]
-
----
-name: gfs2
-
-# GFS — how data is distributed
-
-.boxed-content.large.no-bullet[
-* <i class="fa-solid fa-file"></i> **Files** are divided in fixed-size chunks
-  <br /> .indent.gray-text[**64 MB** each.]
-  <br />
-* <i class="fa-solid fa-copy"></i> **Default 3 replicas**
-  <br /> .indent.gray-text[on different **chunkservers** (rack-aware placement).]
-  <br />
-* <i class="fa-solid fa-server"></i> A single **Master** keeps **metadata in memory**
-  <br /> .indent.gray-text[a table of (filename&chunk, locations).]
-  <br />
-* <i class="fa-solid fa-terminal"></i> **Clients** ask the Master for **chunk locations**
-  <br /> .indent.gray-text[however, read/write occurs **directly to chunkservers**.]
-]
-
-???
-
----
-name: mr2
-class: stepwise-svg
-
-# MapReduce (2004)
-
-.boxed-content.center[
-<object type="image/svg+xml"
-        data="images/map-reduce.svg"
-        id="svg-mapreduce-quiz"
-        style="width:95%"></object>
-]
-
-???
-
----
-name: mr3
-
-# MapReduce — word count (pseudocode)
-
-.boxed-content.large[
-
-``` Python
-def map(_, line):
-    for w in tokenize(line.lower()):
-        if w and w not in STOPWORDS:
-            yield (w, 1)
-
-def shuffle(pairs):
-    grouped = defaultdict(list)
-    for k, v in pairs:
-        grouped[k].append(v)
-    return grouped.items()
-
-def reduce(word, counts):
-    return (word, sum(counts))
+# Start the stack (webserver, scheduler, worker, redis, postgres, flower)
+docker-compose up
 ```
 ]
 
 
----
-name: hadoop1
+.gray-text.large[
+Keep this terminal running; use a second terminal for edits.
 
-![:img Hadoop, 40%](https://upload.wikimedia.org/wikipedia/commons/0/0e/Hadoop_logo.svg)
-
-.boxed-content.large[
-* Cutting and Cafarella were working on *Nutch* (an open-source web search engine).
-  <br /> .gray-text[Google published GFS in 2003, MapReduce in 2004.]
-
-* In January 2006, D. Cutting was hired by Yahoo!
-  <br /> .gray-text[By 2016, Hadoop was adopted by Facebook, Twitter, Amazon AWS, Microsoft, LinkedIn, etc.]
-
-* Hadoop re-implements Google's ideas: **HDFS** & **MapReduce**.
-
-* **Data locality**: send compute to where blocks live.
+Now, open **http://localhost:8080** and log in with `airflow / airflow`.  
 ]
 
 ---
 
-# HDFS — overview (vs GFS)
 
-.boxed-content.large[
-* **NameNode** (metadata) / **DataNodes** (blocks)
-* Large **blocks**, replication, streaming reads
-* Write-once, read-many reality (append came later)
+.section-mark[
+# Q&A
 
-.center[
-![:img Official HDFS architecture diagram, 48%](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/images/hdfsarchitecture.png)
-]
-]
-
----
-name: mr_limits
-
-
-# MapReduce limitations
-
-.boxed-content.large[
-* **Iterative ML/graph** workloads: too many **re-reads** and **shuffles**.
-
-* **Materialization** between stages → heavy **disk I/O**.
-
-* Limited **optimization** opportunities at the MapReduce job level.
-
-* Users wanted **interactive** and **iterative** workloads.
-]
-
----
-name: spark1
-
-# Apache Spark (2009-2016)
-
-.boxed-content.large[
-* **HDFS** becomes a long-term storage layer.
-
-* Immediate access now with **Resilient Distributed Dataset** (RDD).
-  <br /> .gray-text[Data is loaded from HDFS **once**, then cached in memory.]
-
-* Operations are chained in a **DAG**
-
-* **Materialize** the output only at the end of the pipeline.
-  <br /> .gray-text[To HDFS or other storage systems (S3, etc.).]
+.large[Then we jump into the &micro;Lab]
 ]
 
 ---
 
-# Apache Spark (2016)
+# **&micro;Lab**
 
-<object data="images/spark-cacm2016.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
-    <embed src="images/spark-cacm2016.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/spark-cacm2016.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
+## Deploy Apache Airflow and develop the following pipeline:
 
-.gray-text[doi:[10.1145/2934664](https://doi.org/10.1145/2934664)]
+.boxed-content[
+<img src="images/newsgroup-pipeline.png" style="width: 100%" />
+]
 
+???
+
+---
+
+# &micro;Lab's DAG - Tasks
+
+.boxed-content.no-bullet[
+* .large[<i class="fa-solid fa-snowplow"></i> **prepare_dirs**:]
+  <br /> .indent.gray-text[ensure necessary folders exist, clean up previous intermediate results]
+
+* .large[<i class="fa-solid fa-newspaper"></i> **fetch_newsgroups**: get data and preprocess]
+  <br /> .indent.gray-text[download the 20 Newsgroups dataset, suggestion: [with scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_20newsgroups.html)
+  remove "stopwords", clean text (e.g., normalize spaces, remove punctuation), convert to lowercase]
+
+* .large[<i class="fa-solid fa-scissors"></i> **split_into_shards**: prepare parallelization]
+  <br /> .indent.gray-text[chunk the dataset into four blocks, approximatelly even in size]
+
+* .large[<i class="fa-solid fa-calculator"></i> **count_shards**: count words]
+  <br /> .indent.gray-text[runs four **count_words_shard_nn** in parallel]
+
+* .large[<i class="fa-solid fa-ranking-star"></i> **aggregate_counts**: prepare for use]
+  <br /> .indent.gray-text[aggregate the sharded counts and generate a TSV file with all words counts]
+
+<br />
+
+.large[<i class="fa-solid fa-circle-right"></i> Check [how to manage dependencies with this tutorial](https://www.astronomer.io/docs/learn/managing-dependencies)]
+]
+
+---
+
+# Tip - Add scikit-learn to the airflow image
+
+.boxed-content[
+Create a `Dockerfile` where indicated in your `docker-compose.yaml` (e.g., `airflow/Dockerfile`):
+
+.large[
+```dockerfile
+FROM apache/airflow:2.11.0-python3.9
+
+USER root
+
+# Add the Python environment
+RUN python -m pip install -U --no-cache-dir pip && \
+    python -m pip install --no-cache-dir "scikit-learn>=1.2"
+
+# Back to the airflow user
+USER airflow
+```
+]
+]
+
+---
+class: group-roulette
+groups: 5
+seed: 28.09.2026
+
+<br />
+.boxed-content[
+# **&micro;Lab**:
+## Airflow pipeline to count the words in the 20 newsgroup dataset
+.large[Please remember to group with your team after the break]
+]
 
 ---
 
@@ -352,150 +579,19 @@ name: spark1
 ]
 
 ---
+count: false
+class: group-roulette
+groups: 5
+seed: 28.09.2026
 
-# Starting a cluster
+<br />
+.boxed-content[
+# **&micro;Lab**:
+## Airflow pipeline to count the words in the 20 newsgroup dataset
 
-.boxed-content.small[
-```console
-$ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
-    -p 6443:6443 rancher/k3s:v1.31.5-k3s1 server --disable=traefik
-
-$ docker exec -it k8s sh          # from here on, you are inside the cluster
-# kubectl get nodes
-NAME           STATUS   ROLES                  AGE   VERSION
-8d7726f96f74   Ready    control-plane,master   5s    v1.31.5+k3s1
-```
 ]
 
-.boxed-content.large.no-bullet[
-* `server` &rarr; control plane and node in one process.
-* `--privileged`, `--tmpfs` &rarr; k3s mounts cgroups, runs its own containerd.
-* `kubectl` and `crictl` are already in the image.
-]
----
 
-# The cluster has its own image store
-
-.boxed-content.large[
-k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores.
-]
-
-.boxed-content.large.no-bullet[
-* `docker images` &rarr; your laptop.
-* `crictl images` &rarr; the cluster.
-* `ghcr.io/<user>/<name>` &rarr; the only path between them.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> The cluster pulls with no credentials, so the package must be **public**.
-]
----
-
-# &micro;Lab 1 .gray-text[· the four steps]
-
-.cards.cols-2.tight[
-.card[
-.kicker[step 1]
-
-### Start it
-
-`docker run` the k3s line, then `docker exec -it k8s sh`.
-
-.foot[`kubectl get nodes` &rarr; one node, `Ready`.]
-]
-.card[
-.kicker[step 2]
-
-### Deploy your cow
-
-`kubectl create deployment cow --image=ghcr.io/<you>/whalesay --replicas=3`
-
-.foot[No image of your own? A neighbour's, or `ghcr.io/oesteban/whalesay`.]
-]
-.card[
-.kicker[step 3]
-
-### Watch, then explain
-
-`kubectl get pods` twice. Record `STATUS` and `RESTARTS`, and why.
-]
-.card[
-.kicker[step 4]
-
-### Run it as a Job
-
-`kubectl create job cow --image=<same> -- cowsay 'moo'`, then `kubectl logs job/cow`.
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Done when** the referee can say why the same image restarts forever as a Deployment and finishes as a Job.
-]
----
-class: vcenter
-
-# Node, pod, controller
-
-.cards.cols-3[
-.card[
-.section-icon.corner[<i class="fa-solid fa-server"></i>]
-
-.kicker[kubectl get nodes]
-
-### Node
-
-Runs pods. You have one: the k3s container.
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-cube"></i>]
-
-.kicker[kubectl get pods]
-
-### Pod
-
-Containers scheduled together. The smallest unit. You never create one directly.
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-rotate"></i>]
-
-.kicker[kubectl get deploy, get jobs]
-
-### Controller
-
-Compares declared against actual and closes the gap. It creates the pods.
-]
-]
----
-
-# Deployment and Job
-
-.cards.cols-2[
-.card[
-.kicker[always running]
-
-### Deployment
-
-Keeps **N pods running**. A pod that exits is replaced, **even on exit 0**.
-]
-.card[
-.kicker[run once]
-
-### Job
-
-Runs a pod **until it exits 0**, then stops. Nothing is restarted.
-]
-]
-
-.boxed-content.small[
-```console
-# kubectl create deployment NAME --image=IMG --replicas=3
-# kubectl create job        NAME --image=IMG -- CMD ARGS
-```
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> `cowsay` exits 0. Pick the wrong one and `RESTARTS` climbs.
-]
 ---
 
 .section-mark[
@@ -506,349 +602,44 @@ Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 
 ---
 
-.section-mark[
-# Word count in Spark
-]
-
----
-
-# The *20 Newsgroups* dataset
-
-.boxed-content[
-
-.large[Example: `doc_116.txt` (total ~20'000 messages Usenet posts)]
-
-<br />
-
-```Text
-Subject: PC BOARD Layout Help
-From: <EH1QC@CUNYVM.BITNET>
-Organization: City University of New York
-Lines: 8
-
-Hi,  I have a few questions about laying out a PCB. I am using easytrax for dos
-which is a great program. But what my question is When laying out traces what
-thickness should they be? I am mainly designing low voltage low current boards
-for micro controller apps. What should pad sizes be for resistors? I will be
-turning to a commercial PCB maker to produce 1's of these boards and I was
-wondering what is the minimum distance traces should be from each other. Well
-any info would be great. Thanks.
-                                                 Anton
-```
-]
-
-???
-
----
-
-# Transformations and actions
-
-.cards.cols-2[
-.card[
-.kicker[builds the plan]
-
-### Transformation
-
-`select`, `filter`, `groupBy`, `orderBy`, `join`. Returns a new DataFrame. Reads
-nothing.
-]
-.card[
-.kicker[runs the plan]
-
-### Action
-
-`show`, `take`, `count`, `collect`, `write`. Submits a job and returns data.
-]
-]
-
-.boxed-content.small[
-```console
->>> counts = words.groupBy("word").count().orderBy(desc("count"))   # returns at once
->>> counts.take(15)                                                 # 11 s of actual work
-```
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> `explain()` prints the plan **without running it**. That is why, in your output, the plan appears above the words.
-]
----
-
-# Filter, group, order, show
-
-.boxed-content.larger[
-```python
-    # 5. Filter out empty strings, numeric tokens, and stopwords
-    words_df = words_df.filter(
-        (F.col("token") != "") &
-        (~F.col("token").rlike("^[0-9]+$")) &
-        (~F.col("token").isin(stopword_list))
-    )
-
-    # 6. Group by token, count occurrences
-    counts_df = words_df.groupBy("token").count()
-
-    # 7. Get the top 15 words by descending frequency
-    top_15 = counts_df.orderBy(F.desc("count")).limit(15)
-
-    # 8. Show results
-    top_15.show(truncate=False)
-
-    spark.stop()
-
-if __name__ == "__main__":
-    main()
-```
-
-]
-
-???
-
----
-
-# Reading the execution plan
-
-.boxed-content.small[
-```text
-== Physical Plan ==
-AdaptiveSparkPlan isFinalPlan=false
-+- Sort [count#8L DESC NULLS LAST], true, 0
-   +- Exchange rangepartitioning(count#8L DESC NULLS LAST, 200), ENSURE_REQUIREMENTS
-      +- HashAggregate(keys=[word#3], functions=[count(1)])
-         +- Exchange hashpartitioning(word#3, 200), ENSURE_REQUIREMENTS
-            +- HashAggregate(keys=[word#3], functions=[partial_count(1)])
-               +- Filter (length(word#3) >= 3)
-                  +- Generate explode(split(lower(value#0), \W+, -1)), false, [word#3]
-                     +- FileScan text [value#0] ... InMemoryFileIndex(18846 paths)
-```
-]
-
-.boxed-content.no-bullet[
-* Read it **bottom-up**. `FileScan` happens first, `Sort` last.
-* **`Exchange` is a shuffle**: rows move between partitions. On a cluster, across the network.
-* `HashAggregate` twice &rarr; count within each partition, then combine.
-]
----
-
-# &micro;Lab 2 .gray-text[· the four steps]
-
-.cards.cols-2.tight[
-.card[
-.kicker[step 1]
-
-### Get the repo
-
-`git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab`
-
-.foot[Then `cd` into it. Every command runs from there.]
-]
-.card[
-.kicker[step 2]
-
-### Count with DataFrames
-
-`make df`
-
-.foot[Record `elapsed` and `input partitions`.]
-]
-.card[
-.kicker[step 3]
-
-### Count with RDDs
-
-`make rdd`
-
-.foot[Same two numbers. Start it, then read the step-2 plan while it runs.]
-]
-.card[
-.kicker[step 4]
-
-### Find the shuffle
-
-In the DataFrame plan, point at the line where rows move between partitions.
-
-.foot[There is more than one.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 13h30**: both counts run, both plans printed, the shuffle identified. **Then**: `.cache()` the filtered words, count twice, explain the difference.
-]
----
-
-# RDD vs. DataFrame
-
-.boxed-content[
-```python
-    # 2. Read text files into RDD 
-    text_rdd = spark.sparkContext.textFile(f"{NEWSGROUPS_PATH}/*.txt")
-
-    # 3-4. Convert to lowercase and split into tokens
-    tokens_rdd = text_rdd.flatMap(
-        lambda line: re.split(r"\W+", line.lower())
-    )
-
-    # 5. Filter out empty strings, numeric tokens, and stopwords
-    filtered_rdd = tokens_rdd.filter(
-        lambda token: (
-            token != "" and
-            not re.match(r'^[0-9]+$', token) and
-            token not in stopword_list
-        )
-    )
-
-    # 6. Map each token to (token, 1), then reduce
-    word_counts = filtered_rdd.map(lambda w: (w, 1)) \
-                              .reduceByKey(lambda a, b: a + b)
-
-    # 7. Retrieve the top 15 by descending frequency
-    top_15 = word_counts.takeOrdered(15, key=lambda x: -x[1])
-```
-]
-
-???
-
----
-
-# Results
-
-.boxed-content[
-.pull-right[
-.larger[
-<br />
-File `top15_output.txt`:
-
-```Text
-one	14635
-writes	13344
-article	12275
-people	9473
-university	9431
-know	8631
-get	8343
-think	7602
-time	6711
-use	6673
-new	6385
-good	5946
-even	5380
-see	5191
-god	5062
-```
-]
-]
-
-.pull-left.large[
-<br />
-.no-bullet[
-* <i class="fa-solid fa-ranking-star"></i> The most frequent: <br />
-  .indent[*one*, *writes*, *article*]
-
-* <i class="fa-solid fa-pen-nib"></i> *writes* : <br />
-  .indent[probably should be **ignored**]
-
-* <i class="fa-solid fa-graduation-cap"></i> *university* (5<sup>th</sup>): <br />
-  .indent[also **overestimated**]
-]
-]
-
-]
-
-???
-
----
-
-# Stages and tasks
+# **&micro;Lab**: neuro pipeline with Airflow + Docker
 
 .boxed-content.large[
-A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
-plan is a stage boundary.
+- Extend the **official Airflow 2.11.0** stack with the **Docker provider**
+  <br /> .gray-text[Similar to adding scikit-learn before]
 
-Within a stage, Spark runs **one task per partition**.
+- Allow tasks to start sibling containers via the **Docker socket**
+  <br /> .gray-text[We practiced this last week]
+
+- Create a DAG that runs **`oesteban/afni:latest`** and **persists outputs** to the host
+  <br /> .gray-text[the `oesteban/afni:latest` image contains *DataLad* too]
+
+<img src="images/neuro_302-pipeline.png" style="width: 100%" />
 ]
 
-.boxed-content.large.no-bullet[
-* Before the shuffle: **589 tasks**, one per input partition.
-* After it: **27 tasks**, because Spark sized the next stage to the data it actually got.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
-]
 ---
+class: group-roulette
+groups: 5
+seed: 28.09.2026
 
-# The same count on a 32-core cluster
+<br />
+# **&micro;Lab**: neuro pipeline with Airflow + Docker
+
 
 .boxed-content[
-<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
-]
----
+.large[Work with your group, we reconvene and check results at 14h30]
 
-# Where the core-time went
+<br />
 
-.boxed-content.small[
-```text
-Job Wall-clock time: 00:00:55
-Cores per node: 8          (four nodes, 32 cores)
+<img src="images/neuro_302-pipeline.png" style="width: 100%" />
 
-CPU Efficiency:    27.27% of 00:29:20 core-walltime
-Memory Efficiency:  3.68% of 128.00 GB (4.00 GB/core)
-```
 ]
 
-.boxed-content.large.no-bullet[
-* 32 cores held for 55 seconds is **29 minutes of core-time**. About **8 minutes** of it did work.
-* The scheduler ran **10 000 tasks** over 20 000 small files.
-* Three quarters of the reservation went on starting, shipping and collecting tasks.
-]
 
-.admonition[
-<i class="fa-solid fa-circle-right"></i> This is the same mistake `make rdd` made on your laptop: one partition per file.
-]
----
 
-# &micro;Lab 3 .gray-text[· the four steps]
+???
 
-.cards.cols-2.tight[
-.card[
-.kicker[step 1]
 
-### One core
-
-`make slow1`
-
-.foot[Three partition counts: 8, 800, 8000.]
-]
-.card[
-.kicker[step 2]
-
-### All your cores
-
-`make slow`
-
-.foot[The same three, on whatever Docker gives you.]
-]
-.card[
-.kicker[step 3]
-
-### Record six numbers
-
-Six wall clocks, and the `distinct words` column beside each.
-
-.foot[That column should never change.]
-]
-.card[
-.kicker[step 4]
-
-### Explain the shape
-
-More cores: every row falls. More partitions: every column rises. Say why, in
-one sentence.
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 14h50**: the six numbers and the sentence. **Then**: find the partition count that is fastest on your laptop, and say what it depends on.
-]
 ---
 
 .section-mark[
@@ -861,218 +652,42 @@ one sentence.
 
 ---
 
+# Flipped-class | Description
+
+.boxed-content.no-bullet[
+.large[
+* **15 minutes each**, at the top of the afternoon, from 12h45. Then **10 minutes of questions** for the whole set.
+
+* Three slots: **21, 24 and 28 September**. Topics were drawn on day 1.
+
+* Everything presented is **examinable in the section test** on 1 October.
+]
+]
+
+???
+
+Same rules as published on days 0 and 1. Nothing here is new.
+
+---
+
 .section-mark[
 # End
 
 .large[
-See you next time: 24.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-24T08:15:00+02:00"></span>)
+See you next time: 1.10.2026 @ 8h15 (in <span class="timer" data-until="2026-10-01T08:15:00+02:00"></span>)
 
-[<i class="fa-solid fa-circle-left"></i>](../../week1/day2/index.html)
+[<i class="fa-solid fa-circle-left"></i>](../../week2/day2/index.html)
 [<i class="fa-solid fa-home"></i>](#1)
-[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
+[<i class="fa-solid fa-circle-right"></i>](../../week3/day2/index.html)
 ]
 ]
 
-
----
-
-.section-mark[
-# Appendix
-
-.large[Material kept out of the 21.09 delivery, not out of the deck.]
-]
-
----
-class: group-roulette
-groups: 5
-seed: 21.09.2026
-
-<br />
-
-# &micro;Lab: Deploy Spark locally with Docker
-
----
-class: group-roulette
-groups: 5
-seed: 21.09.2026
-
-<br />
-.boxed-content[
-# &micro;Lab: scale up the word count with Spark & Airflow
-
-.large[
-Instead of counting the words in 20 Newsgroups, we scale to a much larger dataset (Wikipedia dump).
-
-Link: https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2
-]
-]
-
-
-
----
-
-# MapReduce (2004)
-
-<object data="images/mapreduce-osdi04.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
-    <embed src="images/mapreduce-osdi04.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/mapreduce-osdi04.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
-
-.gray-text[https://research.google/pubs/mapreduce-simplified-data-processing-on-large-clusters/]
-
----
-class: roulette
-seed: 21.09.2026
-time: 120
-
-.section-mark[
-# Spark paper
-
-.large[
-What has called your attention? <br />
-What are RDDs and why they are important? <br />
-What are the main features of RDDs? <br />
-What components can you name in the Spark architecture? <br />
-
-]
-]
-
----
-
-# Script *PySpark* (1)
-
-.boxed-content[
-```python
-#!/usr/bin/env python
-"""
-Spark job reading the 20 Newsgroups text files from an NFS path,
-applying a stopword filter, and printing the top 15 most frequent tokens.
-"""
-
-import os
-from pathlib import Path
-from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
-
-DATA_DIR = Path(os.getenv("SCRATCH", str(Path.home()))) / "datasets"
-STOPWORDS_PATH = DATA_DIR / "stopwords.txt"
-NEWSGROUPS_PATH = DATA_DIR / "newsgroups"
-
-# Create a set of stop words we don't want to count such as "the"
-stopword_list = {
-  line.strip().lower()
-  for line in STOPWORDS_PATH.read_text().splitlines() if line.strip()
-}
-
-```
-]
-
-???
-
----
-count: false
-
-# Script *PySpark* (2)
-
-.boxed-content.larger[
-```python
-def main():
-    # 1. Initialize Spark
-    spark = SparkSession.builder \
-        .appName("WordCountOnNFS") \
-        .getOrCreate()
-
-    # 2. Read text files as a DataFrame (one column: "value")
-    text_df = spark.read.text(f"{NEWSGROUPS_PATH}/*.txt")
-
-    # 3. Split each line into tokens, explode into rows
-    words_df = text_df.select(
-        F.explode(
-            F.split(F.col("value"), r"\W+")
-        ).alias("token")
-    )
-
-    # 4. Convert to lowercase
-    words_df = words_df.select(F.lower(F.col("token")).alias("token"))
-
-```
-]
-
-???
-
----
-
-# Submission in HPC with *Slurm* (1)
-
-.boxed-content.larger[
-```bash
-#!/bin/bash
-#SBATCH --job-name=SparkWordCount
-#SBATCH --nodes=4
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --time=01:00:00
-
-module load spark/3.5.5
-
-# 1. Identify allocated nodes
-scontrol show hostnames $SLURM_NODELIST > node_list.txt
-
-# 2. Pick the first node as Spark master
-MASTER_NODE=$(head -n 1 node_list.txt)
-
-# 3. Start Spark master on MASTER_NODE
-if [ "$HOSTNAME" = "$MASTER_NODE" ]; then
-  $SPARK_HOME/sbin/start-master.sh
-fi
-```
-
-]
-
-???
-
----
-count: false
-
-# Submission in HPC with *Slurm* (2)
-
-.boxed-content[
-```bash
-# 4. Start Spark workers on each allocated node
-for node in $(cat node_list.txt); do
-  srun -N1 -w "$node" "$SPARK_HOME/sbin/start-worker.sh" "spark://$MASTER_NODE:7077"
-done
-
-# 5. Submit the Spark job
-$SPARK_HOME/bin/spark-submit \
-  --master spark://$MASTER_NODE:7077 \
-  --deploy-mode client \
-  $PWD/wordcount.py
-
-# 6. Stop Spark workers
-for node in $(cat node_list.txt); do
-  ssh $node "$SPARK_HOME/sbin/stop-worker.sh"
-done
-
-# 7. Stop Spark master on MASTER_NODE
-if [ "$HOSTNAME" = "$MASTER_NODE" ]; then
-  $SPARK_HOME/sbin/stop-master.sh
-fi
-```
-
-]
-
-???
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>
-    <script src="../../remark/ext/svg-preload.js"></script>
     <script src="../../remark/ext/svg-theme.js"></script>
     <script src="../../remark/ext/nav-controls.js"></script>
-    <script src="../../remark/ext/stepwise-svg.js"></script>
-    <script src="../../remark/ext/asciicasts.js"></script>
     <script src="../../remark/ext/timer.js"></script>
     <script src="../../remark/ext/roulette.js"></script>
     <script>Roulette.init(slideshow);</script>

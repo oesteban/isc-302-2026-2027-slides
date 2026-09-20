@@ -78,17 +78,18 @@ days:
     start: "08:15"
     title: "DevOps and Docker"
 
-  # The last three teaching days rotated on 2026-09-20, and they are listed here
-  # in DELIVERY order, not directory order. Spark came forward to the Monday so
+  # The last three teaching days rotated on 2026-09-20. The decks were then moved
+  # so that the directory names match the calendar again: week 2 is 21.09 and
+  # 24.09, week 3 is 28.09 and 01.10. Delivery order and directory order agree. Spark came forward to the Monday so
   # that Kubernetes has a week to settle behind it; Kubernetes took the Thursday;
   # Flyte went to the following Monday, where its Kubernetes half runs on
   # Carnaval. The decks keep their directory names: content did not move, only
   # dates did.
-  - id: week3/day1
+  - id: week2/day1
     date: 2026-09-21
     replaces: 2026-09-21
     start: "08:15"
-    title: "MapReduce and Apache Spark"             # was: Mon 28.09
+    title: "MapReduce and Apache Spark"             # was week3/day1, Mon 28.09
 
   - id: week2/day2
     date: 2026-09-24
@@ -97,11 +98,11 @@ days:
     title: "Container orchestration at scale: Kubernetes and Slurm"
                                                     # was: Mon 21.09
 
-  - id: week2/day1
+  - id: week3/day1
     date: 2026-09-28
     replaces: 2026-09-28
     start: "08:15"
-    title: "Specifying pipelines with Flyte"        # was: Thu 24.09
+    title: "Specifying pipelines with Flyte"        # was week2/day1, Thu 24.09
 
   - id: week3/day2
     date: 2026-10-01
