@@ -126,7 +126,11 @@
       raw("-d"),
       text(size: 7.8pt)[Detached. It runs in the background and you get your prompt back.],
       raw("--name k8s"),
-      text(size: 7.8pt)[A name, so every later command can say #raw("k8s") instead of an id.],
+      text(size: 7.8pt)[A name of your choosing. Without it, Docker still identifies the container,
+        but by its id: \
+        #raw("8d7726f96f7475544440565a92a034cda1f767726619081595bab18cfdf76987") \
+        Every later command would have to carry that, or its short form #raw("8d7726f96f74").
+        #raw("k8s") is easier to type and easier to get right.],
       raw("--privileged"),
       text(size: 7.8pt)[Lifts the usual restrictions. k3s mounts cgroups and runs *its own* container runtime inside this container.],
       raw("--tmpfs /run"),
@@ -160,9 +164,22 @@
       Keep that value. It comes back in panel 3, and it is not a coincidence.
       #raw("exit") leaves the shell; the container keeps running without you.
     ]
-    #v(3pt)
-    #text(size: 8pt, weight: "bold")[
-      Everything from step 3 on is typed inside this shell.
+    #v(4pt)
+    #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
+           stroke: 1pt + accent, fill: rgb("#fff0f6"))[
+      #text(size: 8.5pt, weight: "bold")[Do not close this shell.]
+      #v(1pt)
+      #text(size: 8pt)[
+        Steps 3 to 6 and every #raw("kubectl") in panels 5 to 9 are typed *here*, at this
+        prompt. If you type them on your laptop instead, you will get
+        #raw("kubectl: command not found") — the cluster's tools live in the container,
+        not on your machine.
+      ]
+      #v(2pt)
+      #text(size: 8pt)[
+        Closed it by accident? #raw("docker exec -it k8s sh") puts you straight back.
+        Nothing is lost: the cluster never stopped.
+      ]
     ]
   ]
 ]
@@ -170,12 +187,45 @@
 #v(5pt)
 
 #panel("2 · Drive the cluster · steps 3 to 6")[
+  #text(size: 8.5pt, weight: "bold", fill: accent)[
+    Type these at the shell from step 2, inside the container.
+  ]
+  #v(4pt)
   #step("3", "Ask the cluster to keep a whale running")[
     #raw("kubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3", lang: "console")
     #v(1pt)
     #text(size: 8pt)[
       A *Deployment* says: this many of these should exist, at all times. You do not
       say when to start anything.
+    ]
+    #v(3pt)
+    #text(size: 8pt, weight: "bold")[Why is the registry spelled out here, when step 1 named none?]
+    #v(1pt)
+    #text(size: 8pt)[
+      Because there are two copies of this image and they are *not the same thing*.
+      Run these two #emph[on your laptop], not in the cluster shell:
+    ]
+    #v(2pt)
+    #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay
+docker buildx imagetools inspect oesteban/whalesay", lang: "console")
+    #v(2pt)
+    #text(size: 8pt)[
+      The first prints a #raw("Manifests:") list with #raw("Platform: linux/amd64") *and*
+      #raw("Platform: linux/arm64"). The second prints no list at all: it is a single image,
+      #raw("linux/amd64") only.
+    ]
+    #v(2pt)
+    #text(size: 8pt)[
+      An Apple Silicon Mac runs an *arm64* Linux VM, and k3s's containerd has no emulation
+      to fall back on. The Docker Hub copy would give #raw("exec format error") and the pod
+      would never start. The GHCR copy was built for both by GitHub Actions on Friday.
+    ]
+    #v(3pt)
+    #text(size: 8pt, fill: luma(90))[
+      *On Linux or Windows, on Intel or AMD:* the Docker Hub copy runs perfectly well.
+      Check the manifests above, then try it alongside:
+      #raw("kubectl create deployment hub --image=oesteban/whalesay --replicas=1", lang: "console")
+      Which architecture is your laptop? #box(width: 30mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
     ]
   ]
   #v(4pt)
@@ -243,14 +293,14 @@
     ])
   #v(6pt)
   #text(size: 8.5pt)[
-    Compare the NAME here with the #raw("hostname") you wrote in step 2. \
+    Compare the NAME in panel 3 with the #raw("hostname") you wrote in step 2. \
 The container did not crash. It printed its whale and exited *successfully*.
     So why is Kubernetes starting it again?
   ]
   #writing(2)
   #v(4pt)
   #text(size: 8.5pt)[
-    The Job in step 4 used *the same image* and did not do this. What did you
+    The Job in step 5 used *the same image* and did not do this. What did you
     change, in one sentence?
   ]
   #writing(2)
@@ -389,7 +439,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #panel("10 · Extra mile · satisfy the Deployment instead of abandoning it")[
   #text(size: 8.5pt)[
-    In step 4 you stopped the restarting by changing the *object*. There is a
+    In step 5 you stopped the restarting by changing the *object*. There is a
     second way that leaves it a Deployment: same image, no rebuild, no re-push,
     sitting at #raw("RESTARTS 0") and #raw("Running"). Write the command.
   ]
