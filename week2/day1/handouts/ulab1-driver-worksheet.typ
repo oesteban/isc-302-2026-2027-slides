@@ -161,7 +161,7 @@
     ]
     #v(2pt)
     #text(size: 7.8pt, fill: luma(120))[
-      Keep that value. It comes back in panel 3, and it is not a coincidence.
+      Keep that value. It comes back in panel 4, and it is not a coincidence.
       #raw("exit") leaves the shell; the container keeps running without you.
     ]
     #v(4pt)
@@ -170,7 +170,7 @@
       #text(size: 8.5pt, weight: "bold")[Do not close this shell.]
       #v(1pt)
       #text(size: 8pt)[
-        Steps 3 to 6 and every #raw("kubectl") in panels 5 to 9 are typed *here*, at this
+        Steps 3 to 6 and every #raw("kubectl") in panels 6 to 10 are typed *here*, at this
         prompt. If you type them on your laptop instead, you will get
         #raw("kubectl: command not found") — the cluster's tools live in the container,
         not on your machine.
@@ -186,7 +186,59 @@
 
 #v(5pt)
 
-#panel("2 · Drive the cluster · steps 3 to 6")[
+#panel("2 · The five words the next four steps use")[
+  #text(size: 8.5pt)[
+    Read this before step 3. Everything below happens *inside* the cluster you just
+    started, and none of it is a program you run.
+  ]
+  #v(4pt)
+  #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
+    text(size: 8.5pt, weight: "bold")[kubectl],
+    text(size: 8pt)[
+      The cluster's command-line client. It does almost nothing itself: it turns what you
+      type into a request, sends it to the *API server* inside the container, and prints
+      the reply. When you "create" something, all that happens is that the cluster writes
+      down what you asked for.
+    ],
+    text(size: 8.5pt, weight: "bold")[controller],
+    text(size: 8pt)[
+      A loop that runs inside the cluster, forever. It compares *what you wrote down*
+      against *what actually exists*, and acts on the difference. You never call it and it
+      never finishes. This is the part that does the work.
+    ],
+    text(size: 8.5pt, weight: "bold")[pod],
+    text(size: 8pt)[
+      The smallest thing the cluster runs: one or more containers placed together and
+      sharing one address. *You will not create a pod.* A controller creates them, because
+      of something you wrote down.
+    ],
+    text(size: 8.5pt, weight: "bold")[Deployment],
+    text(size: 8pt)[
+      Something you write down that says: *this many pods of this image should be running,
+      always*. Its controller creates them, and replaces any that stop — whatever the
+      reason, including finishing successfully.
+    ],
+    text(size: 8.5pt, weight: "bold")[Job],
+    text(size: 8pt)[
+      Something you write down that says: *run this image once, until it exits 0*. Its
+      controller creates one pod, waits for it to succeed, and stops. Nothing is replaced.
+    ],
+  )
+  #v(5pt)
+  #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt, fill: luma(245))[
+    #text(size: 8pt)[
+      One more, because you will see it on screen: *CrashLoopBackOff*. When a Deployment's
+      pod keeps stopping, the controller does not retry at full speed forever. It waits
+      10s, then 20s, then 40s, doubling up to five minutes between attempts. The name is
+      misleading: it does not mean the container crashed. It means *it stopped again, and I
+      am waiting a while before the next try*.
+    ]
+  ]
+]
+
+#v(5pt)
+
+#panel("3 · Drive the cluster · steps 3 to 6")[
   #text(size: 8.5pt, weight: "bold", fill: accent)[
     Type these at the shell from step 2, inside the container.
   ]
@@ -229,7 +281,7 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
     ]
   ]
   #v(4pt)
-  #step("4", "Look at what the controller made")[
+  #step("4", "Look at the pods the controller made for you")[
     #raw("kubectl get pods", lang: "console") — once straight away, once about a minute later.
     #v(1pt)
     #text(size: 8pt)[
@@ -239,9 +291,9 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
     ]
     #v(2pt)
     #text(size: 7.8pt, fill: luma(120))[
-      Take the two readings *early*. Kubernetes waits longer before each retry —
-      10s, 20s, 40s, and so on up to a five-minute cap — so an hour in, two readings
-      a minute apart can show the same number and tell you nothing.
+      Take both readings in the *first two minutes*. The retries slow down as they go
+      (see #emph[CrashLoopBackOff] in block 2), so two late readings can show the same
+      number and tell you nothing.
     ]
   ]
   #v(4pt)
@@ -266,7 +318,7 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
 
 #v(5pt)
 
-#panel("3 · What you started")[
+#panel("4 · What you started")[
   #text(size: 8.5pt)[From #raw("kubectl get nodes"):]
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
@@ -279,7 +331,7 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
 
 #v(5pt)
 
-#panel("4 · The two readings, and the reason")[
+#panel("5 · The two readings, and the reason")[
   #grid(columns: (1fr, 1fr), column-gutter: 10pt,
     [
       #text(size: 8pt, weight: "bold")[First reading]
@@ -299,7 +351,7 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
     ])
   #v(6pt)
   #text(size: 8.5pt)[
-    Compare the NAME in panel 3 with the #raw("hostname") you wrote in step 2. \
+    Compare the NAME in panel 4 with the #raw("hostname") you wrote in step 2. \
 The container did not crash. It printed its whale and exited *successfully*.
     So why is Kubernetes starting it again?
   ]
@@ -336,7 +388,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(5pt)
 
-#panel("5 · What the logs will tell you")[
+#panel("6 · What the logs will tell you")[
   #text(size: 8.5pt)[
     Logs are the first place you look when something is wrong, and they are not
     only for things that are wrong. Try all four, inside the cluster.
@@ -367,7 +419,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panel("6 · Now use the image you built on Friday")[
+#panel("7 · Now use the image you built on Friday")[
   #text(size: 8.5pt)[
     Everything so far ran *someone else's* image. Repeat step 2 with your own, the
     one your GitHub Actions workflow published on Friday:
@@ -403,9 +455,9 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("7 · The controller's own account")[
+#panel("8 · The controller's own account")[
   #text(size: 8.5pt)[
-    In panel 4 you read *Last State* from #raw("kubectl describe pod"). The same output ends
+    In panel 5 you read *Last State* from #raw("kubectl describe pod"). The same output ends
     with an *Events* block. Read it, then widen to the whole cluster:
   ]
   #v(2pt)
@@ -420,7 +472,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("8 · Two image stores, one name")[
+#panel("9 · Two image stores, one name")[
   #text(size: 8.5pt)[
     Inside the cluster: #raw("crictl images", lang: "console"). \
     On your laptop, in another terminal: #raw("docker images", lang: "console").
@@ -440,7 +492,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("9 · A wish is not a command")[
+#panel("10 · A wish is not a command")[
   #text(size: 8.5pt)[
     #raw("kubectl scale deployment whale --replicas=5", lang: "console"), wait, then
     #raw("kubectl scale deployment whale --replicas=0", lang: "console"). Count the pods after each.
@@ -460,7 +512,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("10 · Extra mile · satisfy the Deployment instead of abandoning it")[
+#panel("11 · Extra mile · satisfy the Deployment instead of abandoning it")[
   #text(size: 8.5pt)[
     In step 5 you stopped the restarting by changing the *object*. There is a
     second way that leaves it a Deployment: same image, no rebuild, no re-push,
