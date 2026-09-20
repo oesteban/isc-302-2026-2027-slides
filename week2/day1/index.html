@@ -391,36 +391,45 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 ]
 ---
 
-# &micro;Lab 1 .gray-text[· the five steps]
+# &micro;Lab 1 .gray-text[· the six steps]
 
 .cards.cols-3.tight[
-.card[
+.card.small[
 .kicker[step 1]
 
-### Start a cluster
+### Create the cluster
 
-`docker run` the k3s line, then `docker exec -it k8s sh`.
+`docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run` `-p 6443:6443` `rancher/k3s:v1.31.5-k3s1 server --disable=traefik`
 
-.foot[`kubectl get nodes` &rarr; one node, `Ready`.]
+.foot[Every flag is explained on your sheet.]
+]
+.card[
+.kicker[step 2]
+
+### Step inside it
+
+`docker exec -it k8s sh`
+
+.foot[An interactive shell **in the container**, not on your laptop. Your prompt changes.]
 ]
 .card.small[
-.kicker[step 2]
+.kicker[step 3]
 
 ### Keep a whale running
 
 `kubectl create deployment whale` `--image=ghcr.io/oesteban/whalesay` `--replicas=3`
 
-.foot[Your own image from Friday comes later, as the first extension.]
+.foot[Your own image from Friday comes later, as an extension.]
 ]
 .card[
-.kicker[step 3]
+.kicker[step 4]
 
 ### Look at what it made
 
 `kubectl get pods`, twice, a minute apart. Record `STATUS` and `RESTARTS`.
 ]
 .card.small[
-.kicker[step 4]
+.kicker[step 5]
 
 ### Run it once instead
 
@@ -429,7 +438,7 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 .foot[Same image, same command. Only the kind of object changed.]
 ]
 .card[
-.kicker[step 5]
+.kicker[step 6]
 
 ### Read what it printed
 
@@ -437,17 +446,10 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 
 .foot[You never had to find the pod.]
 ]
-.card.alert[
-.kicker[then]
-
-### Explain it
-
-Why does the Deployment restart a container that exited **successfully**, and the Job does not?
-]
 ]
 
 .admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 09h45**, then the referee ticks your sheet and you carry on with the extensions.
+<i class="fa-solid fa-flag-checkered"></i> **Core by 09h45**: the whale ran both ways, and you can say why the Deployment restarts a container that exited **successfully** while the Job does not. Then the referee ticks your sheet and you carry on.
 ]
 ---
 class: vcenter

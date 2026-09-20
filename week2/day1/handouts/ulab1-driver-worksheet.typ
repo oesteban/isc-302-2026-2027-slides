@@ -118,23 +118,59 @@
 #v(5pt)
 
 // ══ CORE — ten minutes ════════════════════════════════════════════════════
-#panel("1 · The core, in five steps · ten minutes")[
-  #step("1", "Start a cluster")[
+#panel("1 · Start the cluster · steps 1 and 2")[
+  #step("1", "Create a container that is a Kubernetes cluster")[
     #raw("docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 rancher/k3s:v1.31.5-k3s1 server --disable=traefik", lang: "console")
-    #v(1pt)
-    Then #raw("docker exec -it k8s sh", lang: "console") and stay there: #raw("kubectl")
-    is already installed inside.
+    #v(3pt)
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("-d"),
+      text(size: 7.8pt)[Detached. It runs in the background and you get your prompt back.],
+      raw("--name k8s"),
+      text(size: 7.8pt)[A name, so every later command can say #raw("k8s") instead of an id.],
+      raw("--privileged"),
+      text(size: 7.8pt)[Lifts the usual restrictions. k3s mounts cgroups and runs *its own* container runtime inside this container.],
+      raw("--tmpfs /run"),
+      text(size: 7.8pt)[Two small writable in-memory filesystems that k3s needs (also #raw("/var/run")).],
+      raw("-p 6443:6443"),
+      text(size: 7.8pt)[*HOST:CONTAINER.* Port 6443 #emph[on your laptop] is forwarded to port 6443 #emph[inside the container]. The left one is yours, the right one is the container's. 6443 is where the Kubernetes API server listens.],
+      raw("rancher/k3s:v1.31.5-k3s1"),
+      text(size: 7.8pt)[The image. #raw("rancher/k3s") is the repository, #raw("v1.31.5-k3s1") is the tag. You named no registry, so Docker went to *Docker Hub* and fetched it from there.],
+      raw("server"),
+      text(size: 7.8pt)[*Not a docker flag.* Everything after the image name is the command handed to the program inside. #raw("server") tells k3s to be the control plane.],
+      raw("--disable=traefik"),
+      text(size: 7.8pt)[Also k3s's, not docker's. Traefik is an *ingress controller*: it routes HTTP arriving from outside to services inside. It claims ports 80 and 443 and adds startup time, and nothing today arrives from outside.],
+    )
+  ]
+  #v(5pt)
+  #step("2", "Step inside the container you just made")[
+    #raw("docker exec -it k8s sh", lang: "console")
     #v(2pt)
-    #text(size: 7.5pt, fill: luma(120))[
-      *Why #raw("--disable=traefik")?* k3s normally installs Traefik, an *ingress
-      controller*: the component that takes HTTP traffic arriving from outside and
-      routes it to the right service inside the cluster. It claims ports 80 and 443
-      on your machine and adds time to the start. Nothing today arrives from
-      outside, so we tell k3s to skip it.
+    #text(size: 8pt)[
+      #raw("-i") keeps the input open, #raw("-t") gives you a terminal. Together they get you an
+      *interactive shell running inside that container* — not on your laptop. Your
+      prompt changes; that is the sign.
+    ]
+    #v(3pt)
+    #text(size: 8pt)[
+      Prove it before you go on. Type #raw("hostname") and write down what it says:
+      #box(width: 40mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+    ]
+    #v(2pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      Keep that value. It comes back in panel 3, and it is not a coincidence.
+      #raw("exit") leaves the shell; the container keeps running without you.
+    ]
+    #v(3pt)
+    #text(size: 8pt, weight: "bold")[
+      Everything from step 3 on is typed inside this shell.
     ]
   ]
-  #v(4pt)
-  #step("2", "Ask the cluster to keep a whale running")[
+]
+
+#v(5pt)
+
+#panel("2 · Drive the cluster · steps 3 to 6")[
+  #step("3", "Ask the cluster to keep a whale running")[
     #raw("kubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3", lang: "console")
     #v(1pt)
     #text(size: 8pt)[
@@ -143,18 +179,17 @@
     ]
   ]
   #v(4pt)
-  #step("3", "Look at what the controller made")[
+  #step("4", "Look at what the controller made")[
     #raw("kubectl get pods", lang: "console") — once straight away, once about a minute later.
     #v(1pt)
     #text(size: 8pt)[
       This lists the *pods* the Deployment created on your behalf. Two columns
       matter: *STATUS*, what the pod is doing right now, and *RESTARTS*, how many
-      times the container inside it has been started again. Write both readings in
-      panel 3.
+      times the container inside it has been started again.
     ]
   ]
   #v(4pt)
-  #step("4", "Ask for the same image to run once, instead of forever")[
+  #step("5", "Ask for the same image to run once, instead of forever")[
     #raw("kubectl create job whale --image=ghcr.io/oesteban/whalesay -- cowsay 'a cluster ran me'", lang: "console")
     #v(1pt)
     #text(size: 8pt)[
@@ -163,19 +198,19 @@
     ]
   ]
   #v(4pt)
-  #step("5", "Read what it printed")[
+  #step("6", "Read what it printed")[
     #raw("kubectl logs job/whale", lang: "console")
     #v(1pt)
     #text(size: 8pt)[
       #raw("kubectl logs") prints whatever a container wrote to its output. You did not
-      have to find the pod: naming the Job was enough, and kubectl found it for you.
+      have to find the pod: naming the Job was enough.
     ]
   ]
 ]
 
 #v(5pt)
 
-#panel("2 · What you started")[
+#panel("3 · What you started")[
   #text(size: 8.5pt)[From #raw("kubectl get nodes"):]
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
@@ -188,7 +223,7 @@
 
 #v(5pt)
 
-#panel("3 · The two readings, and the reason")[
+#panel("4 · The two readings, and the reason")[
   #grid(columns: (1fr, 1fr), column-gutter: 10pt,
     [
       #text(size: 8pt, weight: "bold")[First reading]
@@ -208,7 +243,8 @@
     ])
   #v(6pt)
   #text(size: 8.5pt)[
-    The container did not crash. It printed its whale and exited *successfully*.
+    Compare the NAME here with the #raw("hostname") you wrote in step 2. \
+The container did not crash. It printed its whale and exited *successfully*.
     So why is Kubernetes starting it again?
   ]
   #writing(2)
@@ -222,7 +258,7 @@
 
 #v(5pt)
 
-#panel("4 · What the logs will tell you")[
+#panel("5 · What the logs will tell you")[
   #text(size: 8.5pt)[
     Logs are the first place you look when something is wrong, and they are not
     only for things that are wrong. Try all four, inside the cluster.
@@ -253,7 +289,7 @@
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panel("5 · Now use the image you built on Friday")[
+#panel("6 · Now use the image you built on Friday")[
   #text(size: 8.5pt)[
     Everything so far ran *someone else's* image. Repeat step 2 with your own, the
     one your GitHub Actions workflow published on Friday:
@@ -289,9 +325,9 @@
 
 #v(6pt)
 
-#panel("6 · Make the cluster explain itself")[
+#panel("7 · Make the cluster explain itself")[
   #text(size: 8.5pt)[
-    First, the node's NAME from panel 2 is not a hostname anybody chose. Where does
+    The node's NAME is not a hostname anybody chose. Where does
     it come from, and what does that tell you about what a "node" is here?
   ]
   #writing(2)
@@ -311,7 +347,7 @@
 
 #v(6pt)
 
-#panel("7 · Two image stores, one name")[
+#panel("8 · Two image stores, one name")[
   #text(size: 8.5pt)[
     Inside the cluster: #raw("crictl images", lang: "console"). \
     On your laptop, in another terminal: #raw("docker images", lang: "console").
@@ -331,7 +367,7 @@
 
 #v(6pt)
 
-#panel("8 · A wish is not a command")[
+#panel("9 · A wish is not a command")[
   #text(size: 8.5pt)[
     #raw("kubectl scale deployment whale --replicas=5", lang: "console"), wait, then
     #raw("kubectl scale deployment whale --replicas=0", lang: "console"). Count the pods after each.
@@ -351,7 +387,7 @@
 
 #v(6pt)
 
-#panel("9 · Extra mile · satisfy the Deployment instead of abandoning it")[
+#panel("10 · Extra mile · satisfy the Deployment instead of abandoning it")[
   #text(size: 8.5pt)[
     In step 4 you stopped the restarting by changing the *object*. There is a
     second way that leaves it a Deployment: same image, no rebuild, no re-push,
