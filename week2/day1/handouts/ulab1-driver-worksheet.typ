@@ -180,10 +180,25 @@
     #text(size: 8.5pt, weight: "bold")[(b) Anywhere, including macOS and Windows — run kubectl in its own container]
     #v(1pt)
     #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD/kube:/kube:ro\" -e KUBECONFIG=/kube/config \\\n  --entrypoint sh alpine/kubectl", lang: "console")
-    #v(2pt)
-    #text(size: 7.8pt, fill: luma(120))[
-      A shell in a *second, separate* container holding nothing but kubectl.
-      #raw("--network container:k8s") lets it reach the first container's #raw("127.0.0.1:6443").
+    #v(3pt)
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("--rm"),
+      text(size: 7.8pt)[Delete this container the moment you leave it. The cluster in step 1 used #raw("-d") because it must outlive your prompt; this one is disposable and you can start another whenever you like.],
+      raw("-it"),
+      text(size: 7.8pt)[#raw("-i") keeps the input open, #raw("-t") gives a terminal. Together: an interactive shell instead of a single command.],
+      raw("--network container:k8s"),
+      text(size: 7.8pt)[Do not give this container its own network — *join the one the cluster container already has*. That is why #raw("127.0.0.1:6443") works in here: it is the cluster's own loopback, which is exactly the address written in #raw("kube/config").],
+      raw("-v \"$PWD/kube:/kube:ro\""),
+      text(size: 7.8pt)[Bind-mount again, the other way round: your #raw("kube") folder appears inside this container at #raw("/kube"). #raw(":ro") makes it *read-only* — a client has no business editing the cluster's credentials.],
+      raw("-e KUBECONFIG=/kube/config"),
+      text(size: 7.8pt)[Sets an environment variable inside the container. #raw("kubectl") reads #raw("KUBECONFIG") to find out which cluster to talk to. Note the path is #emph[the one inside this container], not the one on your laptop.],
+      raw("--entrypoint sh"),
+      text(size: 7.8pt)[Overrides what the image runs by default. #raw("alpine/kubectl") is built to run #raw("kubectl") and nothing else, so without this you would get one command per #raw("docker run"). Swapping in a shell lets you type many.],
+      raw("alpine/kubectl"),
+      text(size: 7.8pt)[The image: kubectl and a small Alpine base, nothing else. No registry named, so *Docker Hub* again.],
+    )
+    #v(3pt)
+    #text(size: 8pt)[
       Type plain #raw("kubectl") from here. Prove where you are: #raw("command -v k3s") finds
       nothing, because there is no cluster in this container — only a client.
     ]
@@ -259,7 +274,7 @@
 
 #v(5pt)
 
-#panel("3 · Drive the cluster · steps 3 to 6")[
+#panelb("3 · Drive the cluster · steps 3 to 6")[
   #text(size: 8.5pt, weight: "bold", fill: accent)[
     Type these with the kubectl you set up in step 2.
   ]
@@ -440,7 +455,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panel("7 · Now use the image you built on Friday")[
+#panelb("7 · Now use the image you built on Friday")[
   #text(size: 8.5pt)[
     Everything so far ran *someone else's* image. Repeat step 2 with your own, the
     one your GitHub Actions workflow published on Friday:
