@@ -424,6 +424,26 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       Then #raw("kubectl get pods") once more. The Job's pod is the one whose name carries a
       single hash rather than two.
     ]
+    #v(3pt)
+    #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
+      #text(size: 8pt)[
+        *A name can only be used once.* Running that same line a second time fails:
+      ]
+      #v(2pt)
+      #raw("error: failed to create job: jobs.batch \"whale\" already exists", lang: "console")
+      #v(2pt)
+      #text(size: 8pt)[
+        To run another one, either give it a different name, or delete the first:
+      ]
+      #v(2pt)
+      #raw("kubectl create job whale2 --image=ghcr.io/oesteban/whalesay -- cowsay 'again'\nkubectl delete job whale", lang: "console")
+      #v(3pt)
+      #text(size: 8pt)[
+        Note that the Deployment from step 3 is *also* called #raw("whale"), and it was not in
+        the way. Names have to be unique within a kind, not across kinds — which is why the
+        next step has to say #raw("job/whale") and not just #raw("whale").
+      ]
+    ]
   ]
   #v(5pt)
   #step("6", "Read what the Job printed")[
