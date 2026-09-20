@@ -517,10 +517,16 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #text(size: 8pt)[
     Step 4 was for looking. This run is for measuring, and the table only says anything
     while it is still changing, so throw the old Deployment away and start a fresh one.
-    Have this page open before typing the third line.
+    Have this page open before typing the second line.
   ]
   #v(2pt)
-  #raw("kubectl delete deployment whale\nkubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3\nwatch kubectl get pods", block: true)
+  #raw("kubectl delete deployment whale\nkubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3 && watch kubectl get pods", block: true)
+  #v(3pt)
+  #text(size: 8pt)[
+    #raw("&&") is the shell's #emph[and then, only if that worked]: the watch starts the
+    instant the create returns, so not a second is lost to typing the second command. With
+    a #raw(";") instead, the watch would start even if the create had failed.
+  ]
   #v(3pt)
   #text(size: 8pt)[
     Pick one of the three pods and write its line down as soon as it appears. Then leave
