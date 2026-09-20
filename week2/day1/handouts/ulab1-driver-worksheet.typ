@@ -363,9 +363,8 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
     ]
     #v(2pt)
     #text(size: 7.8pt, fill: luma(120))[
-      Take both readings in the *first two minutes*. The retries slow down as they go
-      (see #emph[CrashLoopBackOff] in block 2), so two late readings can show the same
-      number and tell you nothing.
+      Take both readings in the *first two minutes*. The controller waits longer before each
+      restart as it goes on, so two late readings can show the same number and say nothing.
     ]
   ]
   #v(4pt)
