@@ -312,82 +312,112 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 
 #panelb("3 · Drive the cluster · steps 3 to 6")[
   #text(size: 8.5pt, weight: "bold", fill: accent)[
-    Type these with the kubectl you set up in step 2.
+    Type these with the kubectl set up in step 2.
   ]
   #v(4pt)
-  #step("3", "Ask the cluster to keep a whale running")[
+  #step("3", "Create a Deployment")[
+    #text(size: 8pt)[
+      The aim of this round is to watch what a cluster does when a container stops. So the
+      object to create is a Deployment: a stored request for three pods that should be
+      running. Three rather than one, only so that there is more to watch.
+    ]
+    #v(3pt)
+    #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
+      #text(size: 8pt)[
+        *Read step 4 before typing this one.* The pods start, stop and restart within
+        seconds, so #raw("kubectl get pods") has to follow immediately. Have it ready, or the
+        first reading will be taken too late to show anything.
+      ]
+    ]
+    #v(3pt)
     #raw("kubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3", lang: "console")
-    #v(1pt)
-    #text(size: 8pt)[
-      A *Deployment* says: this many of these should exist, at all times. You do not
-      say when to start anything.
-    ]
     #v(3pt)
-    #text(size: 8pt, weight: "bold")[Why is the registry spelled out here, when step 1 named none?]
-    #v(1pt)
-    #text(size: 8pt)[
-      Because there are two copies of this image and they are *not the same thing*.
-      Run these two #emph[on your laptop], not in the cluster shell:
-    ]
-    #v(2pt)
-    #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay
-docker buildx imagetools inspect oesteban/whalesay", lang: "console")
-    #v(2pt)
-    #text(size: 8pt)[
-      The first prints a #raw("Manifests:") list with #raw("Platform: linux/amd64") *and*
-      #raw("Platform: linux/arm64"). The second prints no list at all: it is a single image,
-      #raw("linux/amd64") only.
-    ]
-    #v(2pt)
-    #text(size: 8pt)[
-      An Apple Silicon Mac runs an *arm64* Linux VM, and k3s's containerd has no emulation
-      to fall back on. The Docker Hub copy would give #raw("exec format error") and the pod
-      would never start. The GHCR copy was built for both by GitHub Actions on Friday.
-    ]
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("create"),
+      text(size: 7.8pt)[The verb: make a new object. Others are #raw("get"), #raw("describe"), #raw("scale"), #raw("delete"), #raw("logs").],
+      raw("deployment"),
+      text(size: 7.8pt)[The *kind* of object to create. #raw("job"), #raw("pod"), #raw("service") are other kinds.],
+      raw("whale"),
+      text(size: 7.8pt)[The *name*, chosen freely. Every later command refers to it by this name. It also becomes the label #raw("app=whale") and the prefix of every pod name it creates, which is why the pods come out called #raw("whale-544548b554-kpnfx").],
+      raw("--image=..."),
+      text(size: 7.8pt)[Which image the pods run. The only part the cluster has to fetch from a registry.],
+      raw("--replicas=3"),
+      text(size: 7.8pt)[How many pods the request asks for. Leave it out and the default is 1.],
+    )
     #v(3pt)
-    #text(size: 8pt, fill: luma(90))[
-      *On Linux or Windows, on Intel or AMD:* the Docker Hub copy runs perfectly well.
-      Check the manifests above, then try it alongside:
-      #raw("kubectl create deployment hub --image=oesteban/whalesay --replicas=1", lang: "console")
-      Which architecture is your laptop? #box(width: 30mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      Why #raw("ghcr.io/...") spelled out, when step 1 named no registry at all? There is a
+      second copy of this image on Docker Hub, and it does not work on every laptop. Panel 12,
+      the annex, has the answer and a command to check it.
     ]
   ]
-  #v(4pt)
-  #step("4", "Look at the pods the controller made for you")[
-    #raw("kubectl get pods", lang: "console") — once straight away, once about a minute later.
+  #v(5pt)
+  #step("4", "Read the pods twice")[
+    #text(size: 8pt)[
+      The Deployment now exists and the cluster is acting on it. This lists the pods it
+      produced.
+    ]
+    #v(2pt)
+    #raw("kubectl get pods", lang: "console")
     #v(3pt)
     #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
       raw("get"),
       text(size: 7.8pt)[List objects, one line each. No name given, so it lists them all.],
       raw("pods"),
-      text(size: 7.8pt)[The kind to list. #raw("pod"), #raw("pods") and the short #raw("po") all work. Try #raw("kubectl get deployments") and #raw("kubectl get jobs") too.],
+      text(size: 7.8pt)[The kind to list. #raw("pod"), #raw("pods") and the short #raw("po") all work. #raw("kubectl get deployments") and #raw("kubectl get jobs") list the other two kinds.],
     )
-    #v(2pt)
+    #v(3pt)
     #text(size: 8pt)[
-      Two columns matter: *STATUS*, what the pod is doing right now, and *RESTARTS*, how
-      many times the container inside it has been started again.
+      *Take the first reading straight away,* then wait about a minute and take a second one.
+      Record both in panel 5. Two columns matter: *STATUS*, what the pod is doing at that
+      instant, and *RESTARTS*, how many times the container inside it has been started again.
     ]
-    #v(2pt)
-    #text(size: 7.8pt, fill: luma(120))[
-      Take both readings in the *first two minutes*. The controller waits longer before each
-      restart as it goes on, so two late readings can show the same number and say nothing.
+    #v(3pt)
+    #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
+      #text(size: 8pt)[
+        *If the first reading already showed every pod as #raw("Completed"),* it was taken too
+        late: the containers had run and stopped before the command did. Delete the
+        Deployment, create it again, and have #raw("get pods") ready this time.
+      ]
+      #v(2pt)
+      #raw("kubectl delete deployment whale", lang: "console")
+      #v(2pt)
+      #text(size: 7.8pt, fill: luma(120))[
+        #raw("delete") removes the stored request, and its pods go with it. Then repeat step 3.
+      ]
     ]
   ]
-  #v(4pt)
-  #step("5", "Ask for the same image to run once, instead of forever")[
+  #v(5pt)
+  #step("5", "Create a Job from the same image")[
+    #text(size: 8pt)[
+      A Job is the other kind of stored request: run the image once, until it finishes. The
+      image and the cluster are the same as in step 3, and only the kind is different — so
+      anything that happens differently is caused by the kind alone.
+    ]
+    #v(2pt)
     #raw("kubectl create job whale --image=ghcr.io/oesteban/whalesay -- cowsay 'a cluster ran me'", lang: "console")
     #v(3pt)
     #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
       raw("job"),
-      text(size: 7.8pt)[The kind. Everything else on this line is the same as step 3; only the kind changed.],
+      text(size: 7.8pt)[The kind. Everything else on this line works exactly as it did in step 3.],
       raw("--"),
-      text(size: 7.8pt)[*Ends kubectl's own arguments.* Whatever follows is not for kubectl: it is the command to run inside the container, and it replaces the one built into the image. The same idea as #raw("--entrypoint") in step 2, and of #raw("ENTRYPOINT") in a Dockerfile.],
+      text(size: 7.8pt)[*Ends kubectl's own arguments.* What follows is not for kubectl: it is the command to run inside the container, and it replaces the one built into the image. The same idea as #raw("--entrypoint") in step 2, and of #raw("ENTRYPOINT") in a Dockerfile.],
       raw("cowsay 'a cluster ran me'"),
-      text(size: 7.8pt)[That command and its one argument. #raw("cowsay") is the program inside the image; the quoted text is what it prints.],
+      text(size: 7.8pt)[That command and its single argument. #raw("cowsay") is the program inside the image; the quoted text is what it prints.],
     )
+    #v(2pt)
+    #text(size: 8pt)[
+      Then #raw("kubectl get pods") once more. The Job's pod is the one whose name carries a
+      single hash rather than two.
+    ]
   ]
-  #v(4pt)
-  #step("6", "Read what it printed")[
+  #v(5pt)
+  #step("6", "Read what the Job printed")[
+    #text(size: 8pt)[
+      The pod ran #raw("cowsay") and exited. What it printed is still held by the cluster, and
+      this is how to see it.
+    ]
+    #v(2pt)
     #raw("kubectl logs job/whale", lang: "console")
     #v(3pt)
     #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
@@ -398,8 +428,6 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
     )
   ]
 ]
-
-#v(5pt)
 
 #panel("4 · What you started")[
   #text(size: 8.5pt)[From #raw("kubectl get nodes"):]
@@ -631,6 +659,44 @@ The container did not crash. It printed its whale and exited *successfully*.
   #v(3pt)
   #text(size: 7.5pt, fill: luma(130))[
     No hint. The image runs one program and then stops; nothing says it has to.
+  ]
+]
+
+#v(8pt)
+
+#v(6pt)
+
+#panel("12 · Annex · why the image comes from ghcr.io and not Docker Hub")[
+  #text(size: 8.5pt)[
+    Two copies of this image exist under the same short name, and they are not the same
+    thing. Run these two #emph[on the laptop], not in the kubectl container:
+  ]
+  #v(2pt)
+  #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay\ndocker buildx imagetools inspect oesteban/whalesay", lang: "console")
+  #v(3pt)
+  #text(size: 8.5pt)[
+    The first prints a #raw("Manifests:") list with #raw("Platform: linux/amd64") *and*
+    #raw("Platform: linux/arm64"). The second prints no list at all: one image, #raw("linux/amd64")
+    only.
+  ]
+  #v(3pt)
+  #text(size: 8.5pt)[
+    An Apple Silicon Mac runs an *arm64* Linux VM, and the containerd inside k3s has no
+    emulation to fall back on. The Docker Hub copy would fail there with
+    #raw("exec format error") and the pod would never start. The GHCR copy was built for both
+    architectures by GitHub Actions on Friday.
+  ]
+  #v(3pt)
+  #text(size: 8.5pt)[
+    *On Linux or Windows, on Intel or AMD,* the Docker Hub copy is fine. Check the manifests
+    above, then run it alongside:
+  ]
+  #v(2pt)
+  #raw("kubectl create deployment hub --image=oesteban/whalesay --replicas=1", lang: "console")
+  #v(3pt)
+  #text(size: 8.5pt)[
+    Which architecture is this laptop?
+    #box(width: 35mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
   ]
 ]
 
