@@ -8,3 +8,6 @@ __pycache__/
 # Create it with tools/roster-local.sh; the committed roster.yml is a
 # synthetic placeholder and is what the published site serves.
 roster.local.yml
+
+# scratch deck used to render candidate slides for review
+_preview/

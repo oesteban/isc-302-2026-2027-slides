@@ -121,6 +121,19 @@ Identify storage sys., compute abstractions, and formats
 ]
 
 ---
+class: group-roulette
+groups: 5
+seed: 21.09.2026
+
+.boxed-content[
+# &micro;Lab 1 .gray-text[· Kubernetes in one container]
+
+.large[
+**20 minutes.** Start a cluster, run one image on it two ways, explain the
+`RESTARTS` column.
+]
+]
+---
 
 # Why do we need pipelines?
 
@@ -339,6 +352,159 @@ name: spark1
 ]
 
 ---
+
+# Starting a cluster
+
+.boxed-content.small[
+```console
+$ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
+    -p 6443:6443 rancher/k3s:v1.31.5-k3s1 server --disable=traefik
+
+$ docker exec -it k8s sh          # from here on, you are inside the cluster
+# kubectl get nodes
+NAME           STATUS   ROLES                  AGE   VERSION
+8d7726f96f74   Ready    control-plane,master   5s    v1.31.5+k3s1
+```
+]
+
+.boxed-content.large.no-bullet[
+* `server` &rarr; control plane and node in one process.
+* `--privileged`, `--tmpfs` &rarr; k3s mounts cgroups, runs its own containerd.
+* `kubectl` and `crictl` are already in the image.
+]
+---
+
+# The cluster has its own image store
+
+.boxed-content.large[
+k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores.
+]
+
+.boxed-content.large.no-bullet[
+* `docker images` &rarr; your laptop.
+* `crictl images` &rarr; the cluster.
+* `ghcr.io/<user>/<name>` &rarr; the only path between them.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The cluster pulls with no credentials, so the package must be **public**.
+]
+---
+
+# &micro;Lab 1 .gray-text[· the four steps]
+
+.cards.cols-2.tight[
+.card[
+.kicker[step 1]
+
+### Start it
+
+`docker run` the k3s line, then `docker exec -it k8s sh`.
+
+.foot[`kubectl get nodes` &rarr; one node, `Ready`.]
+]
+.card[
+.kicker[step 2]
+
+### Deploy your cow
+
+`kubectl create deployment cow --image=ghcr.io/<you>/whalesay --replicas=3`
+
+.foot[No image of your own? A neighbour's, or `ghcr.io/oesteban/whalesay`.]
+]
+.card[
+.kicker[step 3]
+
+### Watch, then explain
+
+`kubectl get pods` twice. Record `STATUS` and `RESTARTS`, and why.
+]
+.card[
+.kicker[step 4]
+
+### Run it as a Job
+
+`kubectl create job cow --image=<same> -- cowsay 'moo'`, then `kubectl logs job/cow`.
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Done when** the referee can say why the same image restarts forever as a Deployment and finishes as a Job.
+]
+---
+class: vcenter
+
+# Node, pod, controller
+
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-server"></i>]
+
+.kicker[kubectl get nodes]
+
+### Node
+
+Runs pods. You have one: the k3s container.
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-cube"></i>]
+
+.kicker[kubectl get pods]
+
+### Pod
+
+Containers scheduled together. The smallest unit. You never create one directly.
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-rotate"></i>]
+
+.kicker[kubectl get deploy, get jobs]
+
+### Controller
+
+Compares declared against actual and closes the gap. It creates the pods.
+]
+]
+---
+
+# Deployment and Job
+
+.cards.cols-2[
+.card[
+.kicker[always running]
+
+### Deployment
+
+Keeps **N pods running**. A pod that exits is replaced, **even on exit 0**.
+]
+.card[
+.kicker[run once]
+
+### Job
+
+Runs a pod **until it exits 0**, then stops. Nothing is restarted.
+]
+]
+
+.boxed-content.small[
+```console
+# kubectl create deployment NAME --image=IMG --replicas=3
+# kubectl create job        NAME --image=IMG -- CMD ARGS
+```
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> `cowsay` exits 0. Pick the wrong one and `RESTARTS` climbs.
+]
+---
+
+.section-mark[
+# Lunch break
+
+.large[We reconvene in <span class="timer">1 hour</span>.]
+]
+
+---
 class: group-roulette
 groups: 5
 seed: 21.09.2026
@@ -503,14 +669,6 @@ god	5062
 ]
 
 ???
-
----
-
-.section-mark[
-# Lunch break
-
-.large[We reconvene in <span class="timer">1 hour</span>.]
-]
 
 ---
 class: group-roulette
