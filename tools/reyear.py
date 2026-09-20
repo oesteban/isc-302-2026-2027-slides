@@ -214,8 +214,14 @@ def check(cfg: dict) -> int:
     # Only our own hosts; third-party links are none of this script's business.
     url_re = re.compile(r"https://(?:oesteban\.github\.io|github\.com/oesteban)/[^\"'>)` ]*")
 
+    # A deck's absolute own-host URL is its cover link; nav arrows are relative.
+    # Renaming a directory left the cover pointing at the old path while --check
+    # stayed green, because that path was still a valid URL for another deck.
+    deck_urls = {f"{base}/{d['id']}/index.html" for d in cfg["days"]}
+
     problems = 0
     for path in sorted(ROOT.glob("week*/day*/index.html")):
+        own = f"{base}/{path.parent.relative_to(ROOT).as_posix()}/index.html"
         for i, line in enumerate(path.read_text().splitlines(), 1):
             for m in date_re.finditer(line):
                 token = m.group(1) or m.group(0)
@@ -227,6 +233,9 @@ def check(cfg: dict) -> int:
                 if url not in valid_urls:
                     problems += 1
                     print(f"  {path.relative_to(ROOT)}:{i}: url {url!r} is not in course.yml")
+                elif url in deck_urls and url != own:
+                    problems += 1
+                    print(f"  {path.relative_to(ROOT)}:{i}: url {url!r} is another deck's; this one is {own!r}")
 
     if problems:
         print(f"\n{problems} inconsistenc{'ies' if problems != 1 else 'y'} with course.yml.")
