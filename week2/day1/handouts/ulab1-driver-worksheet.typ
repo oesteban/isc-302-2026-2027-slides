@@ -422,9 +422,12 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     #v(3pt)
     #text(size: 8pt)[
       Watch for two minutes. *STATUS* flickers between #raw("Running"), #raw("Completed") and
-      #raw("CrashLoopBackOff") — the container only runs for a fraction of a second, so
-      #raw("Running") is rarely caught. *RESTARTS* is the column that tells the story: it only
-      ever goes up. Record an early line and a later one in panel 4, then *Ctrl-C*.
+      #raw("CrashLoopBackOff"). In the first seconds #raw("Running") does appear, because the
+      restarts are still coming quickly; after that the cluster pauses longer and longer
+      between them and mostly the table reads #raw("Completed"). *RESTARTS* is the column
+      that tells the story: it only ever goes up. \
+      Nothing has to be written down yet. Press *Ctrl-C* whenever you have seen enough;
+      panel 4 runs this again, and that is the run you will be copying from.
     ]
     #v(3pt)
     #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
@@ -509,29 +512,43 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 ]
 
 #panelb("4 · Why the Deployment kept restarting")[
-  #text(size: 8.5pt, weight: "bold")[Two lines from the watch in step 4.]
+  #text(size: 8.5pt, weight: "bold")[Run the watch again, this time with a pen in hand.]
   #v(1pt)
-  #text(size: 8pt)[One copied in the first seconds, one copied about a minute later.]
+  #text(size: 8pt)[
+    Step 4 was for looking. This run is for measuring, and the table only says anything
+    while it is still changing, so throw the old Deployment away and start a fresh one.
+    Have this page open before typing the third line.
+  ]
+  #v(2pt)
+  #raw("kubectl delete deployment whale\nkubectl create deployment whale --image=ghcr.io/oesteban/whalesay --replicas=3\nwatch kubectl get pods", block: true)
+  #v(3pt)
+  #text(size: 8pt)[
+    Pick one of the three pods and write its line down as soon as it appears. Then leave
+    the watch running, wait a full minute by the clock, and write the *same pod's* line
+    down again. Press *Ctrl-C* once both are on paper.
+  ]
   #v(4pt)
   #grid(columns: (1fr, 1fr), column-gutter: 10pt,
     [
-      #text(size: 8pt, weight: "bold")[An early line]
+      #text(size: 8pt, weight: "bold")[As soon as the pod appears]
       #v(2pt)
       #grid(columns: (auto, 1fr), column-gutter: 5pt, row-gutter: 6pt, align: bottom,
+        text(size: 8pt)[NAME], rule(100%),
         text(size: 8pt)[STATUS], rule(100%),
         text(size: 8pt)[RESTARTS], rule(100%),
       )
     ],
     [
-      #text(size: 8pt, weight: "bold")[A later line]
+      #text(size: 8pt, weight: "bold")[The same pod, one minute later]
       #v(2pt)
       #grid(columns: (auto, 1fr), column-gutter: 5pt, row-gutter: 6pt, align: bottom,
+        text(size: 8pt)[NAME], rule(100%),
         text(size: 8pt)[STATUS], rule(100%),
         text(size: 8pt)[RESTARTS], rule(100%),
       )
     ])
   #v(7pt)
-  #text(size: 8.5pt, weight: "bold")[First, where those pods are running.]
+  #text(size: 8.5pt, weight: "bold")[First, find out where those pods are actually running.]
   #v(1pt)
   #text(size: 8pt)[
     In step 2 the node came out with a name like #raw("7c19eb7874a1"). Run #raw("docker ps")
@@ -558,7 +575,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     a pod of each kind:
   ]
   #v(2pt)
-  #raw("kubectl get pod <one of the three> -o jsonpath='{.spec.restartPolicy}'\nkubectl get pod <the Job's pod>     -o jsonpath='{.spec.restartPolicy}'", block: true)
+  #raw("kubectl get pod <one of the three> -o jsonpath='{.spec.restartPolicy}'\nkubectl get pod <the Job's pod>    -o jsonpath='{.spec.restartPolicy}'", block: true)
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[Deployment's pod], rule(100%),
@@ -569,7 +586,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     Neither value was typed in step 3 or step 5. The kind that was asked for put it there.
   ]
   #v(6pt)
-  #text(size: 8.5pt, weight: "bold")[Now the question this round is about.]
+  #text(size: 8.5pt, weight: "bold")[Now answer the question this round is about.]
   #v(1pt)
   #text(size: 8pt)[
     #raw("cowsay") printed its whale and exited. It did not crash: it finished, which for a
@@ -680,8 +697,8 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       Puts the time each line was written in front of it. Subtract the first timestamp from
       the last: that is how long the program took, and the interesting digits are after the
       decimal point. \
-      *Compare it with the two seconds between redraws in step 4. Why was #raw("Running")
-      never on screen?*
+      *The watch in step 4 redrew every two seconds. Of each of those two seconds, how much
+      was there actually a running container to see?*
     ],
 
     raw("kubectl logs <pod> --previous"),
