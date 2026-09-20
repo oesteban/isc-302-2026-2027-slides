@@ -248,6 +248,20 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       never found the config and fell back to a built-in default. Check that #raw("kube/config")
       exists and is not empty, and that you are running from the folder that contains #raw("kube").
     ]
+    #v(5pt)
+    #text(size: 8.5pt, weight: "bold")[Write down what that table said.]
+    #v(1pt)
+    #text(size: 8pt)[
+      This is the cluster from step 1, described by the cluster itself. The figures come back
+      in panel 4.
+    ]
+    #v(3pt)
+    #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
+      text(size: 8pt)[NAME], rule(100%),
+      text(size: 8pt)[VERSION], rule(100%),
+      text(size: 8pt)[STATUS], rule(100%),
+      text(size: 8pt)[AGE], rule(100%),
+    )
   ]
 ]
 
@@ -347,7 +361,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     #v(3pt)
     #text(size: 7.8pt, fill: luma(120))[
       Why #raw("ghcr.io/...") spelled out, when step 1 named no registry at all? There is a
-      second copy of this image on Docker Hub, and it does not work on every laptop. Panel 12,
+      second copy of this image on Docker Hub, and it does not work on every laptop. Panel 11,
       the annex, has the answer and a command to check it.
     ]
   ]
@@ -379,7 +393,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       Watch for two minutes. *STATUS* flickers between #raw("Running"), #raw("Completed") and
       #raw("CrashLoopBackOff") — the container only runs for a fraction of a second, so
       #raw("Running") is rarely caught. *RESTARTS* is the column that tells the story: it only
-      ever goes up. Record an early line and a later one in panel 5, then *Ctrl-C*.
+      ever goes up. Record an early line and a later one in panel 4, then *Ctrl-C*.
     ]
     #v(3pt)
     #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
@@ -463,20 +477,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   ]
 ]
 
-#panel("4 · What you started")[
-  #text(size: 8.5pt)[From #raw("kubectl get nodes"):]
-  #v(3pt)
-  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
-    text(size: 8pt)[NAME], rule(100%),
-    text(size: 8pt)[VERSION], rule(100%),
-    text(size: 8pt)[STATUS], rule(100%),
-    text(size: 8pt)[AGE when first Ready], rule(100%),
-  )
-]
-
-#v(5pt)
-
-#panel("5 · Two lines from the watch, and the reason")[
+#panel("4 · Two lines from the watch, and the reason")[
   #grid(columns: (1fr, 1fr), column-gutter: 10pt,
     [
       #text(size: 8pt, weight: "bold")[An early line]
@@ -496,7 +497,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     ])
   #v(6pt)
   #text(size: 8.5pt)[
-    Run #raw("docker ps") on your laptop: compare CONTAINER ID with the NAME in panel 4. \
+    Run #raw("docker ps") on the laptop: compare CONTAINER ID with the NAME written down in step 2. \
 The container did not crash. It printed its whale and exited *successfully*.
     So why is Kubernetes starting it again?
   ]
@@ -541,7 +542,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(5pt)
 
-#panel("6 · What the logs will tell you")[
+#panel("5 · What the logs will tell you")[
   #text(size: 8.5pt)[
     Logs are the first place you look when something is wrong, and they are not
     only for things that are wrong. Try all four, inside the cluster.
@@ -572,7 +573,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panelb("7 · Now use the image you built on Friday")[
+#panelb("6 · Now use the image you built on Friday")[
   #text(size: 8.5pt)[
     Everything so far ran *someone else's* image. Repeat step 2 with your own, the
     one your GitHub Actions workflow published on Friday:
@@ -608,9 +609,9 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("8 · The controller's own account")[
+#panel("7 · The controller's own account")[
   #text(size: 8.5pt)[
-    In panel 5 you read *Last State* from #raw("kubectl describe pod"). The same output ends
+    In panel 4 you read *Last State* from #raw("kubectl describe pod"). The same output ends
     with an *Events* block. Read it, then widen to the whole cluster:
   ]
   #v(2pt)
@@ -631,7 +632,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("9 · Two image stores, one name")[
+#panel("8 · Two image stores, one name")[
   #text(size: 8.5pt)[
     Inside the cluster: #raw("crictl images", lang: "console"). \
     On your laptop, in another terminal: #raw("docker images", lang: "console").
@@ -651,7 +652,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("10 · A wish is not a command")[
+#panel("9 · A wish is not a command")[
   #text(size: 8.5pt)[
     #raw("kubectl scale deployment whale --replicas=5", lang: "console"), wait, then
     #raw("kubectl scale deployment whale --replicas=0", lang: "console"). Count the pods after each.
@@ -677,7 +678,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("11 · Extra mile · satisfy the Deployment instead of abandoning it")[
+#panel("10 · Extra mile · satisfy the Deployment instead of abandoning it")[
   #text(size: 8.5pt)[
     In step 5 you stopped the restarting by changing the *object*. There is a
     second way that leaves it a Deployment: same image, no rebuild, no re-push,
@@ -700,7 +701,7 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(6pt)
 
-#panel("12 · Annex · why the image comes from ghcr.io and not Docker Hub")[
+#panel("11 · Annex · why the image comes from ghcr.io and not Docker Hub")[
   #text(size: 8.5pt)[
     Two copies of this image exist under the same short name, and they are not the same
     thing. Run these two #emph[on the laptop], not in the kubectl container:
