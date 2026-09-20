@@ -477,7 +477,11 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   ]
 ]
 
-#panel("4 · Two lines from the watch, and the reason")[
+#panelb("4 · Why the Deployment kept restarting")[
+  #text(size: 8.5pt, weight: "bold")[Two lines from the watch in step 4.]
+  #v(1pt)
+  #text(size: 8pt)[One copied in the first seconds, one copied about a minute later.]
+  #v(4pt)
   #grid(columns: (1fr, 1fr), column-gutter: 10pt,
     [
       #text(size: 8pt, weight: "bold")[An early line]
@@ -495,46 +499,79 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
         text(size: 8pt)[RESTARTS], rule(100%),
       )
     ])
+  #v(7pt)
+  #text(size: 8.5pt, weight: "bold")[First, where those pods are running.]
+  #v(1pt)
+  #text(size: 8pt)[
+    In step 2 the node came out with a name like #raw("7c19eb7874a1"). Run #raw("docker ps")
+    on the laptop and read the CONTAINER ID column: that node name is the id of the
+    container started in step 1. A real cluster has many machines and has to choose one;
+    this cluster has a single container acting as its one machine, and the three pods are
+    processes inside it.
+  ]
   #v(6pt)
-  #text(size: 8.5pt)[
-    Run #raw("docker ps") on the laptop: compare CONTAINER ID with the NAME written down in step 2. \
-The container did not crash. It printed its whale and exited *successfully*.
-    So why is Kubernetes starting it again?
+  #text(size: 8.5pt, weight: "bold")[Now the question this round is about.]
+  #v(1pt)
+  #text(size: 8pt)[
+    #raw("cowsay") printed its whale and exited. It did not crash: it finished, which for a
+    program is the ordinary way to end. The cluster starts it again anyway, and RESTARTS
+    keeps climbing. Why?
   ]
   #writing(2)
   #v(4pt)
-  #text(size: 8.5pt)[
-    The Job in step 5 used *the same image* and did not do this. What did you
-    change, in one sentence?
+  #text(size: 8pt)[
+    The Job in step 5 ran *the same image* on *the same cluster* and was started exactly
+    once. The image did not change and the cluster did not change, so the difference is
+    something you wrote. What was it?
   ]
   #writing(2)
   #v(4pt)
   #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
     #text(size: 7.8pt)[
-      *If STATUS reads #raw("CrashLoopBackOff"):* that is the status shown while a controller
-      waits before starting a stopped container again. The wait grows — 10s, 20s, 40s,
-      doubling to a five-minute ceiling. It does not mean the container crashed.
+      *On #raw("CrashLoopBackOff") again:* it is the status shown while the cluster waits
+      before starting a stopped container one more time. The wait grows each round, 10s,
+      20s, 40s, doubling up to a five-minute ceiling, which is why the table slows down the
+      longer it is watched. Nothing has crashed and nothing needs fixing.
     ]
   ]
   #v(5pt)
   #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
          stroke: 1pt + accent, fill: rgb("#fff0f6"))[
-    #text(size: 8.5pt, weight: "bold")[Then read what Kubernetes actually claims.]
+    #text(size: 8.5pt, weight: "bold")[Then read the cluster's own account of it.]
     #v(1pt)
     #text(size: 8pt)[
-      #raw("kubectl describe pod <one of them>", lang: "console") and find the block called
-      *Last State*.
+      #raw("get") prints one line per object. #raw("describe") prints everything the cluster
+      knows about *one* object, which for a pod is some fifty lines.
+    ]
+    #v(2pt)
+    #raw("kubectl describe pod whale-544548b554-528fl", lang: "console")
+    #v(2pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      Substitute one of your own pod names from #raw("kubectl get pods"); the random part
+      differs on every laptop.
+    ]
+    #v(3pt)
+    #text(size: 8pt)[
+      About a third of the way down sits a block headed *Last State*. It describes the
+      previous run of the container, the one that has already ended. Copy two of its fields:
     ]
     #v(3pt)
     #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
-      text(size: 8pt)[Exit Code], rule(100%),
       text(size: 8pt)[Reason], rule(100%),
+      text(size: 8pt)[Exit Code], rule(100%),
     )
-    #v(4pt)
+    #v(5pt)
     #text(size: 8pt)[
-      Now read the message beside *State: Waiting*. It contains the words
-      #raw("restarting failed container"). \
-      *Was it a failure?* Reconcile those two lines, in one sentence.
+      Then go to the very bottom of the same output, to the block headed *Events*. One of
+      its lines reads:
+    ]
+    #v(2pt)
+    #raw("Warning  BackOff  ...  Back-off restarting failed container whalesay", lang: "console")
+    #v(3pt)
+    #text(size: 8pt)[
+      Those two parts of one output describe the same container and do not agree about it.
+      Which of them is wrong about what the container did, and what does that tell you
+      about what a Deployment expects of a container?
     ]
     #writing(2)
   ]
@@ -542,27 +579,54 @@ The container did not crash. It printed its whale and exited *successfully*.
 
 #v(5pt)
 
-#panel("5 · What the logs will tell you")[
+#panelb("5 · Reading logs")[
   #text(size: 8.5pt)[
-    Logs are the first place you look when something is wrong, and they are not
-    only for things that are wrong. Try all four, inside the cluster.
+    A container has no screen. Whatever the program inside writes is kept by the cluster,
+    and #raw("kubectl logs") prints it back. Type these with the kubectl from step 2, while
+    the Deployment from step 3 still exists.
   ]
-  #v(4pt)
-  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 5pt, align: (top, top),
+  #v(5pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 6pt, align: (top, top),
+
+    raw("kubectl logs <pod>"),
+    text(size: 8pt)[
+      The plain form. Take a pod name from #raw("kubectl get pods"). Out comes the whale.
+    ],
+
     raw("kubectl logs deploy/whale"),
-    text(size: 8pt)[There are three pods. Which one did it pick, and how do you know?],
-    raw("kubectl logs <pod> --previous"),
-    text(size: 8pt)[The container that *already died*. Why would that ever be the only copy left?],
+    text(size: 8pt)[
+      KIND/NAME, as in step 6. Logs belong to a container and the Deployment has three, so
+      kubectl picks one and admits it on the first line:
+      #raw("Found 3 pods, using pod/whale-…"). Run it twice. \
+      *Does it pick the same pod both times, and is that what you would want?*
+    ],
+
     raw("kubectl logs -l app=whale --prefix"),
-    text(size: 8pt)[All three at once. What does the prefix tell you?],
+    text(size: 8pt)[
+      All three at once. #raw("-l") selects by *label* rather than by name, and step 3
+      stamped #raw("app=whale") on every pod it created. #raw("--prefix") puts
+      #raw("[pod/NAME/CONTAINER]") at the start of each line. \
+      *Take #raw("--prefix") away and the same output becomes useless. Why?*
+    ],
+
     raw("kubectl logs <pod> --timestamps"),
-    text(size: 8pt)[Now you can see *when*. How far apart are the restarts?],
+    text(size: 8pt)[
+      Puts the time each line was written in front of it. Compare the first timestamp with
+      the last one. \
+      *How long did the program take to run, and what does that explain about step 4?*
+    ],
+
+    raw("kubectl logs <pod> --previous"),
+    text(size: 8pt)[
+      The run *before* the current one. Plain #raw("logs") only ever shows the container
+      running now, so once a container is replaced its output is out of reach without this.
+      Here it often answers #raw("unable to retrieve container logs") instead: these pods
+      restart every few seconds and the dead container has already been cleared away. \
+      *When is #raw("--previous") the only command that can answer the question?*
+    ],
   )
   #v(5pt)
-  #text(size: 8.5pt)[
-    A pod is gone and you want to know why. Which of those four do you reach for,
-    and what would you have lost if you had waited an hour?
-  ]
+  #text(size: 8.5pt)[Answer that last one here.]
   #writing(2)
 ]
 
@@ -573,69 +637,100 @@ The container did not crash. It printed its whale and exited *successfully*.
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panelb("6 · Now use the image you built on Friday")[
+#panelb("6 · Run the image you built on Friday")[
   #text(size: 8.5pt)[
-    Everything so far ran *someone else's* image. Repeat step 2 with your own, the
-    one your GitHub Actions workflow published on Friday:
+    Everything so far ran an image belonging to someone else. Now do step 3 again with your
+    own: the one your GitHub Actions workflow pushed on Friday. Replace
+    #raw("<your-handle>") with your GitHub username.
   ]
   #v(2pt)
   #raw("kubectl create deployment mine --image=ghcr.io/<your-handle>/whalesay", lang: "console")
   #v(3pt)
   #text(size: 8pt)[
+    No #raw("--replicas") this time, so the default applies and there is one pod. It will
+    restart for ever, for the reason written in panel 4. That is expected. What is being
+    tested here is only whether the image arrives.
+  ]
+  #v(4pt)
+  #text(size: 8pt)[
     Your handle #box(width: 45mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
-    #h(8pt) Did it pull? #box(width: 20mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+    #h(8pt) Did the pod start? #box(width: 20mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
   ]
   #v(5pt)
   #text(size: 8.5pt)[
-    If it did not, #raw("kubectl describe pod") will name the reason. Write it down,
-    then fix it.
+    If the image never arrived, STATUS reads #raw("ErrImagePull") or
+    #raw("ImagePullBackOff"), and #raw("kubectl describe pod") carries the registry's own
+    message in the *Events* block at the bottom. Write that message down, then fix it.
   ]
   #writing(2)
   #v(4pt)
   #text(size: 8.5pt)[
-    Nobody told the cluster where #raw("ghcr.io") is, and nobody gave it a password.
-    So: what *is* a registry, and what had to be true of your package for this to
-    work at all?
+    A registry is a server that stores images and hands them out over HTTPS. Nobody told
+    the cluster where #raw("ghcr.io") is, and nobody gave it a password, yet it fetched the
+    image. What had to be true of your package for that to work?
   ]
-  #writing(3)
+  #writing(2)
   #v(4pt)
   #text(size: 8.5pt)[
-    On Friday you pushed to *GHCR*. When you type #raw("docker pull alpine") you get
-    an image from *Docker Hub*, and you never type a registry name. Where did that
-    default come from, and what is the full name your #raw("alpine") actually has?
+    #raw("docker pull alpine") names no registry at all and still gets an image. Which
+    registry serves it, and what is the full name that #raw("alpine") is short for?
   ]
   #writing(2)
 ]
 
 #v(6pt)
 
-#panel("7 · The controller's own account")[
+#panel("7 · Read the cluster's event log")[
   #text(size: 8.5pt)[
-    In panel 4 you read *Last State* from #raw("kubectl describe pod"). The same output ends
-    with an *Events* block. Read it, then widen to the whole cluster:
+    Every time the cluster decides something it writes the decision down: this pod goes on
+    that node, this image was pulled and took 510 ms, this container was started, this one
+    is being held back before another try. Those records are called *Events*. They are
+    objects like pods, so #raw("kubectl get") lists them.
   ]
   #v(2pt)
   #raw("kubectl get events --sort-by=.lastTimestamp | tail -8", lang: "console")
-  #v(2pt)
-  #text(size: 7.8pt, fill: luma(120))[
-    #raw("events") is a kind of object like #raw("pods"): the cluster records one every time it
-    decides something. #raw("--sort-by") takes a field of the object, oldest first, so
-    #raw("tail -8") leaves the eight most recent.
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("events"),
+    text(size: 7.8pt)[The kind to list, exactly as #raw("pods") was in step 4. This covers the whole cluster, not one pod.],
+    raw("--sort-by=.lastTimestamp"),
+    text(size: 7.8pt)[Order by a field of the object, oldest first. Without it the order is arbitrary and the list is unreadable.],
+    raw("| tail -8"),
+    text(size: 7.8pt)[Ordinary shell, nothing to do with kubectl: keep the last eight lines, which are now the eight most recent events.],
+  )
+  #v(4pt)
+  #text(size: 8.5pt)[
+    The same events, narrowed to one pod, are the block at the bottom of the
+    #raw("kubectl describe pod") output read in panel 4.
   ]
   #v(4pt)
   #text(size: 8.5pt)[
-    Nobody wrote this log. Who did, and what is it a record of — what you asked for,
-    or what the cluster did about it?
+    Nobody typed any of these lines. Read them and say what they are a record of: the
+    requests you made, or what the cluster did in order to meet them?
   ]
   #writing(2)
 ]
 
 #v(6pt)
 
-#panel("8 · Two image stores, one name")[
+#panel("8 · The cluster has its own image store")[
   #text(size: 8.5pt)[
-    Inside the cluster: #raw("crictl images", lang: "console"). \
-    On your laptop, in another terminal: #raw("docker images", lang: "console").
+    k3s does not use the Docker daemon on the laptop. Inside the #raw("k8s") container it
+    runs a container runtime of its own, *containerd*, which keeps its own copy of every
+    image it pulls. #raw("crictl") is to containerd what #raw("docker") is to Docker, and
+    k3s ships it.
+  ]
+  #v(4pt)
+  #text(size: 8pt)[
+    Both lines below are typed *on the laptop*, in a terminal that is not the kubectl one:
+  ]
+  #v(2pt)
+  #raw("docker exec k8s crictl images     # the cluster's images\ndocker images                     # the laptop's images", lang: "console")
+  #v(3pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    #raw("docker exec k8s ...") runs a command inside the #raw("k8s") container.
+    #raw("crictl") exists only in there, so typing it on the laptop, or in the kubectl
+    container, finds no such command.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
@@ -644,87 +739,106 @@ The container did not crash. It printed its whale and exited *successfully*.
   )
   #v(6pt)
   #text(size: 8.5pt)[
-    Nobody copied anything from your laptop into the cluster. So how did the image
-    get there?
+    Nobody copied anything from the laptop into the cluster, and the two stores share no
+    files. So where did the cluster's copy come from, and what would have happened in
+    step 3 if that image had only ever existed on your laptop?
   ]
   #writing(2)
 ]
 
 #v(6pt)
 
-#panel("9 · A wish is not a command")[
+#panel("9 · Scale the Deployment, then delete a pod")[
   #text(size: 8.5pt)[
-    #raw("kubectl scale deployment whale --replicas=5", lang: "console"), wait, then
-    #raw("kubectl scale deployment whale --replicas=0", lang: "console"). Count the pods after each.
-    #v(2pt)
-    #text(size: 7.8pt, fill: luma(120))[
-      #raw("scale") edits one field of a request that already exists — here #raw("replicas") —
-      rather than creating anything. #raw("deployment whale") is KIND then NAME, the long form
-      of #raw("deploy/whale").
-    ]
+    A Deployment is a stored request, so changing how many pods run means editing the
+    request. Nothing is started or stopped by hand.
   ]
-  #v(4pt)
+  #v(2pt)
+  #raw("kubectl scale deployment whale --replicas=5\nkubectl scale deployment whale --replicas=0", lang: "console")
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("scale"),
+    text(size: 7.8pt)[Edits one field, #raw("replicas"), of an object that already exists. It creates nothing.],
+    raw("deployment whale"),
+    text(size: 7.8pt)[KIND then NAME, written with a space. The long form of #raw("deploy/whale").],
+  )
+  #v(3pt)
+  #text(size: 8pt)[Count the pods with #raw("kubectl get pods") a few seconds after each line.]
+  #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[pods at 5], rule(100%),
     text(size: 8pt)[pods at 0], rule(100%),
   )
   #v(6pt)
-  #text(size: 8.5pt)[
-    Now delete the *Job's* pod: #raw("kubectl delete pod <the job pod>", lang: "console").
-    Does it come back? Does a Deployment's pod come back? Why are the answers different?
+  #text(size: 8.5pt, weight: "bold")[Now delete a pod that something is still asking for, and one that nothing is.]
+  #v(2pt)
+  #raw("kubectl scale deployment whale --replicas=3\nkubectl delete pod <one of the three>\nkubectl delete pod <the Job's pod from step 5>")
+  #v(3pt)
+  #text(size: 8pt)[
+    Then #raw("kubectl get pods") again. One of the two is back within seconds and the
+    other is simply gone. Which is which, and why are the answers different?
   ]
   #writing(2)
 ]
 
 #v(6pt)
 
-#panel("10 · Extra mile · satisfy the Deployment instead of abandoning it")[
+#panel("10 · Extra mile · make the Deployment stop restarting")[
   #text(size: 8.5pt)[
-    In step 5 you stopped the restarting by changing the *object*. There is a
-    second way that leaves it a Deployment: same image, no rebuild, no re-push,
-    sitting at #raw("RESTARTS 0") and #raw("Running"). Write the command.
+    Step 5 stopped the restarting by asking for a different *kind* of object. There is a
+    second way, and it leaves the object a Deployment: same image, nothing rebuilt, nothing
+    re-pushed, and the pods settle at #raw("Running") with #raw("RESTARTS 0").
   ]
-  #writing(2)
   #v(3pt)
   #text(size: 8.5pt)[
-    You have now satisfied a Deployment two ways. Which would you use for a web
-    server, and which for a nightly report?
+    What you already know: the image runs one program and that program ends, and step 5
+    showed how to replace the program a container runs. Delete the Deployment, then create
+    it again with one thing added.
+  ]
+  #v(3pt)
+  #text(size: 8pt, weight: "bold")[Write the command, then run it.]
+  #writing(2)
+  #v(4pt)
+  #text(size: 8.5pt)[
+    There are now two ways to keep this cluster content with this image. Which one fits a
+    web server, and which fits a report that is produced once a night?
   ]
   #writing(2)
-  #v(3pt)
-  #text(size: 7.5pt, fill: luma(130))[
-    No hint. The image runs one program and then stops; nothing says it has to.
-  ]
 ]
 
 #v(8pt)
 
-#v(6pt)
-
 #panel("11 · Annex · why the image comes from ghcr.io and not Docker Hub")[
   #text(size: 8.5pt)[
-    Two copies of this image exist under the same short name, and they are not the same
-    thing. Run these two #emph[on the laptop], not in the kubectl container:
+    Two copies of this image exist, #raw("ghcr.io/oesteban/whalesay") and
+    #raw("oesteban/whalesay"), and they are not the same thing. Run these two #emph[on the
+    laptop], not in the kubectl container:
   ]
   #v(2pt)
-  #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay\ndocker buildx imagetools inspect oesteban/whalesay", lang: "console")
+  #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay\ndocker buildx imagetools inspect oesteban/whalesay")
+  #v(3pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    #raw("imagetools inspect") asks a registry what a name points at, and prints the answer
+    without downloading the image itself.
+  ]
   #v(3pt)
   #text(size: 8.5pt)[
-    The first prints a #raw("Manifests:") list with #raw("Platform: linux/amd64") *and*
-    #raw("Platform: linux/arm64"). The second prints no list at all: one image, #raw("linux/amd64")
-    only.
+    A name in a registry can point at a single image, or at a *list* of images with one
+    entry per CPU architecture. The first command prints such a list, headed
+    #raw("Manifests:"), with #raw("Platform: linux/amd64") *and* #raw("Platform: linux/arm64").
+    The second prints no list at all: one image, #raw("linux/amd64") only.
   ]
   #v(3pt)
   #text(size: 8.5pt)[
     An Apple Silicon Mac runs an *arm64* Linux VM, and the containerd inside k3s has no
     emulation to fall back on. The Docker Hub copy would fail there with
-    #raw("exec format error") and the pod would never start. The GHCR copy was built for both
-    architectures by GitHub Actions on Friday.
+    #raw("exec format error") and the pod would never start. The GHCR copy was built for
+    both architectures by GitHub Actions on Friday.
   ]
   #v(3pt)
   #text(size: 8.5pt)[
-    *On Linux or Windows, on Intel or AMD,* the Docker Hub copy is fine. Check the manifests
-    above, then run it alongside:
+    *On Linux or Windows, on an Intel or AMD processor,* the Docker Hub copy is fine. Check
+    the manifests above, then run it alongside:
   ]
   #v(2pt)
   #raw("kubectl create deployment hub --image=oesteban/whalesay --replicas=1", lang: "console")
