@@ -222,9 +222,9 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       #text(size: 8.5pt, weight: "bold")[Either way, you are outside the cluster.]
       #v(1pt)
       #text(size: 8pt)[
-        Nothing from here on is typed *inside* the cluster. That is the normal arrangement:
-        the cluster is one thing, the client is another, and they meet over one HTTPS
-        address. Which did you pick, (a) or (b)?
+        Nothing from here on is typed *inside* the cluster. The cluster is one program and
+        the client is another, and the only thing joining them is the address in
+        #raw("kube/config"). Which did you pick, (a) or (b)?
         #box(width: 12mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
       ]
     ]
@@ -280,14 +280,15 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 
     text(size: 8.5pt, weight: "bold")[Deployment],
     text(size: 8pt)[
-      *A request, in writing.* This one says: #emph[keep three pods of
-      #raw("ghcr.io/oesteban/whalesay") running]. Submitting it starts nothing. It records
-      what should be true.
+      *A written request, saved inside the cluster.* This one says: #emph[three pods of
+      #raw("ghcr.io/oesteban/whalesay"), running]. #raw("kubectl create deployment") starts no
+      container: it sends the request, the cluster stores it, and the command returns. The
+      pods show up a moment later, put there by something else.
     ],
 
     text(size: 8.5pt, weight: "bold")[controller],
     text(size: 8pt)[
-      *The program inside the cluster that makes the request true.* It reads the Deployment
+      *The program inside the cluster that acts on the stored request.* It reads the Deployment
       (three wanted), counts the pods that exist (two), starts one. A second later it counts
       again, and it never stops counting. \
       Hence a deleted pod reappears: the pod was removed, the request was not.
