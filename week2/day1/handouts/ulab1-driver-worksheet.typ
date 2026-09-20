@@ -246,53 +246,57 @@
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
+
     text(size: 8.5pt, weight: "bold")[kubectl],
     text(size: 8pt)[
-      The cluster's command-line client. All commands it has, such as #raw("kubectl get"),
-      send an HTTPS request to the cluster's API at (#raw("https://127.0.0.1:6443"))
-      
-      It does almost nothing itself: it turns what you
-      type into a request, sends it to the *API server* inside the container, and prints
-      the reply. When you "create" something, all that happens is that the cluster writes
-      down what you asked for.
+      The program you type commands into. It runs nothing itself: it turns each command
+      into an HTTPS request to #raw("https://127.0.0.1:6443") and prints the reply. It is the
+      same split as the #raw("docker") command and the Docker daemon — one is the thing you
+      type, the other is the thing that does it.
     ],
-    text(size: 8.5pt, weight: "bold")[controller],
-    text(size: 8pt)[
-      A loop that runs inside the cluster, forever. It compares *what you wrote down*
-      against *what actually exists*, and acts on the difference. You never call it and it
-      never finishes. This is the part that does the work.
-    ],
+
     text(size: 8.5pt, weight: "bold")[pod],
     text(size: 8pt)[
-      The smallest thing the cluster runs: one or more containers placed together and
-      sharing one address. *You will not create a pod.* A controller creates them, because
-      of something you wrote down.
+      *A running container, as Kubernetes counts it.* On Friday #raw("docker run") gave you a
+      container; here you get a pod, with the container inside it. (A pod can hold two or
+      three containers that must sit on the same machine and share one IP address. Today
+      each of yours holds one.) *You never start a pod yourself.*
     ],
+
     text(size: 8.5pt, weight: "bold")[Deployment],
     text(size: 8pt)[
-      Something you write down that says: *this many pods of this image should be running,
-      always*. Its controller creates them, and replaces any that stop — whatever the
-      reason, including finishing successfully.
+      *A request you hand in, in writing.* Yours says: #emph[keep three pods of
+      #raw("ghcr.io/oesteban/whalesay") running]. That is all it is. Handing it in starts
+      nothing; it only records what you want.
     ],
+
+    text(size: 8.5pt, weight: "bold")[controller],
+    text(size: 8pt)[
+      *The program inside the cluster that makes your request true.* It reads your
+      Deployment (three wanted), counts the pods that exist (say two), and starts one. A
+      second later it counts again. It never stops counting. \
+      That is why a pod you delete comes straight back: you removed a pod, but you did not
+      change the request.
+    ],
+
     text(size: 8.5pt, weight: "bold")[Job],
     text(size: 8pt)[
-      Something you write down that says: *run this image once, until it exits 0*. Its
-      controller creates one pod, waits for it to succeed, and stops. Nothing is replaced.
+      *A different request in writing:* #emph[run this image once, until it finishes]. Its
+      controller starts one pod, waits for it to exit successfully, and then stops. It does
+      not replace it.
     ],
   )
   #v(5pt)
   #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt, fill: luma(245))[
     #text(size: 8pt)[
-      One more, because you will see it on screen: *CrashLoopBackOff*. When a Deployment's
-      pod keeps stopping, the controller does not retry at full speed forever. It waits
-      10s, then 20s, then 40s, doubling up to five minutes between attempts. The name is
-      misleading: it does not mean the container crashed. It means *it stopped again, and I
-      am waiting a while before the next try*.
+      One more, because it will be on your screen: *CrashLoopBackOff*. Your whale prints and
+      exits, so the controller keeps starting it again. It slows down as it goes — 10s, then
+      20s, then 40s, doubling up to five minutes between tries — and while it is waiting,
+      that is the word it shows. It does *not* mean the container crashed. It means
+      #emph[it stopped again and I am waiting a bit before the next try].
     ]
   ]
 ]
-
-#v(5pt)
 
 #panelb("3 · Drive the cluster · steps 3 to 6")[
   #text(size: 8.5pt, weight: "bold", fill: accent)[
