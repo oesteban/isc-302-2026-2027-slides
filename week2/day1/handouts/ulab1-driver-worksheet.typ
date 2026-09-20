@@ -199,8 +199,22 @@
     )
     #v(3pt)
     #text(size: 8pt)[
-      Type plain #raw("kubectl") from here. Prove where you are: #raw("command -v k3s") finds
-      nothing, because there is no cluster in this container — only a client.
+      From this prompt, commands are typed as plain #raw("kubectl"), with no #raw("docker")
+      in front.
+    ]
+    #v(3pt)
+    #text(size: 8pt)[
+      There are now *two containers running*, and a second terminal shows both:
+    ]
+    #v(2pt)
+    #raw("docker ps
+NAMES    IMAGE                       STATUS
+client   alpine/kubectl              Up 2 seconds
+k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
+    #v(2pt)
+    #text(size: 8pt)[
+      One is the cluster, one is the client. Leaving the client stops only the client:
+      #raw("--rm") deletes it, and the cluster carries on without it.
     ]
     #v(4pt)
     #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
