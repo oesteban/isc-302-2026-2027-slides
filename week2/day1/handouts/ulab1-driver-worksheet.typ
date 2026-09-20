@@ -256,60 +256,57 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 #panel("2 · Some definitions")[
   #text(size: 8.5pt)[
     Step 1 produced a Kubernetes cluster inside one container. Step 2 produced a
-    #raw("kubectl") outside it that can reach the cluster's API. These are the words the
-    next four steps use.
+    #raw("kubectl") outside it that can reach the cluster's API. Steps 3 to 6 use the words
+    below.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
 
     text(size: 8.5pt, weight: "bold")[kubectl],
     text(size: 8pt)[
-      The cluster's command-line client. It runs nothing itself: each command becomes an
-      HTTPS request to #raw("https://127.0.0.1:6443"), and the reply is printed. The same
-      split as the #raw("docker") command and the Docker daemon — one is typed, the other
-      does the work.
+      The cluster's command-line client. It runs nothing itself: every command becomes an
+      HTTPS request to the cluster's API, and the reply is printed. The same split as the
+      #raw("docker") command and the Docker daemon — one is typed, the other does the work.
     ],
 
     text(size: 8.5pt, weight: "bold")[pod],
     text(size: 8pt)[
       *A running container, as Kubernetes counts it.* #raw("docker run") produces a
       container; Kubernetes produces a pod, with the container inside it. A pod may hold
-      two or three containers that must share a machine and a single IP address; here, each
-      holds one. *Pods are never created directly.*
+      several containers that have to share one machine and one IP address, but holding a
+      single container is the ordinary case. *Pods are never created directly.*
     ],
 
     text(size: 8.5pt, weight: "bold")[Deployment],
     text(size: 8pt)[
-      *A written request, saved inside the cluster.* This one says: #emph[three pods of
-      #raw("ghcr.io/oesteban/whalesay"), running]. #raw("kubectl create deployment") starts no
-      container: it sends the request, the cluster stores it, and the command returns. The
-      pods show up a moment later, put there by something else.
+      *A written request, stored by the cluster,* of the form #emph[keep N copies of image X
+      running]. Creating one starts no container: the request is sent, the cluster saves it,
+      and the command returns. Pods appear a moment later, started by something else.
     ],
 
     text(size: 8.5pt, weight: "bold")[controller],
     text(size: 8pt)[
-      *The program inside the cluster that acts on the stored request.* It reads the Deployment
-      (three wanted), counts the pods that exist (two), starts one. A second later it counts
-      again, and it never stops counting. \
-      Hence a deleted pod reappears: the pod was removed, the request was not.
+      *The program inside the cluster that acts on a stored request.* Given a Deployment
+      asking for three copies, it counts the pods that exist, finds two, and starts one. A
+      second later it counts again, and it never stops counting. \
+      This is why a deleted pod comes back: the pod was removed, the request was not.
     ],
 
     text(size: 8.5pt, weight: "bold")[Job],
     text(size: 8pt)[
-      *A different request:* #emph[run this image once, until it finishes]. Its controller
-      starts one pod, waits for a successful exit, and stops. Nothing is replaced.
+      *A different stored request:* #emph[run image X once, until it finishes]. Its
+      controller starts one pod, waits for a successful exit, and stops. Nothing is
+      replaced.
+    ],
+
+    text(size: 8.5pt, weight: "bold")[CrashLoopBackOff],
+    text(size: 8pt)[
+      *A pod status,* shown when a container keeps stopping and a controller keeps starting
+      it again. The wait between attempts grows: 10s, then 20s, then 40s, doubling to a
+      five-minute ceiling. It does *not* mean the container crashed — only that it stopped
+      again, and the next attempt has not happened yet.
     ],
   )
-  #v(5pt)
-  #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt, fill: luma(245))[
-    #text(size: 8pt)[
-      One more, because it appears on screen: *CrashLoopBackOff*. The whale prints and exits,
-      so the controller starts it again. The interval grows — 10s, then 20s, then 40s,
-      doubling to a five-minute ceiling — and during the wait, this is the status shown. It
-      does *not* mean the container crashed. It means #emph[stopped again, waiting before
-      the next attempt].
-    ]
-  ]
 ]
 
 #panelb("3 · Drive the cluster · steps 3 to 6")[
