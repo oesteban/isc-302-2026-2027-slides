@@ -237,6 +237,12 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
       matter: *STATUS*, what the pod is doing right now, and *RESTARTS*, how many
       times the container inside it has been started again.
     ]
+    #v(2pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      Take the two readings *early*. Kubernetes waits longer before each retry —
+      10s, 20s, 40s, and so on up to a five-minute cap — so an hour in, two readings
+      a minute apart can show the same number and tell you nothing.
+    ]
   ]
   #v(4pt)
   #step("5", "Ask for the same image to run once, instead of forever")[
@@ -304,6 +310,28 @@ The container did not crash. It printed its whale and exited *successfully*.
     change, in one sentence?
   ]
   #writing(2)
+  #v(5pt)
+  #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
+         stroke: 1pt + accent, fill: rgb("#fff0f6"))[
+    #text(size: 8.5pt, weight: "bold")[Then read what Kubernetes actually claims.]
+    #v(1pt)
+    #text(size: 8pt)[
+      #raw("kubectl describe pod <one of them>", lang: "console") and find the block called
+      *Last State*.
+    ]
+    #v(3pt)
+    #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
+      text(size: 8pt)[Exit Code], rule(100%),
+      text(size: 8pt)[Reason], rule(100%),
+    )
+    #v(4pt)
+    #text(size: 8pt)[
+      Now read the message beside *State: Waiting*. It contains the words
+      #raw("restarting failed container"). \
+      *Was it a failure?* Reconcile those two lines, in one sentence.
+    ]
+    #writing(2)
+  ]
 ]
 
 #v(5pt)
@@ -370,27 +398,22 @@ The container did not crash. It printed its whale and exited *successfully*.
     an image from *Docker Hub*, and you never type a registry name. Where did that
     default come from, and what is the full name your #raw("alpine") actually has?
   ]
-  #writing(3)
+  #writing(2)
 ]
 
 #v(6pt)
 
-#panel("7 · Make the cluster explain itself")[
+#panel("7 · The controller's own account")[
   #text(size: 8.5pt)[
-    The node's NAME is not a hostname anybody chose. Where does
-    it come from, and what does that tell you about what a "node" is here?
+    In panel 4 you read *Last State* from #raw("kubectl describe pod"). The same output ends
+    with an *Events* block. Read it, then widen to the whole cluster:
   ]
-  #writing(2)
+  #v(2pt)
+  #raw("kubectl get events --sort-by=.lastTimestamp | tail -8", lang: "console")
   #v(4pt)
   #text(size: 8.5pt)[
-    #raw("kubectl describe pod <one of the whale pods>", lang: "console") and read the
-    *Events* block at the very bottom. Copy the two most recent event lines.
-  ]
-  #writing(2)
-  #v(3pt)
-  #text(size: 8.5pt)[
-    Then #raw("kubectl get events --sort-by=.lastTimestamp | tail -5", lang: "console").
-    Whose account of the morning is this — yours, or the controller's?
+    Nobody wrote this log. Who did, and what is it a record of — what you asked for,
+    or what the cluster did about it?
   ]
   #writing(2)
 ]
