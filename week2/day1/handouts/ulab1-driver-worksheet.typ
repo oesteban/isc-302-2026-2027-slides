@@ -267,11 +267,11 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 
 #v(5pt)
 
-#panel("2 · Some definitions")[
+#panelb("2 · Some definitions")[
   #text(size: 8.5pt)[
     Step 1 produced a Kubernetes cluster inside one container. Step 2 produced a
     #raw("kubectl") outside it that can reach the cluster's API. Steps 3 to 6 use the words
-    below.
+    below, and so does every question in panels 4 to 9. Come back here.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
@@ -296,13 +296,32 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
 
     text(size: 8.5pt, weight: "bold")[Deployment],
     text(size: 8pt)[
-      *A written request, stored by the cluster,* of the form #emph[keep N pods of image X
-      running]. Creating one starts no container: the request is sent, the cluster saves it,
-      and the command returns. The pods appear a moment later, started by something else. \
+      *Kubernetes' object for a service: something meant to be up.* It is a written request,
+      stored by the cluster, of the form #emph[keep N pods of image X running]. Creating one
+      starts no container: the request is sent, the cluster saves it, and the command
+      returns. The pods appear a moment later, started by something else. \
       Why request it rather than start it? On a real cluster there are many machines, and
       picking one by hand would mean tracking which has room. Worse, machines and processes
       fail: a container started by hand stays dead, while a request that is stored can go on
       being satisfied after the failure.
+    ],
+
+    text(size: 8.5pt, weight: "bold")[Job],
+    text(size: 8pt)[
+      *Kubernetes' object for a task: something meant to finish.* The stored request reads
+      #emph[run image X once, until it exits successfully]. One pod is started, its exit is
+      waited for, and nothing is replaced.
+    ],
+
+    text(size: 8.5pt, weight: "bold")[restartPolicy],
+    text(size: 8pt)[
+      *The field that says what to do when a container stops* — and the one field that
+      separates the two objects above. A Deployment's pods get #raw("Always"); a Job's pods
+      get #raw("Never"). Neither is ever typed: the kind that was asked for fills it in. \
+      #raw("Always") does *not* mean #emph[on failure]. It means #emph[whenever this
+      container is not running, start it]. The exit code is not consulted, because a service
+      that has stopped is not serving, whatever it thought it was doing. \
+      Panel 4 reads this field off a running pod.
     ],
 
     text(size: 8.5pt, weight: "bold")[controller],
@@ -311,15 +330,27 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       until they are met.* Take a Deployment that says three pods. The controller counts the
       pods that exist. Two, so it starts one. Four, and it would stop one. Then it counts
       again, and it keeps counting for as long as the request is stored. \
-      This is why a deleted pod comes back: deleting a pod changes the count, not the
-      request.
+      This is why a *deleted pod* comes back: deleting a pod changes the count, not the
+      request. Note what a controller works on: whole pods.
     ],
 
-    text(size: 8.5pt, weight: "bold")[Job],
+    text(size: 8.5pt, weight: "bold")[kubelet],
     text(size: 8pt)[
-      *A different stored request:* #emph[run image X once, until it finishes]. Its
-      controller starts one pod, waits for a successful exit, and stops. Nothing is
-      replaced.
+      *The part of Kubernetes that runs on each machine* and does the actual starting and
+      stopping of containers there. It works one level below the controller: not on pods,
+      but on the containers inside a pod that already exists. When a container stops, the
+      kubelet is what consults #raw("restartPolicy") and starts it again — same pod, same
+      name, same node. \
+      So there are two loops, and they are easy to confuse. The kubelet restarts a
+      *container* in place, and RESTARTS goes up. A controller replaces a whole *pod*, and a
+      new name appears with RESTARTS back at 0. Panel 4 is the first, panel 9 the second.
+    ],
+
+    text(size: 8.5pt, weight: "bold")[scheduler],
+    text(size: 8pt)[
+      *The program that decides which machine a new pod goes to.* With one machine there is
+      nothing to decide, but it still runs and still says so. It appears in panel 7 under the
+      name #raw("default-scheduler").
     ],
   )
 ]
@@ -510,19 +541,49 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     processes inside it.
   ]
   #v(6pt)
+  #text(size: 8.5pt, weight: "bold")[Second, notice what did *not* change.]
+  #v(1pt)
+  #text(size: 8pt)[
+    Compare the two lines written above. RESTARTS climbed — did the pod NAME change? It did
+    not, so nothing was replaced: the same pod stayed where it was and the container inside
+    it was started again. That is the *kubelet* in panel 2, not a controller. Panel 9 is
+    about the other loop, where a whole pod really is replaced.
+  ]
+  #v(6pt)
+  #text(size: 8.5pt, weight: "bold")[Third, read the one field that decides all of this.]
+  #v(1pt)
+  #text(size: 8pt)[
+    #raw("-o jsonpath=...") prints a single field of an object instead of the whole table;
+    #raw(".spec.restartPolicy") is the path to the field inside it. Put the same question to
+    a pod of each kind:
+  ]
+  #v(2pt)
+  #raw("kubectl get pod <one of the three> -o jsonpath='{.spec.restartPolicy}'\nkubectl get pod <the Job's pod>     -o jsonpath='{.spec.restartPolicy}'", block: true)
+  #v(3pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
+    text(size: 8pt)[Deployment's pod], rule(100%),
+    text(size: 8pt)[Job's pod], rule(100%),
+  )
+  #v(2pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    Neither value was typed in step 3 or step 5. The kind that was asked for put it there.
+  ]
+  #v(6pt)
   #text(size: 8.5pt, weight: "bold")[Now the question this round is about.]
   #v(1pt)
   #text(size: 8pt)[
     #raw("cowsay") printed its whale and exited. It did not crash: it finished, which for a
     program is the ordinary way to end. The cluster starts it again anyway, and RESTARTS
-    keeps climbing. Why?
+    keeps climbing. \
+    Using the two values just written down and the entry for #raw("restartPolicy") in
+    panel 2, say why.
   ]
   #writing(2)
   #v(4pt)
   #text(size: 8pt)[
     The Job in step 5 ran *the same image* on *the same cluster* and was started exactly
     once. The image did not change and the cluster did not change, so the difference is
-    something you wrote. What was it?
+    something you wrote. What was it, and which field did it set for you?
   ]
   #writing(2)
   #v(4pt)
@@ -569,9 +630,11 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     #raw("Warning  BackOff  ...  Back-off restarting failed container whalesay", lang: "console")
     #v(3pt)
     #text(size: 8pt)[
-      Those two parts of one output describe the same container and do not agree about it.
-      Which of them is wrong about what the container did, and what does that tell you
-      about what a Deployment expects of a container?
+      Those two parts of one output describe the same container and do not agree about it:
+      one says *Completed*, the other says *failed*. \
+      Panel 2 defines a Deployment as the object for something *meant to be up*. Read from
+      there: which of the two words is wrong, and from a Deployment's point of view, is it
+      wrong at all?
     ]
     #writing(2)
   ]
@@ -597,8 +660,10 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     text(size: 8pt)[
       KIND/NAME, as in step 6. Logs belong to a container and the Deployment has three, so
       kubectl picks one and admits it on the first line:
-      #raw("Found 3 pods, using pod/whale-…"). Run it twice. \
-      *Does it pick the same pod both times, and is that what you would want?*
+      #raw("Found 3 pods, using pod/whale-…"). Run it twice: the same pod answers both
+      times. \
+      *Now suppose only one of the three pods is misbehaving. What is the risk in letting
+      kubectl choose for you?*
     ],
 
     raw("kubectl logs -l app=whale --prefix"),
@@ -606,14 +671,17 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       All three at once. #raw("-l") selects by *label* rather than by name, and step 3
       stamped #raw("app=whale") on every pod it created. #raw("--prefix") puts
       #raw("[pod/NAME/CONTAINER]") at the start of each line. \
-      *Take #raw("--prefix") away and the same output becomes useless. Why?*
+      *Run it once with #raw("--prefix") and once without. Three whales arrive either way.
+      Name a question the prefixed output answers and the bare one cannot.*
     ],
 
     raw("kubectl logs <pod> --timestamps"),
     text(size: 8pt)[
-      Puts the time each line was written in front of it. Compare the first timestamp with
-      the last one. \
-      *How long did the program take to run, and what does that explain about step 4?*
+      Puts the time each line was written in front of it. Subtract the first timestamp from
+      the last: that is how long the program took, and the interesting digits are after the
+      decimal point. \
+      *Compare it with the two seconds between redraws in step 4. Why was #raw("Running")
+      never on screen?*
     ],
 
     raw("kubectl logs <pod> --previous"),
@@ -622,11 +690,13 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
       running now, so once a container is replaced its output is out of reach without this.
       Here it often answers #raw("unable to retrieve container logs") instead: these pods
       restart every few seconds and the dead container has already been cleared away. \
-      *When is #raw("--previous") the only command that can answer the question?*
+      *So the cluster keeps the last run, sometimes, for a while. If a container's output
+      were the only record of why it stopped, what would that mean for a cluster you
+      actually depended on?*
     ],
   )
   #v(5pt)
-  #text(size: 8.5pt)[Answer that last one here.]
+  #text(size: 8.5pt)[Answer that last one here. It is the reason log collection exists.]
   #writing(2)
 ]
 
@@ -667,13 +737,18 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #text(size: 8.5pt)[
     A registry is a server that stores images and hands them out over HTTPS. Nobody told
     the cluster where #raw("ghcr.io") is, and nobody gave it a password, yet it fetched the
-    image. What had to be true of your package for that to work?
+    image. \
+    Open your package's page on GitHub — your profile, then *Packages*. One setting there
+    is the answer. Which, and what would the pod have done if it were set the other way?
   ]
   #writing(2)
   #v(4pt)
   #text(size: 8.5pt)[
-    #raw("docker pull alpine") names no registry at all and still gets an image. Which
-    registry serves it, and what is the full name that #raw("alpine") is short for?
+    #raw("docker pull alpine") names no registry at all and still gets an image. A full
+    image name has three parts before the tag: *registry / namespace / repository*.
+    #raw("ghcr.io/oesteban/whalesay") has all three written out. \
+    Write #raw("alpine") out the same way. Panel 8 lists image names in full, and the
+    #raw("rancher") ones there show the pattern.
   ]
   #writing(2)
 ]
@@ -702,6 +777,12 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #text(size: 8.5pt)[
     The same events, narrowed to one pod, are the block at the bottom of the
     #raw("kubectl describe pod") output read in panel 4.
+  ]
+  #v(4pt)
+  #text(size: 8.5pt)[
+    The *From* column names who wrote each line, and both names are defined in panel 2:
+    #raw("default-scheduler") chose the machine, #raw("kubelet") did the work on it. The
+    #raw("BackOff") lines are the kubelet's, which is consistent with panel 4.
   ]
   #v(4pt)
   #text(size: 8.5pt)[
@@ -740,8 +821,9 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #v(6pt)
   #text(size: 8.5pt)[
     Nobody copied anything from the laptop into the cluster, and the two stores share no
-    files. So where did the cluster's copy come from, and what would have happened in
-    step 3 if that image had only ever existed on your laptop?
+    files. So where did the cluster's copy come from? One line of the event log in panel 7
+    says it outright, with a duration. \
+    And what would step 3 have done if that image had only ever existed on your laptop?
   ]
   #writing(2)
 ]
@@ -772,11 +854,14 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #v(6pt)
   #text(size: 8.5pt, weight: "bold")[Now delete a pod that something is still asking for, and one that nothing is.]
   #v(2pt)
-  #raw("kubectl scale deployment whale --replicas=3\nkubectl delete pod <one of the three>\nkubectl delete pod <the Job's pod from step 5>")
+  #raw("kubectl scale deployment whale --replicas=3\nkubectl delete pod <one of the three>\nkubectl delete pod <the Job's pod from step 5>", block: true)
   #v(3pt)
   #text(size: 8pt)[
     Then #raw("kubectl get pods") again. One of the two is back within seconds and the
-    other is simply gone. Which is which, and why are the answers different?
+    other is simply gone. Which is which? \
+    Panel 2 has the answer in two places: what a *controller* counts, and what each of the
+    two stored requests actually asks for. Note that the replacement arrives with a *new
+    name* and RESTARTS back at 0 — this is the second loop, not the kubelet's.
   ]
   #writing(2)
 ]
@@ -815,7 +900,7 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
     laptop], not in the kubectl container:
   ]
   #v(2pt)
-  #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay\ndocker buildx imagetools inspect oesteban/whalesay")
+  #raw("docker buildx imagetools inspect ghcr.io/oesteban/whalesay\ndocker buildx imagetools inspect oesteban/whalesay", block: true)
   #v(3pt)
   #text(size: 7.8pt, fill: luma(120))[
     #raw("imagetools inspect") asks a registry what a name points at, and prints the answer
@@ -844,9 +929,16 @@ k8s      rancher/k3s:v1.36.4-k3s1    Up 4 minutes", lang: "console")
   #raw("kubectl create deployment hub --image=oesteban/whalesay --replicas=1", lang: "console")
   #v(3pt)
   #text(size: 8.5pt)[
-    Which architecture is this laptop?
-    #box(width: 35mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+    Which architecture is this laptop? Ask Docker, not the shell — on a Mac the two answer
+    differently, and it is Docker's Linux VM that runs the image:
   ]
+  #v(2pt)
+  #raw("docker version --format '{{.Server.Arch}}'")
+  #v(3pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
+    text(size: 8pt)[Architecture], rule(100%),
+    text(size: 8pt)[Docker Hub copy runs?], rule(100%),
+  )
 ]
 
 #v(8pt)
