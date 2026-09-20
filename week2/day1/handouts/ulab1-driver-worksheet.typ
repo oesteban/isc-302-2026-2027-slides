@@ -59,6 +59,15 @@
   #body
 ]
 
+#let panelb(title, body) = block(
+  width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, breakable: true,
+  stroke: (top: 1.4pt + accent, rest: hair),
+)[
+  #lbl(title)
+  #v(3pt)
+  #body
+]
+
 #let writing(n) = {
   for _ in range(n) {
     block(width: 100%, height: 15pt, above: 3pt, below: 0pt, stroke: (bottom: hair))[]
@@ -118,67 +127,76 @@
 #v(5pt)
 
 // ══ CORE — ten minutes ════════════════════════════════════════════════════
-#panel("1 · Start the cluster · steps 1 and 2")[
+#panelb("1 · Start the cluster, then get a client · steps 1 and 2")[
   #step("1", "Create a container that is a Kubernetes cluster")[
-    #raw("docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 rancher/k3s:v1.31.5-k3s1 server --disable=traefik", lang: "console")
+    #raw("mkdir kube\ndocker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 -v \"$PWD/kube:/output\" \\\n  rancher/k3s:v1.36.4-k3s1 server --disable=traefik \\\n  --write-kubeconfig /output/config --write-kubeconfig-mode 644", lang: "console")
     #v(3pt)
     #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
       raw("-d"),
       text(size: 7.8pt)[Detached. It runs in the background and you get your prompt back.],
       raw("--name k8s"),
-      text(size: 7.8pt)[A name of your choosing. Without it, Docker still identifies the container,
-        but by its id: \
-        #raw("8d7726f96f7475544440565a92a034cda1f767726619081595bab18cfdf76987") \
-        Every later command would have to carry that, or its short form #raw("8d7726f96f74").
-        #raw("k8s") is easier to type and easier to get right.],
+      text(size: 7.8pt)[A name of your choosing. Without it Docker still identifies the container, but by its id:
+        #raw("8d7726f96f7475544440565a92a034cda1f767726619081595bab18cfdf76987").
+        Every later command would have to carry that, or its short form #raw("8d7726f96f74").],
       raw("--privileged"),
       text(size: 7.8pt)[Lifts the usual restrictions. k3s mounts cgroups and runs *its own* container runtime inside this container.],
       raw("--tmpfs /run"),
-      text(size: 7.8pt)[Two small writable in-memory filesystems that k3s needs (also #raw("/var/run")).],
+      text(size: 7.8pt)[Two small writable in-memory filesystems k3s needs (also #raw("/var/run")).],
       raw("-p 6443:6443"),
-      text(size: 7.8pt)[*HOST:CONTAINER.* Port 6443 #emph[on your laptop] is forwarded to port 6443 #emph[inside the container]. The left one is yours, the right one is the container's. 6443 is where the Kubernetes API server listens.],
-      raw("rancher/k3s:v1.31.5-k3s1"),
-      text(size: 7.8pt)[The image. #raw("rancher/k3s") is the repository, #raw("v1.31.5-k3s1") is the tag. You named no registry, so Docker went to *Docker Hub* and fetched it from there.],
+      text(size: 7.8pt)[*HOST:CONTAINER.* Port 6443 #emph[on your laptop] is forwarded to 6443 #emph[inside the container]. 6443 is where the cluster's *API server* listens, and step 2 is going to talk to it.],
+      raw("-v \"$PWD/kube:/output\""),
+      text(size: 7.8pt)[Bind-mounts your new #raw("kube") folder into the container, so a file written there lands on your laptop.],
+      raw("rancher/k3s:v1.36.4-k3s1"),
+      text(size: 7.8pt)[The image. #raw("rancher/k3s") is the repository, #raw("v1.36.4-k3s1") the tag. You named no registry, so Docker went to *Docker Hub*.],
       raw("server"),
-      text(size: 7.8pt)[*Not a docker flag.* Everything after the image name is the command handed to the program inside. #raw("server") tells k3s to be the control plane.],
+      text(size: 7.8pt)[*Not a docker flag.* Everything after the image name is the command handed to the program inside. #raw("server") tells k3s to be the cluster.],
       raw("--disable=traefik"),
-      text(size: 7.8pt)[Also k3s's, not docker's. Traefik is an *ingress controller*: it routes HTTP arriving from outside to services inside. It claims ports 80 and 443 and adds startup time, and nothing today arrives from outside.],
+      text(size: 7.8pt)[Also k3s's. Traefik is an *ingress controller*: it routes HTTP arriving from outside to services inside. It claims ports 80 and 443 and adds startup time; nothing today arrives from outside.],
+      raw("--write-kubeconfig"),
+      text(size: 7.8pt)[Writes the cluster's address and credentials to #raw("/output/config"), which is your #raw("kube/config"). #raw("-mode 644") makes it readable without #raw("sudo").],
     )
-  ]
-  #v(5pt)
-  #step("2", "Step inside the container you just made")[
-    #raw("docker exec -it k8s sh", lang: "console")
-    #v(2pt)
-    #text(size: 8pt)[
-      #raw("-i") keeps the input open, #raw("-t") gives you a terminal. Together they get you an
-      *interactive shell running inside that container* — not on your laptop. Your
-      prompt changes; that is the sign.
-    ]
     #v(3pt)
     #text(size: 8pt)[
-      Prove it before you go on. Type #raw("hostname") and write down what it says:
-      #box(width: 40mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
+      After a few seconds #raw("kube/config") exists on your laptop. Open it. One line reads
+      #raw("server: https://127.0.0.1:6443") — that is the only address anything will need.
     ]
+  ]
+  #v(5pt)
+  #step("2", "Get a kubectl, and point it at that address")[
+    #text(size: 8pt)[
+      #raw("kubectl") is *not part of the cluster*. It is an ordinary program that sends HTTPS
+      requests to the address above, so it can live anywhere. Pick one.
+    ]
+    #v(4pt)
+    #text(size: 8.5pt, weight: "bold")[(a) On Linux — install it on your laptop]
+    #v(1pt)
+    #raw("sudo snap install kubectl --classic\nexport KUBECONFIG=$PWD/kube/config\nkubectl get nodes", lang: "console")
     #v(2pt)
     #text(size: 7.8pt, fill: luma(120))[
-      Keep that value. It comes back in panel 4, and it is not a coincidence.
-      #raw("exit") leaves the shell; the container keeps running without you.
+      It reaches the cluster through the port you published in step 1. This is exactly how
+      you would drive a real cluster from your own machine.
+    ]
+    #v(4pt)
+    #text(size: 8.5pt, weight: "bold")[(b) Anywhere, including macOS and Windows — run kubectl in its own container]
+    #v(1pt)
+    #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD/kube:/kube:ro\" -e KUBECONFIG=/kube/config \\\n  --entrypoint sh alpine/kubectl", lang: "console")
+    #v(2pt)
+    #text(size: 7.8pt, fill: luma(120))[
+      A shell in a *second, separate* container holding nothing but kubectl.
+      #raw("--network container:k8s") lets it reach the first container's #raw("127.0.0.1:6443").
+      Type plain #raw("kubectl") from here. Prove where you are: #raw("command -v k3s") finds
+      nothing, because there is no cluster in this container — only a client.
     ]
     #v(4pt)
     #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
            stroke: 1pt + accent, fill: rgb("#fff0f6"))[
-      #text(size: 8.5pt, weight: "bold")[Do not close this shell.]
+      #text(size: 8.5pt, weight: "bold")[Either way, you are outside the cluster.]
       #v(1pt)
       #text(size: 8pt)[
-        Steps 3 to 6 and every #raw("kubectl") in panels 6 to 10 are typed *here*, at this
-        prompt. If you type them on your laptop instead, you will get
-        #raw("kubectl: command not found") — the cluster's tools live in the container,
-        not on your machine.
-      ]
-      #v(2pt)
-      #text(size: 8pt)[
-        Closed it by accident? #raw("docker exec -it k8s sh") puts you straight back.
-        Nothing is lost: the cluster never stopped.
+        Nothing from here on is typed *inside* the cluster. That is the normal arrangement:
+        the cluster is one thing, the client is another, and they meet over one HTTPS
+        address. Which did you pick, (a) or (b)?
+        #box(width: 12mm, stroke: (bottom: 0.5pt + luma(120)), height: 9pt)
       ]
     ]
   ]
@@ -186,16 +204,19 @@
 
 #v(5pt)
 
-#panel("2 · The five words the next four steps use")[
+#panel("2 · Some definitions")[
   #text(size: 8.5pt)[
-    Read this before step 3. Everything below happens *inside* the cluster you just
-    started, and none of it is a program you run.
+    At this point you have a Kubernetes cluster running inside one container, and a
+    #raw("kubectl") outside it that can reach the cluster's API. Read this before step 3.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
     text(size: 8.5pt, weight: "bold")[kubectl],
     text(size: 8pt)[
-      The cluster's command-line client. It does almost nothing itself: it turns what you
+      The cluster's command-line client. All commands it has, such as #raw("kubectl get"),
+      send an HTTPS request to the cluster's API at (#raw("https://127.0.0.1:6443"))
+      
+      It does almost nothing itself: it turns what you
       type into a request, sends it to the *API server* inside the container, and prints
       the reply. When you "create" something, all that happens is that the cluster writes
       down what you asked for.
@@ -240,7 +261,7 @@
 
 #panel("3 · Drive the cluster · steps 3 to 6")[
   #text(size: 8.5pt, weight: "bold", fill: accent)[
-    Type these at the shell from step 2, inside the container.
+    Type these with the kubectl you set up in step 2.
   ]
   #v(4pt)
   #step("3", "Ask the cluster to keep a whale running")[
@@ -351,7 +372,7 @@ docker buildx imagetools inspect oesteban/whalesay", lang: "console")
     ])
   #v(6pt)
   #text(size: 8.5pt)[
-    Compare the NAME in panel 4 with the #raw("hostname") you wrote in step 2. \
+    Run #raw("docker ps") on your laptop: compare CONTAINER ID with the NAME in panel 4. \
 The container did not crash. It printed its whale and exited *successfully*.
     So why is Kubernetes starting it again?
   ]

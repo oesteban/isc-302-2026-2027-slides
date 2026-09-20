@@ -353,24 +353,25 @@ name: spark1
 
 ---
 
-# Starting a cluster
+# Starting a cluster, and a client for it
 
 .boxed-content.small[
 ```console
+$ mkdir kube
 $ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
-    -p 6443:6443 rancher/k3s:v1.31.5-k3s1 server --disable=traefik
+    -p 6443:6443 -v "$PWD/kube:/output" \
+    rancher/k3s:v1.36.4-k3s1 server --disable=traefik \
+    --write-kubeconfig /output/config --write-kubeconfig-mode 644
 
-$ docker exec -it k8s sh          # from here on, you are inside the cluster
-# kubectl get nodes
-NAME           STATUS   ROLES                  AGE   VERSION
-8d7726f96f74   Ready    control-plane,master   5s    v1.31.5+k3s1
+$ grep server: kube/config
+    server: https://127.0.0.1:6443
 ```
 ]
 
 .boxed-content.large.no-bullet[
-* `server` &rarr; control plane and node in one process.
-* `--privileged`, `--tmpfs` &rarr; k3s mounts cgroups, runs its own containerd.
-* `kubectl` and `crictl` are already in the image.
+* **k3s** is a Kubernetes distribution packaged as one binary. One container, one node, one cluster.
+* The cluster writes its address and credentials to **your laptop**, into `kube/config`.
+* **`kubectl` is not part of the cluster.** It is a client, and it lives wherever you want.
 ]
 ---
 
@@ -399,18 +400,20 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 
 ### Create the cluster
 
-`docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run` `-p 6443:6443` `rancher/k3s:v1.31.5-k3s1 server --disable=traefik`
+`docker run -d --name k8s --privileged …` `-v "$PWD/kube:/output"` `rancher/k3s:v1.36.4-k3s1 server` `--write-kubeconfig /output/config`
 
 .foot[Every flag is explained on your sheet.]
 ]
-.card[
+.card.small[
 .kicker[step 2]
 
-### Step inside it
+### Get a kubectl
 
-`docker exec -it k8s sh`
+**Linux:** `snap install kubectl --classic`, then `export KUBECONFIG=$PWD/kube/config`
 
-.foot[An interactive shell **in the container**, not on your laptop. Your prompt changes.]
+**Anywhere:** `docker run --rm -it --network container:k8s -v "$PWD/kube:/kube:ro" -e KUBECONFIG=/kube/config --entrypoint sh alpine/kubectl`
+
+.foot[Either way you are **outside** the cluster, talking to it over one address.]
 ]
 .card.small[
 .kicker[step 3]
