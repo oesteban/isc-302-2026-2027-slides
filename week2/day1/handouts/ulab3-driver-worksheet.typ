@@ -711,6 +711,48 @@ print(lines.rdd.getNumPartitions())", block: true)
   ]
 ]
 
+#v(6pt)
+
+#panel("11 · Annex · what these numbers looked like here")[
+  #text(size: 8pt)[
+    Measured on the teaching machine while this sheet was written. *Yours will not match*
+    and are not meant to: the cluster runs on whatever cores Docker was given. What
+    should match is the *shape*, and the shape is three things: every column below
+    rises as the partitions rise, every row falls as the cores rise, and the number of
+    distinct words never moves at all.
+  ]
+  #v(4pt)
+  #grid(columns: (1fr, auto, auto, auto), column-gutter: 9pt, row-gutter: 4pt,
+        align: (left, right, right, right),
+    text(size: 8pt, weight: "bold")[run],
+    text(size: 8pt, weight: "bold")[partitions],
+    text(size: 8pt, weight: "bold")[4 workers],
+    text(size: 8pt, weight: "bold")[1 worker],
+
+    text(size: 8pt)[#raw("wordcount_df.py")], text(size: 8pt)[589], text(size: 8pt)[11.7 s], text(size: 8pt, fill: luma(140))[—],
+    text(size: 8pt)[#raw("wordcount_rdd.py")], text(size: 8pt)[18'846], text(size: 8pt)[555.8 s], text(size: 8pt, fill: luma(140))[—],
+    text(size: 8pt)[#raw("slowdown.py"), first split], text(size: 8pt)[8], text(size: 8pt)[9.9 s], text(size: 8pt)[24.7 s],
+    text(size: 8pt)[#raw("slowdown.py"), second], text(size: 8pt)[800], text(size: 8pt)[18.3 s], text(size: 8pt)[56.1 s],
+    text(size: 8pt)[#raw("slowdown.py"), third], text(size: 8pt)[8000], text(size: 8pt)[98.6 s], text(size: 8pt)[301.9 s],
+    text(size: 8pt)[#raw("wordcount_df.py") at #raw("32m")], text(size: 8pt)[2356], text(size: 8pt)[22.2 s], text(size: 8pt, fill: luma(140))[—],
+  )
+  #v(3pt)
+  #text(size: 8pt)[
+    #raw("distinct words") read *154119* on all six #raw("slowdown.py") rows. If yours
+    changes between rows, the run is wrong and no timing from it means anything.
+  ]
+  #v(4pt)
+  #text(size: 8pt)[
+    *One more pair, for panel 6.* The same two counts with no cluster at all, run
+    straight on the laptop's own cores with #raw("--master local[4]"), took *10.3 s* and
+    *541.1 s*; given 36 cores instead, *11 s* and *114 s*. The DataFrame count barely
+    moves, because it is bound by opening 18'846 files. The RDD count falls to about a fifth,
+    because it is bound by scheduling 18'846 tasks. So there is no single number for how
+    much slower RDDs are: it depends entirely on how many cores you have, which is
+    itself the answer panel 6 is asking for.
+  ]
+]
+
 #v(4pt)
 #align(center)[
   #text(size: 8pt, fill: luma(130), style: "italic")[

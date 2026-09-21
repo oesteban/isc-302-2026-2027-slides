@@ -679,6 +679,34 @@ cluster UI to ensure that workers are registered and have sufficient resources",
   ]
 ]
 
+#v(6pt)
+
+#panel("10 · Annex · what these numbers looked like here")[
+  #text(size: 8pt)[
+    Every figure below was measured on the teaching machine, on a fast connection, while
+    this sheet was being written. *Yours will not match*, and they are not meant to: they
+    are here so you can tell a slow laptop from a broken one. An order of magnitude out
+    is worth asking about; a factor of two is not.
+  ]
+  #v(4pt)
+  #grid(columns: (1fr, auto, auto), column-gutter: 10pt, row-gutter: 4pt, align: (left, right, left),
+    text(size: 8pt, weight: "bold")[what], text(size: 8pt, weight: "bold")[measured], text(size: 8pt, weight: "bold")[where],
+    text(size: 8pt)[cluster downloads the Spark image], text(size: 8pt)[1 m 9 s], text(size: 7.8pt, fill: luma(120))[step 2],
+    text(size: 8pt)[the same download, slower connection], text(size: 8pt)[2 m 53 s], text(size: 7.8pt, fill: luma(120))[step 2],
+    text(size: 8pt)[all three pods #raw("1/1 Running")], text(size: 8pt)[112 s to 182 s], text(size: 7.8pt, fill: luma(120))[step 2],
+    text(size: 8pt)[workers restart once the image is in the store], text(size: 8pt)[about 20 s], text(size: 7.8pt, fill: luma(120))[panel 7],
+    text(size: 8pt)[SparkPi on two workers], text(size: 8pt)[8 s], text(size: 7.8pt, fill: luma(120))[panel 6],
+    text(size: 8pt)[handing the image over instead of downloading], text(size: 8pt)[37 s], text(size: 7.8pt, fill: luma(120))[panel 8],
+    text(size: 8pt)[the image, as the cluster reports it], text(size: 8pt)[534'909'833 B], text(size: 7.8pt, fill: luma(120))[panel 4],
+  )
+  #v(4pt)
+  #text(size: 8pt)[
+    Write your own beside them as you go. The last two rows are the interesting pair: the
+    import moves the same bytes as the download and does it without a network, which is
+    the whole argument of panel 8.
+  ]
+]
+
 #v(5pt)
 #align(center)[
   #text(size: 8pt, fill: luma(130), style: "italic")[
