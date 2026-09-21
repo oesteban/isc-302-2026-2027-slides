@@ -142,6 +142,39 @@
 
 // ══ CORE — fifteen to twenty minutes ══════════════════════════════════════
 #panelb("1 · Fill the lab folder, then hand the cluster a file · step 1")[
+  #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
+         stroke: 1pt + accent, fill: rgb("#fff0f6"))[
+    #text(size: 8.5pt, weight: "bold")[First, check the cluster survived the break.]
+    #v(1pt)
+    #text(size: 8pt)[
+      A laptop that slept takes its cluster's container runtime with it, and it does not
+      come back on its own. Run #raw("kubectl get nodes") before anything else: the
+      #raw("STATUS") must read #raw("Ready"). If it does not, or if commands start timing
+      out later, work down this list and stop at the first one that helps.
+    ]
+    #v(2pt)
+    #raw("docker restart k8s          # then LEAVE the kubectl shell and start a new one\ndocker exec k8s crictl ps    # rows mean the runtime is back; a bare header does not\nkubectl delete pods --all   # clears pods wedged while it was down", block: true)
+    #v(3pt)
+    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+      raw("docker restart k8s"),
+      text(size: 7.8pt)[Stop and start the cluster container without destroying it, so the image store and every object you created survive.],
+      raw("crictl ps"),
+      text(size: 7.8pt)[List the containers the cluster's runtime is actually running. A header with no rows underneath means it is answering but cannot start anything.],
+      raw("delete pods --all"),
+      text(size: 7.8pt)[Delete every pod in this namespace. The Deployments immediately make new ones; pods that were stuck while the runtime was down never recover on their own.],
+    )
+    #v(3pt)
+    #text(size: 8pt)[
+      Leaving the shell is not optional: the client joined the cluster container's
+      network, and restarting the cluster replaces it, so an old client answers
+      #raw("connection refused") for ever afterwards. \
+      If #raw("crictl ps") prints only a header, or pods stay in
+      #raw("ContainerCreating") past a minute, *rebuild*: µLab 2 step 1, then step 2.
+      With the image store on its named volume that is about *30 seconds*, not the three
+      minutes it took the first time.
+    ]
+  ]
+  #v(4pt)
   #text(size: 8.5pt)[
     µLab 2 built the Spark cluster by typing three commands, and it works. Two things
     those commands cannot do are now needed: give the pods the folder holding the corpus,
@@ -333,7 +366,7 @@ print(rows)
 print(lines.rdd.getNumPartitions())", block: true)
   #v(4pt)
   #step("2", "Submit it to the cluster, in the kubectl shell.")[
-    The driver runs inside the master pod, for the reason µLab 2 panel 9 gives.
+    The driver runs inside the master pod, for the reason µLab 2 panel 10 gives.
   ]
   #v(2pt)
   #raw("kubectl exec deploy/spark-master -- /opt/spark/bin/spark-submit \\\n  --master spark://spark-master:7077 \\\n  /lab/wordcount_df.py /lab/data", lang: "console")
@@ -707,7 +740,7 @@ print(lines.rdd.getNumPartitions())", block: true)
     executor could be started, and the usual cause here is that there are no workers:
     panel 8 scales them to one. #raw("kubectl get pods") settles it in one line. The
     other two causes are a submission queued behind one that already holds every core,
-    which panel 7 warns about, and a driver with no name, which µLab 2 panel 9 covers.
+    which panel 7 warns about, and a driver with no name, which µLab 2 panel 10 covers.
   ]
 ]
 

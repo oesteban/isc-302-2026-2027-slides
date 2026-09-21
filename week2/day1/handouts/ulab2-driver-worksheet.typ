@@ -16,7 +16,7 @@
 // submission hangs for ever, which was measured, not guessed. And the image is
 // left for the cluster to download rather than imported from the laptop, because
 // the whole point of panel 4 is that the two stores are separate; the import is
-// panel 8, where it is an optimisation rather than a mystery.
+// panel 9, where it is an optimisation rather than a mystery.
 //
 // The sheet is cut in two by a checkpoint bar. AUTHORING.md rule G1 sizes a core
 // at ten minutes, and this one is sized for fifteen to twenty, because the cluster
@@ -149,6 +149,37 @@
     now and hand it over now, while rebuilding is free.
   ]
   #v(3pt)
+  #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
+         stroke: 1pt + accent, fill: rgb("#fff0f6"))[
+    #text(size: 8.5pt, weight: "bold")[macOS: check this before anything else.]
+    #v(1pt)
+    #text(size: 8pt)[
+      If your shell forces a platform, every container in this round is emulated
+      instruction by instruction. The cluster starts, runs slowly, and then stops
+      answering, and nothing in the failure points at the cause. It must print an empty
+      line:
+    ]
+    #v(2pt)
+    #raw("echo \"$DOCKER_DEFAULT_PLATFORM\"", lang: "console")
+    #v(2pt)
+    #text(size: 8pt)[
+      If it prints #raw("linux/amd64"), find where it is set, delete that line from the
+      file, and clear it from this shell as well. Editing the file alone is not enough:
+      this terminal already has the value.
+    ]
+    #v(2pt)
+    #raw("grep -rn DOCKER_DEFAULT_PLATFORM ~/.zshrc ~/.zprofile ~/.bash_profile ~/.bashrc\nunset DOCKER_DEFAULT_PLATFORM\ndocker rmi -f rancher/k3s:v1.36.4-k3s1 alpine/kubectl", block: true)
+    #v(2pt)
+    #text(size: 8pt)[
+      The last line throws away anything already pulled for the wrong architecture. All
+      three images this round uses publish an Apple Silicon build, so nothing here needs
+      emulating. \
+      *Measured on an M-series Mac:* forced to #raw("linux/amd64") the cluster's runtime
+      stopped answering after about half an hour and never came back; native, the three
+      pods were running in *35 seconds*.
+    ]
+  ]
+  #v(4pt)
   #step("1", "Make the folder, then rebuild the cluster around it.")[
     Work in the same folder you started the cluster in during µLab 1, the one with
     #raw("kube") in it.
@@ -172,10 +203,10 @@
     That is intended: nothing from µLab 1 is needed again.
   ]
   #v(2pt)
-  #raw("docker rm -f k8s\ndocker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 -v \"$PWD/kube:/output\" -v \"$PWD/lab:/lab\" \\\n  rancher/k3s:v1.36.4-k3s1 server --disable=traefik \\\n  --write-kubeconfig /output/config --write-kubeconfig-mode 644", lang: "console")
+  #raw("docker rm -f k8s\ndocker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 -v \"$PWD/kube:/output\" -v \"$PWD/lab:/lab\" \\\n  -v k3s-images:/var/lib/rancher/k3s/agent/containerd \\\n  rancher/k3s:v1.36.4-k3s1 server --disable=traefik \\\n  --write-kubeconfig /output/config --write-kubeconfig-mode 644", lang: "console")
   #v(3pt)
   #text(size: 8pt)[
-    This is the µLab 1 command with *one argument added*. The table repeats the rest in
+    This is the µLab 1 command with *two arguments added*. The table repeats the rest in
     one line each so that nothing on this sheet is typed unexplained.
   ]
   #v(2pt)
@@ -198,6 +229,8 @@
     text(size: 7.8pt)[Bind-mount: the #raw("kube") folder here appears inside at #raw("/output"), which is where the credentials file gets written.],
     text(fill: accent, weight: "bold", raw("-v \"$PWD/lab:/lab\"")),
     text(size: 7.8pt)[*The new one.* The #raw("lab") folder here appears inside the cluster at #raw("/lab"). It is empty, and it stays yours: a bind mount is the same folder seen twice, not a copy, so whatever you put in it later is visible inside at once.],
+    text(fill: accent, weight: "bold", raw("-v k3s-images:/var/lib/…")),
+    text(size: 7.8pt)[*Also new.* A *named volume*, not a folder of yours, holding the images the cluster downloads. Keeping it outside the container means throwing the cluster away no longer throws away the 535 MB with it: a rebuild then takes seconds instead of minutes.],
     raw("rancher/k3s:…"),
     text(size: 7.8pt)[The image: a whole Kubernetes in one binary. Pinned to #raw("v1.36.4-k3s1") so every laptop runs the same version.],
     raw("server"),
@@ -311,7 +344,7 @@
     text(size: 8pt)[
       *The name server every pod is given, which answers for Service names.* It is what
       turns #raw("spark-master") into an address inside the cluster. It answers for pods
-      that are behind a Service, and *for nothing else*, which is the trap panel 9
+      that are behind a Service, and *for nothing else*, which is the trap panel 10
       describes.
     ],
   )
@@ -415,33 +448,43 @@
     raw("crictl images"),
     text(size: 7.8pt)[The cluster's own tool for talking to containerd, and its way of saying #emph[list the images you can start].],
     raw("docker image ls NAME"),
-    text(size: 7.8pt)[Docker's list, narrowed to one name. No rows at all is a perfectly good answer here.],
+    text(size: 7.8pt)[Docker's list, narrowed to one name. Printing a header and no rows is not an error: it means Docker has no image by that name.],
   )
   #v(3pt)
-  #text(size: 8pt)[As observed, with the laptop's copy present only because it had been pulled earlier:]
+  #text(size: 8pt)[
+    The first listing has the Spark image. The second, on almost every laptop in this
+    room, *has nothing at all*, and that is the result to expect:
+  ]
   #v(2pt)
   #raw("IMAGE                                        TAG                 IMAGE ID            SIZE
 docker.io/library/spark                      3.5.4-python3       5908cada5243a       535MB
 
-REPOSITORY   TAG             IMAGE ID       CREATED         SIZE
-spark        3.5.4-python3   5908cada5243   21 months ago   982MB", block: true)
+REPOSITORY   TAG       IMAGE ID   CREATED   SIZE", block: true)
   #v(3pt)
   #text(size: 8pt)[
-    The #raw("IMAGE ID") is the same in both, because it is the same image. The two
-    #raw("SIZE") columns disagree because they measure different things, the download and
-    the unpacked copy, not because the images differ.
+    Nothing on this sheet ever asked you to pull Spark, so your Docker has never seen it.
+    The cluster fetched its own copy in step 2 and put it somewhere Docker cannot read.
+  ]
+  #v(3pt)
+  #text(size: 8pt)[
+    *If you do get a row*, it is because you pulled that image yourself at some point,
+    and it makes the same point more sharply: the #raw("IMAGE ID") will match the
+    cluster's to the character, and the cluster downloaded it again anyway. The two
+    #raw("SIZE") columns disagree even then, because they measure different things, the
+    download and the unpacked copy.
   ]
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
     text(size: 8pt)[cluster IMAGE ID], rule(100%),
-    text(size: 8pt)[laptop IMAGE ID], rule(100%),
+    text(size: 8pt)[laptop: ID, or #emph[none]], rule(100%),
   )
   #v(4pt)
   #text(size: 8.5pt, weight: "bold")[Now answer the first question.]
   #v(1pt)
   #text(size: 8pt)[
-    If your laptop already had that image, the cluster downloaded a second copy of
-    something that was sitting on the same disk. Say why it had to. \
+    Two programs on one laptop, both keeping images, and only one of them has this one.
+    Say what would have to be true for the cluster to have used a copy your Docker
+    already held, and why it is not. \
     Panel 2 defines *image store*, and the two listings above were produced by two
     different programs: read which command each one needed.
   ]
@@ -530,7 +573,7 @@ INFO Master: Registering worker 10.42.0.3:39957 with 1 cores, 1024.0 MiB RAM", b
   #v(3pt)
   #text(size: 8pt)[
     Typed in the #raw("kubectl") shell. The driver runs *inside the master pod*, which
-    looks like a detail and is not: panel 9 says what happens when it runs anywhere else.
+    looks like a detail and is not: panel 10 says what happens when it runs anywhere else.
   ]
   #v(2pt)
   #raw("kubectl exec deploy/spark-master -- /opt/spark/bin/spark-submit \\\n  --master spark://spark-master:7077 \\\n  --conf spark.driver.host=spark-master \\\n  --class org.apache.spark.examples.SparkPi \\\n  local:///opt/spark/examples/jars/spark-examples_2.12-3.5.4.jar 100", lang: "console")
@@ -607,7 +650,55 @@ INFO Master: Registering worker 10.42.0.9:40593 with 1 cores, 1024.0 MiB RAM", b
 
 #v(6pt)
 
-#panel("8 · Extra mile · hand the cluster the image instead of letting it download it")[
+#panelb("8 · Rebuild the same cluster from a file")[
+  #text(size: 8.5pt)[
+    Three commands built this cluster and they worked. What they did not do is write
+    anything down: the only record that the master needs #raw("--host spark-master") is
+    your shell history. Tear the three objects down and make them again from a file that
+    says exactly the same thing.
+  ]
+  #v(2pt)
+  #raw("kubectl delete deployment spark-master spark-worker\nkubectl delete service spark-master\nkubectl apply -f https://raw.githubusercontent.com/oesteban/\\\n  isc-302-2026-2027-spark-lab/main/spark-as-typed.yaml\nkubectl get pods", lang: "console")
+  #v(2pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    The address is one line, broken here only to fit the page.
+  ]
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("delete deployment A B"),
+    text(size: 7.8pt)[Two names after one kind. Deleting a Deployment deletes the pods it was keeping alive, which is the loop from µLab 1 running in reverse.],
+    raw("delete service"),
+    text(size: 7.8pt)[A different kind, so a separate command. The Service was never owned by either Deployment.],
+    raw("apply -f https://…"),
+    text(size: 7.8pt)[Make the cluster match what that file describes. #raw("-f") is for #emph[file], and a URL counts as one, so nothing is downloaded to your laptop.],
+  )
+  #v(3pt)
+  #text(size: 8pt)[
+    Three objects again, from one command, and the pods are back in *seconds* rather
+    than minutes: the image never left the cluster's store. Open the file in a browser
+    and read it; its header carries the three commands it replaces, line for line.
+  ]
+  #v(3pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
+    text(size: 8pt)[seconds to three pods], rule(100%),
+    text(size: 8pt)[objects created], rule(100%),
+  )
+  #v(4pt)
+  #text(size: 8.5pt, weight: "bold")[Now answer what the file is actually for.]
+  #v(1pt)
+  #text(size: 8pt)[
+    The file and the three commands produce the same cluster, so the file has bought you
+    a record and nothing else yet. Name one thing a file can ask for that
+    #raw("kubectl create") has no option to express. \
+    The flag tables in step 2 are the place to look: every argument #raw("create") accepts
+    is listed there, and µLab 3 opens by needing two things that are not.
+  ]
+  #writing(2)
+]
+
+#v(6pt)
+
+#panel("9 · Extra mile · hand the cluster the image instead of letting it download it")[
   #text(size: 8.5pt)[
     Step 2 waited while the cluster downloaded 535 MB that may already have been on the
     same disk. It does not have to: an image can be written out of one store and read
@@ -650,7 +741,7 @@ INFO Master: Registering worker 10.42.0.9:40593 with 1 cores, 1024.0 MiB RAM", b
 
 #v(8pt)
 
-#panel("9 · Annex · why the driver has to run somewhere that has a name")[
+#panel("10 · Annex · why the driver has to run somewhere that has a name")[
   #text(size: 8pt)[
     Leave #raw("--conf spark.driver.host=spark-master") out of panel 6 and the job never
     starts. Executors are told to call the driver back by name, and the name they are
@@ -681,7 +772,7 @@ cluster UI to ensure that workers are registered and have sufficient resources",
 
 #v(6pt)
 
-#panel("10 · Annex · what these numbers looked like here")[
+#panel("11 · Annex · what these numbers looked like here")[
   #text(size: 8pt)[
     Every figure below was measured on the teaching machine, on a fast connection, while
     this sheet was being written. *Yours will not match*, and they are not meant to: they
@@ -696,14 +787,14 @@ cluster UI to ensure that workers are registered and have sufficient resources",
     text(size: 8pt)[all three pods #raw("1/1 Running")], text(size: 8pt)[112 s to 182 s], text(size: 7.8pt, fill: luma(120))[step 2],
     text(size: 8pt)[workers restart once the image is in the store], text(size: 8pt)[about 20 s], text(size: 7.8pt, fill: luma(120))[panel 7],
     text(size: 8pt)[SparkPi on two workers], text(size: 8pt)[8 s], text(size: 7.8pt, fill: luma(120))[panel 6],
-    text(size: 8pt)[handing the image over instead of downloading], text(size: 8pt)[37 s], text(size: 7.8pt, fill: luma(120))[panel 8],
+    text(size: 8pt)[handing the image over instead of downloading], text(size: 8pt)[37 s], text(size: 7.8pt, fill: luma(120))[panel 9],
     text(size: 8pt)[the image, as the cluster reports it], text(size: 8pt)[534'909'833 B], text(size: 7.8pt, fill: luma(120))[panel 4],
   )
   #v(4pt)
   #text(size: 8pt)[
     Write your own beside them as you go. The last two rows are the interesting pair: the
     import moves the same bytes as the download and does it without a network, which is
-    the whole argument of panel 8.
+    the whole argument of panel 9.
   ]
 ]
 
