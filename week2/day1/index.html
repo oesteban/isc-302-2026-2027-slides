@@ -66,39 +66,6 @@ counter: true
 ]
 
 ---
-class: vcenter
-counter: true
-
-# Objectives
-
-.cards.goals[
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-Explain the evolution of large-scale data processing
-.gray-text[from GFS/MapReduce through Hadoop/HDFS to Apache Spark]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-Decompose a big-data problem into distributed steps
-.gray-text[recognize *MapReduce*, and contextualize it within the evolution of the field]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-Implement and execute a Spark workflow
-.gray-text[20 Newsgroups word count: reporting stage-level latency and interpreting the DAG]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-Identify storage sys., compute abstractions, and formats
-.gray-text[HDFS, object stores (storage systems), RDDs, DataFrames, Polars (compute abstractions), CSV, JSON, Parquet (file formats)]
-]
-]
-
----
 
 # Schedule
 
@@ -316,63 +283,21 @@ class: group-roulette
 groups: 5
 seed: 21.09.2026
 
+<br />
 .boxed-content[
 # &micro;Lab 2 .gray-text[· Deploying Spark on your own cluster]
 
 .large[
-**30 minutes.** Hand the cluster a folder, put a Spark master and two workers on it, and
-read the log that proves the workers found the master.
+Handout available on ISC Learn.
 ]
 ]
 
 ---
 
-# &micro;Lab 2 .gray-text[· the four steps]
+.section-mark[
+# &micro;Lab 2
 
-.cards.cols-2.tight[
-.card.small[
-.kicker[step 1]
-
-### Hand the cluster a folder
-
-`mkdir lab`, then `docker rm -f k8s` and start it again with `-v "$PWD/lab:/lab"` added.
-
-.foot[A container sees only the folders it was given when it was created. Rebuilding is the only way to add one.]
-]
-.card.small[
-.kicker[step 2]
-
-### Deploy the master, then the workers
-
-`kubectl create service clusterip spark-master --clusterip="None" --tcp=7077:7077`, then a
-Deployment for the master and one for `--replicas=2` workers.
-
-.foot[The name first: the master looks its own name up when it starts. Then `kubectl get pods`, one to three minutes of `ContainerCreating` while 535 MB arrives.]
-]
-.card.small[
-.kicker[step 3]
-
-### Compare the two image stores
-
-`docker exec k8s crictl images` <br /> `docker image ls spark:3.5.4-python3`
-
-.foot[Same `IMAGE ID`, two different `SIZE` columns. Write both ids down.]
-]
-.card.small[
-.kicker[step 4]
-
-### Read the master's log
-
-`kubectl logs deploy/spark-master | grep Master:`
-
-.foot[One line per worker announcing itself, with the cores and the RAM it offers.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 10h10**: the master and both workers
-`Running`, and the log showing two workers registered. **Then**: delete a worker pod and
-watch the master notice.
+.large[Time left: .timer[20 min].]
 ]
 
 ---
