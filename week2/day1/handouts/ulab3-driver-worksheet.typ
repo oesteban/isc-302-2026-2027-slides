@@ -23,7 +23,7 @@
 //
 // The sheet is cut in two by a checkpoint bar. AUTHORING.md rule G1 sizes a core
 // at ten minutes; this one is sized for fifteen to twenty, because the RDD count
-// in step 3 takes minutes and the reader is not the clock.
+// in step 5 takes minutes and the reader is not the clock.
 //
 // Every number quoted below was observed on a real run on 2026-09-21, on a
 // four-worker cluster, not reasoned out.
@@ -141,126 +141,83 @@
 #v(5pt)
 
 // ══ CORE — fifteen to twenty minutes ══════════════════════════════════════
-#panelb("1 · Fill the lab folder, then hand the cluster a file · step 1")[
-  #block(width: 100%, inset: (x: 6pt, y: 5pt), radius: 2pt,
-         stroke: 1pt + accent, fill: rgb("#fff0f6"))[
-    #text(size: 8.5pt, weight: "bold")[First, check the cluster survived the break.]
-    #v(1pt)
-    #text(size: 8pt)[
-      A laptop that slept takes its cluster's container runtime with it, and it does not
-      come back on its own. Run #raw("kubectl get nodes") before anything else: the
-      #raw("STATUS") must read #raw("Ready"). If it does not, or if commands start timing
-      out later, work down this list and stop at the first one that helps.
-    ]
-    #v(2pt)
-    #raw("docker restart k8s          # then LEAVE the kubectl shell and start a new one\ndocker exec k8s crictl ps    # rows mean the runtime is back; a bare header does not\nkubectl delete pods --all   # clears pods wedged while it was down", block: true)
-    #v(3pt)
-    #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-      raw("docker restart k8s"),
-      text(size: 7.8pt)[Stop and start the cluster container without destroying it, so the image store and every object you created survive.],
-      raw("crictl ps"),
-      text(size: 7.8pt)[List the containers the cluster's runtime is actually running. A header with no rows underneath means it is answering but cannot start anything.],
-      raw("delete pods --all"),
-      text(size: 7.8pt)[Delete every pod in this namespace. The Deployments immediately make new ones; pods that were stuck while the runtime was down never recover on their own.],
-    )
-    #v(3pt)
-    #text(size: 8pt)[
-      Leaving the shell is not optional: the client joined the cluster container's
-      network, and restarting the cluster replaces it, so an old client answers
-      #raw("connection refused") for ever afterwards. \
-      If #raw("crictl ps") prints only a header, or pods stay in
-      #raw("ContainerCreating") past a minute, *rebuild*: µLab 2 step 1, then step 2.
-      With the image store on its named volume that is about *30 seconds*, not the three
-      minutes it took the first time.
-    ]
-  ]
-  #v(4pt)
+#panelb("1 · Start again from nothing · steps 1 and 2")[
   #text(size: 8.5pt)[
-    µLab 2 built the Spark cluster by typing three commands, and it works. Two things
-    those commands cannot do are now needed: give the pods the folder holding the corpus,
-    and give the master a name of its own in cluster DNS. Neither is an option on
-    #raw("kubectl create"). Both are lines in a file.
+    µLab 2 built a Spark cluster by typing three commands. This round builds the same
+    cluster from a *file*, and to see that the file really is what built it, everything
+    from µLab 2 has to go first: the cluster, and the folder it was given. Starting from
+    nothing also puts every group in the same state, which is what makes the numbers you
+    are about to measure comparable at the caucus.
   ]
   #v(3pt)
-  #step("1", "Put the scripts and the corpus into lab, then apply the file.")[
-    The first three lines run on the laptop, in the folder holding #raw("kube") and
-    #raw("lab"). The corpus is the 20 MB #raw("20news.zip") from ISC Learn.
+  #step("1", "Throw µLab 2 away, fetch the lab, and build the cluster again.")[
+    On the laptop, in the folder you have been working in. The corpus is the 20 MB
+    #raw("20news.zip") from ISC Learn; use wherever your browser put it.
   ]
   #v(2pt)
-  #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data\nls lab/data/20news | wc -l", lang: "console")
+  #raw("docker rm -f k8s\nrm -rf lab kube\nmkdir lab kube\ngit clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data\nls lab/data/20news | wc -l", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("docker rm -f k8s"),
+    text(size: 7.8pt)[Delete the cluster container and everything running on it. Nothing from µLab 2 is needed again.],
+    raw("rm -rf lab kube"),
+    text(size: 7.8pt)[Delete the two folders µLab 2 made. If #raw("rm") refuses, Docker created one of them as #raw("root"): #raw("sudo rm -rf lab kube") and carry on.],
+    raw("mkdir lab kube"),
+    text(size: 7.8pt)[Make them again, empty and yours. They have to exist *before* the cluster starts, or Docker will create them owned by root.],
     raw("clone … lab"),
-    text(size: 7.8pt)[The last argument says where to put it, and it must be the #raw("lab") µLab 2 created, because that is the folder the cluster was given. Cloning into it works only while it is *empty*; if this refuses, something is already there.],
+    text(size: 7.8pt)[The last argument says where to put it, and it must be #raw("lab"), because that is the name the next command hands to the cluster. Under a second: the corpus is not in the repository.],
     raw("unzip -d lab/data"),
-    text(size: 7.8pt)[Unpack into that folder. The zip contains a directory called #raw("20news"), so this produces #raw("lab/data/20news") beside the #raw("stopwords.txt") that came with the clone.],
+    text(size: 7.8pt)[Unpack into that folder. The zip holds a directory called #raw("20news"), so this produces #raw("lab/data/20news") beside the #raw("stopwords.txt") that came with the clone.],
     raw("| wc -l"),
-    text(size: 7.8pt)[Count the lines, which here means count the files. It must read *18846*. Anything else means the zip landed somewhere other than #raw("lab/data").],
+    text(size: 7.8pt)[Count the files. It must read *18846*. Anything else means the zip landed somewhere other than #raw("lab/data").],
   )
   #v(4pt)
-  #text(size: 8.5pt, weight: "bold")[Now describe the cluster in a file, and apply it.]
-  #v(1pt)
   #text(size: 8pt)[
-    The same Service and two Deployments as µLab 2, written down instead of typed, plus
-    the two things that could not be typed. In the #raw("kubectl") shell:
+    Now start the cluster. This is µLab 2's command, character for character, and every
+    argument in it is explained there. The three that matter here are repeated below.
   ]
   #v(2pt)
-  #raw("kubectl apply -f https://raw.githubusercontent.com/oesteban/\\\n  isc-302-2026-2027-spark-lab/main/spark-standalone.yaml", lang: "console")
-  #v(2pt)
-  #text(size: 7.8pt, fill: luma(120))[
-    The address is one line, broken here only to fit the page. Type it without the
-    backslash and without the line break.
-  ]
+  #raw("docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 -v \"$PWD/kube:/output\" -v \"$PWD/lab:/lab\" \\\n  -v k3s-images:/var/lib/rancher/k3s/agent/containerd \\\n  rancher/k3s:v1.36.4-k3s1 server --disable=traefik \\\n  --write-kubeconfig /output/config --write-kubeconfig-mode 644", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("apply"),
-    text(size: 7.8pt)[Make the cluster match the description: create what is missing, change what differs, leave the rest alone. Safe to run twice.],
-    raw("-f https://…"),
-    text(size: 7.8pt)[#raw("-f") is for #emph[file], and a URL counts as one. #raw("raw.githubusercontent.com") serves a file's contents rather than the web page around it.],
-    raw("volumeMounts: /lab"),
-    text(size: 7.8pt)[In the file, on both Deployments: hand each pod the folder the cluster container sees at #raw("/lab").],
-    raw("hostname: spark-master"),
-    text(size: 7.8pt)[In the file, on the master: give the pod a name cluster DNS answers for, so #raw("--conf spark.driver.host") is never needed again.],
-  )
-  #v(3pt)
-  #text(size: 8pt)[
-    It prints three warnings saying these objects were created by hand and it has nothing
-    to compare against. That is true and harmless: it patches them anyway, and each pod is
-    replaced by one that has the folder.
-  ]
-  #v(4pt)
-  #text(size: 8pt)[
-    Once the new pods read #raw("1/1 Running"), ask one of them to count the same files.
-    It has never been told anything about your laptop:
-  ]
-  #v(2pt)
-  #raw("kubectl get pods\nkubectl exec deploy/spark-worker -- ls /lab/data/20news | wc -l", lang: "console")
-  #v(3pt)
-  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
-    text(size: 8pt)[files on the laptop], rule(100%),
-    text(size: 8pt)[files inside the pod], rule(100%),
+    raw("-v \"$PWD/kube:/output\""),
+    text(size: 7.8pt)[Where the cluster writes the credentials file your client will read.],
+    raw("-v \"$PWD/lab:/lab\""),
+    text(size: 7.8pt)[The folder you just filled, visible inside the cluster at #raw("/lab"). Every path on this sheet beginning #raw("/lab/") reaches through this one argument.],
+    raw("-v k3s-images:…"),
+    text(size: 7.8pt)[The named volume holding the images the cluster has downloaded. It survived µLab 2, so this time the Spark image is already there and nothing is downloaded.],
   )
   #v(4pt)
-  #text(size: 8.5pt, weight: "bold")[Then set the cluster to four workers.]
-  #v(1pt)
-  #text(size: 8pt)[
-    Every command in this round is a submission to that cluster, and nothing runs on your
-    laptop's own cores. Each worker was given one core, so the cluster's size is its
-    worker count. Four, so that every group runs the same experiment.
+  #step("2", "Get a client, and give it the manifest file as well.")[
+    A second terminal, same folder. This is µLab 2's client line with *one mount added*,
+    and you will need it: step 3 reads that file.
   ]
   #v(2pt)
-  #raw("kubectl scale deployment spark-worker --replicas=4\nkubectl logs deploy/spark-master | grep -c \"Registering worker\"", lang: "console")
+  #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD/kube:/kube:ro\" \\\n  -v \"$PWD/lab/spark-standalone.yaml:/spark-standalone.yaml:ro\" \\\n  -e KUBECONFIG=/kube/config --entrypoint sh alpine/kubectl", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("scale … --replicas=4"),
-    text(size: 7.8pt)[Edit one field of a Deployment that already exists. Give it fifteen seconds and re-run #raw("kubectl get pods").],
-    raw("grep -c \"Registering worker\""),
-    text(size: 7.8pt)[Count the lines in which a worker announced itself. The master restarted when the file was applied, so this counts only what has reported in since.],
+    raw("--network container:k8s"),
+    text(size: 7.8pt)[Join the cluster container's network instead of getting one, which is why #raw("127.0.0.1:6443") works in here.],
+    raw("-v \"$PWD/kube:/kube:ro\""),
+    text(size: 7.8pt)[The credentials, read-only.],
+    text(fill: accent, weight: "bold", raw("-v \"…/spark-standalone.yaml:/spark-standalone.yaml:ro\"")),
+    text(size: 7.8pt)[*The new one.* A bind mount of a *single file* rather than a folder: it appears inside this container as #raw("/spark-standalone.yaml"). Without it, step 3 has nothing to read.],
+    raw("-e KUBECONFIG=/kube/config"),
+    text(size: 7.8pt)[Which cluster to talk to. The path is the one inside this container.],
+    raw("--entrypoint sh"),
+    text(size: 7.8pt)[A shell, instead of the single #raw("kubectl") the image is built to run.],
   )
+  #v(4pt)
+  #text(size: 8pt)[
+    Check the cluster answers before going on. #raw("STATUS") must read #raw("Ready"):
+    a node that is #raw("NotReady") will accept every command below and run none of them.
+  ]
+  #v(2pt)
+  #raw("kubectl get nodes", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
-    text(size: 8pt)[worker pods Running], rule(100%),
-    text(size: 8pt)[cores available], rule(100%),
+    text(size: 8pt)[NAME], rule(100%),
+    text(size: 8pt)[STATUS], rule(100%),
   )
 ]
 
@@ -272,6 +229,15 @@
   ]
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 5pt, align: (top, top),
+
+    text(size: 8.5pt, weight: "bold")[manifest],
+    text(size: 8pt)[
+      *A file describing objects you want to exist, rather than commands that create
+      them.* µLab 2 typed one command per object. A manifest lists several, and
+      #raw("kubectl apply") makes the cluster match it: creating what is missing,
+      changing what differs, leaving the rest. It can also ask for things no
+      #raw("kubectl create") option covers, which is why step 3 uses one.
+    ],
 
     text(size: 8.5pt, weight: "bold")[partition],
     text(size: 8pt)[
@@ -341,12 +307,151 @@
       has 203 of them, ordinary English plus the names of mail header fields. They
       matter twice here: they are why #raw("university") finishes fifth, from the
       #raw("Organization:") lines rather than from anyone discussing universities, and
-      they are why one line of the plan in panel 5 is enormous.
+      they are why one line of the plan in panel 6 is enormous.
     ],
   )
 ]
 
-#panelb("3 · Count the words with the DataFrame API · step 2")[
+#panelb("3 · Read the manifest, then apply it · step 3")[
+  #text(size: 8.5pt)[
+    µLab 2 created a Service and two Deployments by typing three commands. The file
+    mounted in step 2 describes those same three objects, and adds the two things
+    #raw("kubectl create") has no option to express: a folder for the pods, and a name
+    for the master that cluster DNS will answer for. Read it before you hand it over.
+  ]
+  #v(3pt)
+  #step("3", "Print the manifest, read it, then apply it.")[
+    In the #raw("kubectl") shell from step 2, where the file is mounted at the root.
+  ]
+  #v(2pt)
+  #raw("cat /spark-standalone.yaml", lang: "console")
+  #v(3pt)
+  #text(size: 8pt)[
+    It is *three documents in one file*, separated by lines of three dashes. The worker's
+    repeated fields are elided below where they match the master's; on screen they are
+    written out.
+  ]
+  #v(2pt)
+  ```yaml
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: spark-master
+  spec:
+    clusterIP: None
+    selector: { app: spark-master }
+    ports:
+      - { name: submit, port: 7077, targetPort: 7077 }
+      - { name: ui,     port: 8080, targetPort: 8080 }
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: spark-master
+  spec:
+    replicas: 1
+    selector:
+      matchLabels: { app: spark-master }
+    template:
+      metadata:
+        labels: { app: spark-master }
+      spec:
+        hostname: spark-master
+        subdomain: spark-master
+        containers:
+          - name: spark
+            image: spark:3.5.4-python3
+            imagePullPolicy: IfNotPresent
+            command: ["/opt/spark/bin/spark-class"]
+            args: ["org.apache.spark.deploy.master.Master", "--host", "spark-master"]
+            volumeMounts:
+              - { name: lab, mountPath: /lab, readOnly: true }
+        volumes:
+          - name: lab
+            hostPath: { path: /lab, type: Directory }
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: spark-worker
+  spec:
+    replicas: 2
+    ...                         # selector and labels as above, with app: spark-worker
+          containers:
+            - name: spark
+              image: spark:3.5.4-python3
+              args:
+                - org.apache.spark.deploy.worker.Worker
+                - spark://spark-master:7077
+                - --cores
+                - "1"
+                - --memory
+                - 1g
+              volumeMounts:
+                - { name: lab, mountPath: /lab, readOnly: true }
+          volumes: ...          # the same /lab
+  ```
+  #v(3pt)
+  #text(size: 8.5pt, weight: "bold")[Walking through it.]
+  #v(2pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("---"),
+    text(size: 7.8pt)[A document separator. One file can hold several objects, and #raw("kubectl apply") creates them all in order.],
+    raw("apiVersion / kind"),
+    text(size: 7.8pt)[Which kind of object, and which version of its description. #raw("kind") is the same word #raw("kubectl get") takes: #raw("kubectl get services"), #raw("kubectl get deployments").],
+    raw("metadata: name"),
+    text(size: 7.8pt)[What it is called. This is the name you type afterwards, and for the Service it is also the name that resolves inside the cluster.],
+    raw("clusterIP: None"),
+    text(size: 7.8pt)[Do not give the Service an address of its own; let the name answer with the pod's. The master binds to whatever its own name resolves to, and it cannot bind to an address belonging to no machine.],
+    raw("selector / labels"),
+    text(size: 7.8pt)[The Service carries a *selector*, the pods carry *labels*, and they have to match. That is the whole attachment: no pod is ever named anywhere.],
+    raw("replicas"),
+    text(size: 7.8pt)[How many pods the controller should keep alive. Each worker was given one core, so on the worker Deployment this is the cluster's core count.],
+    raw("template"),
+    text(size: 7.8pt)[The pod to stamp out. Everything under it describes one pod, and the controller makes #raw("replicas") of them.],
+    text(fill: accent, weight: "bold", raw("hostname / subdomain")),
+    text(size: 7.8pt)[*Not expressible with #raw("kubectl create").* Gives the master's pod a name cluster DNS answers for, which is what lets a driver tell the executors where to call back. Without it, submissions hang.],
+    raw("image / imagePullPolicy"),
+    text(size: 7.8pt)[Which image, and #emph[use the cluster's store if it is there, download only if it is not]. It is there, from µLab 2.],
+    raw("command / args"),
+    text(size: 7.8pt)[What to run instead of the image's default, and its arguments. These are the same strings µLab 2 typed after the #raw("--").],
+    text(fill: accent, weight: "bold", raw("volumeMounts / volumes")),
+    text(size: 7.8pt)[*The other thing #raw("kubectl create") cannot express.* #raw("volumes") names a source, here the cluster container's #raw("/lab"); #raw("volumeMounts") says where each container sees it. Both Deployments get it: the master runs the driver, which reads the script, and the workers run the executors, which read the corpus.],
+  )
+  #v(4pt)
+  #text(size: 8.5pt, weight: "bold")[Now hand it to the cluster.]
+  #v(2pt)
+  #raw("kubectl apply -f /spark-standalone.yaml\nkubectl get pods", lang: "console")
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("apply"),
+    text(size: 7.8pt)[Make the cluster match what the file describes: create what is missing, change what differs, leave the rest alone. Running it twice changes nothing the second time.],
+    raw("-f /spark-standalone.yaml"),
+    text(size: 7.8pt)[Read the description from this file. #raw("-f") is for #emph[file], and the path is the one *inside this container*, which is where step 2 mounted it.],
+  )
+  #v(3pt)
+  #text(size: 8pt)[Three objects, created in the order the file lists them:]
+  #v(2pt)
+  #raw("service/spark-master created\ndeployment.apps/spark-master created\ndeployment.apps/spark-worker created", block: true)
+  #v(3pt)
+  #text(size: 8pt)[
+    The pods are #raw("1/1 Running") within seconds rather than minutes: the image never
+    left the cluster's store when µLab 2's cluster was deleted, because step 1 put that
+    store in a named volume. Write the three names down.
+  ]
+  #v(2pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
+    text(size: 8pt)[master pod], rule(100%),
+    text(size: 8pt)[READY], rule(24mm),
+    text(size: 8pt)[worker pod], rule(100%),
+    text(size: 8pt)[READY], rule(24mm),
+    text(size: 8pt)[worker pod], rule(100%),
+    text(size: 8pt)[seconds until all three], rule(24mm),
+  )
+]
+
+#panelb("4 · Count the words with the DataFrame API · step 4")[
   #text(size: 8.5pt)[
     The script below counts every word in 18'846 Usenet messages and prints the fifteen
     most common. What this step is for is not the word list: it is that the *plan comes
@@ -365,7 +470,7 @@ rows   = counts.take(15)                                            # THIS one r
 print(rows)
 print(lines.rdd.getNumPartitions())", block: true)
   #v(4pt)
-  #step("2", "Submit it to the cluster, in the kubectl shell.")[
+  #step("4", "Submit it to the cluster, in the kubectl shell.")[
     The driver runs inside the master pod, for the reason µLab 2 panel 10 gives.
   ]
   #v(2pt)
@@ -396,7 +501,7 @@ print(lines.rdd.getNumPartitions())", block: true)
   ]
   #v(3pt)
   #text(size: 8pt)[
-    *Write these down now.* They are printed once, at the end of this run, and panel 6
+    *Write these down now.* They are printed once, at the end of this run, and panel 7
     needs them after the next run has scrolled them away. On a four-worker cluster this
     took *11.7 seconds* and reported *589* input partitions, with #raw("one") on top at
     14'620.
@@ -424,25 +529,25 @@ print(lines.rdd.getNumPartitions())", block: true)
   )
 ]
 
-#panelb("4 · Start the RDD count, then leave it running · step 3")[
+#panelb("5 · Start the RDD count, then leave it running · step 5")[
   #text(size: 8.5pt)[
     The second script gets the same fifteen words by different machinery: no columns, no
     optimiser, just functions applied one after another. It takes *minutes* rather than
     seconds: on a four-worker cluster it took *555 seconds*, which is nine minutes. Why
-    is the question panel 6 asks. Start it now and go straight to panel 5. Do not sit and
+    is the question panel 7 asks. Start it now and go straight to panel 6. Do not sit and
     watch it.
   ]
   #v(3pt)
-  #step("3", "Open a SECOND kubectl shell, and submit the other script from there.")[
+  #step("5", "Open a SECOND kubectl shell, and submit the other script from there.")[
     A second #raw("docker run") line, exactly the one from µLab 2, in a second terminal.
-    The first shell keeps the DataFrame output on screen, which panel 5 needs.
+    The first shell keeps the DataFrame output on screen, which panel 6 needs.
   ]
   #v(2pt)
   #raw("kubectl exec deploy/spark-master -- /opt/spark/bin/spark-submit \\\n  --master spark://spark-master:7077 \\\n  /lab/wordcount_rdd.py /lab/data", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("/lab/wordcount_rdd.py"),
-    text(size: 7.8pt)[The only thing that changes. Every other argument is the one explained in panel 3.],
+    text(size: 7.8pt)[The only thing that changes. Every other argument is the one explained in panel 4.],
     raw("second shell"),
     text(size: 7.8pt)[Not a second cluster: both shells talk to the same master. Two clients, one cluster, exactly as in µLab 1.],
   )
@@ -470,14 +575,14 @@ print(lines.rdd.getNumPartitions())", block: true)
   )
 ]
 
-#panelb("5 · Find the shuffles in the plan · step 4")[
+#panelb("6 · Find the shuffles in the plan · step 6")[
   #text(size: 8.5pt)[
-    The plan printed in step 2 is what Spark decided to do, written as a tree. Read it
+    The plan printed in step 4 is what Spark decided to do, written as a tree. Read it
     *bottom-up*: the bottom row happens first and the top row last. Two of its rows move
     rows between partitions, and those two are what this step is about.
   ]
   #v(3pt)
-  #step("4", "Scroll back to the plan in the first shell, and find the two Exchange rows.")[
+  #step("6", "Scroll back to the plan in the first shell, and find the two Exchange rows.")[
     The copy below is the same plan with one line shortened, so that it can be marked up
     on paper. Circle the two rows on this sheet; check they are in your own output too.
   ]
@@ -506,7 +611,7 @@ print(lines.rdd.getNumPartitions())", block: true)
     raw("FileScan text"),
     text(size: 7.8pt)[Open the files and produce one row per line of text. This is the first thing that happens, and the only row that touches a disk.],
     raw("InMemoryFileIndex(18846 paths)"),
-    text(size: 7.8pt)[How many files Spark found. Note it, because panel 6 compares it with the two partition counts.],
+    text(size: 7.8pt)[How many files Spark found. Note it, because panel 7 compares it with the two partition counts.],
     raw("Generate explode(split(…))"),
     text(size: 7.8pt)[Cut each line into words and turn one row of text into many rows of one word. #raw("split") cuts, #raw("explode") is what turns one row into many.],
     raw("\\W+"),
@@ -548,10 +653,10 @@ print(lines.rdd.getNumPartitions())", block: true)
 #v(6pt)
 
 #text(size: 8pt, style: "italic", fill: luma(110))[
-  Solved means panels 1 to 5 are done: the DataFrame count finished and its four numbers
+  Solved means panels 1 to 6 are done: the DataFrame count finished and its four numbers
   written down, the RDD count started and its partition count taken from the lineage, and
   the two #raw("Exchange") rows found and explained. The RDD clock may still be empty
-  here, and goes in at panel 6.
+  here, and goes in at panel 7.
 ]
 #v(3pt)
 
@@ -560,11 +665,11 @@ print(lines.rdd.getNumPartitions())", block: true)
 #v(8pt)
 
 // ══ EXTENSIONS — up to twenty minutes ═════════════════════════════════════
-#panelb("6 · Compare the two partition counts and the two clocks")[
+#panelb("7 · Compare the two partition counts and the two clocks")[
   #text(size: 8.5pt)[
     Both scripts printed the same fifteen words with the same counts, on the same
     cluster, from the same files. Everything that differs between them is machinery.
-    Copy the four numbers you wrote down in panels 3 and 4 into one place.
+    Copy the four numbers you wrote down in panels 4 and 5 into one place.
   ]
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
@@ -583,7 +688,7 @@ print(lines.rdd.getNumPartitions())", block: true)
   #text(size: 8.5pt, weight: "bold")[Two questions, and both are arithmetic before they are opinion.]
   #v(2pt)
   #text(size: 8pt)[
-    One of the two partition counts is exactly the number of files, which panel 5's
+    One of the two partition counts is exactly the number of files, which panel 6's
     #raw("InMemoryFileIndex") row also printed. Divide the larger partition count by the
     smaller one and write the result down. Then say what that number is counting.
   ]
@@ -604,7 +709,7 @@ print(lines.rdd.getNumPartitions())", block: true)
 
 #v(5pt)
 
-#panelb("7 · Split the same job three ways and time each one")[
+#panelb("8 · Split the same job three ways and time each one")[
   #text(size: 8.5pt)[
     Panel 6 compared two partition counts that the two readers happened to choose. This
     one chooses them on purpose. #raw("slowdown.py") runs the same count three times over
@@ -616,7 +721,7 @@ print(lines.rdd.getNumPartitions())", block: true)
   #v(3pt)
   #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
     #text(size: 8pt)[
-      *Wait until the RDD count from step 3 has finished before submitting this.* A
+      *Wait until the RDD count from step 5 has finished before submitting this.* A
       standalone master gives every core it has to the first application that asks, so a
       second submission does not share: it waits, printing
       #raw("Initial job has not accepted any resources") until the first one is over.
@@ -627,7 +732,7 @@ print(lines.rdd.getNumPartitions())", block: true)
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("/lab/slowdown.py"),
-    text(size: 7.8pt)[The only argument that differs from panel 3. The script sets the partition counts itself, with #raw("repartition(n)"), which is a transformation that says nothing except #emph[redistribute into n pieces].],
+    text(size: 7.8pt)[The only argument that differs from panel 4. The script sets the partition counts itself, with #raw("repartition(n)"), which is a transformation that says nothing except #emph[redistribute into n pieces].],
   )
   #v(3pt)
   #text(size: 8pt)[
@@ -651,7 +756,7 @@ print(lines.rdd.getNumPartitions())", block: true)
 
 #v(5pt)
 
-#panelb("8 · Shrink the cluster to one core and run it again")[
+#panelb("9 · Shrink the cluster to one core and run it again")[
   #text(size: 8.5pt)[
     Panel 7 varied the partitions and held the cores fixed. Now hold the partitions fixed
     and vary the cores. Every worker offers one core, so the cluster's size is a field in
@@ -692,7 +797,7 @@ print(lines.rdd.getNumPartitions())", block: true)
 
 #v(6pt)
 
-#panel("9 · Extra mile · make the reader choose a different number of partitions")[
+#panel("10 · Extra mile · make the reader choose a different number of partitions")[
   #text(size: 8.5pt)[
     589 was not a guess. The reader charges a fixed cost per file, then fills each
     partition until the total reaches a limit. Both are settings. Predict the new
@@ -726,7 +831,7 @@ print(lines.rdd.getNumPartitions())", block: true)
 
 #v(8pt)
 
-#panel("10 · Annex · getting past two things that go wrong")[
+#panel("11 · Annex · getting past two things that go wrong")[
   #text(size: 8pt)[
     The #raw("Filter") row is unreadable because #raw("explain()") prints every value of
     an #raw("INSET") test, and there are 203 of them. #raw("explain(\"formatted\")")
@@ -738,15 +843,15 @@ print(lines.rdd.getNumPartitions())", block: true)
     *If a submission never starts.* The driver waits, printing
     #raw("Initial job has not accepted any resources") every fifteen seconds. It means no
     executor could be started, and the usual cause here is that there are no workers:
-    panel 8 scales them to one. #raw("kubectl get pods") settles it in one line. The
+    panel 9 scales them to one. #raw("kubectl get pods") settles it in one line. The
     other two causes are a submission queued behind one that already holds every core,
-    which panel 7 warns about, and a driver with no name, which µLab 2 panel 10 covers.
+    which panel 8 warns about, and a driver with no name, which µLab 2 panel 10 covers.
   ]
 ]
 
 #v(6pt)
 
-#panel("11 · Annex · what these numbers looked like here")[
+#panel("12 · Annex · what these numbers looked like here")[
   #text(size: 8pt)[
     Measured on the teaching machine while this sheet was written. *Yours will not match*
     and are not meant to: the cluster runs on whatever cores Docker was given. What
@@ -776,13 +881,13 @@ print(lines.rdd.getNumPartitions())", block: true)
   ]
   #v(4pt)
   #text(size: 8pt)[
-    *One more pair, for panel 6.* The same two counts with no cluster at all, run
+    *One more pair, for panel 7.* The same two counts with no cluster at all, run
     straight on the laptop's own cores with #raw("--master local[4]"), took *10.3 s* and
     *541.1 s*; given 36 cores instead, *11 s* and *114 s*. The DataFrame count barely
     moves, because it is bound by opening 18'846 files. The RDD count falls to about a fifth,
     because it is bound by scheduling 18'846 tasks. So there is no single number for how
     much slower RDDs are: it depends entirely on how many cores you have, which is
-    itself the answer panel 6 is asking for.
+    itself the answer panel 7 is asking for.
   ]
 ]
 
