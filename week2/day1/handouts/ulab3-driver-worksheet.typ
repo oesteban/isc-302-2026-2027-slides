@@ -141,17 +141,17 @@
 #v(5pt)
 
 // ══ CORE — fifteen to twenty minutes ══════════════════════════════════════
-#panelb("1 · Fill the lab folder, then size the cluster · step 1")[
+#panelb("1 · Fill the lab folder, then hand the cluster a file · step 1")[
   #text(size: 8.5pt)[
-    µLab 2 handed the cluster an empty folder. This round puts things in it: the two
-    scripts you are about to run, and the 18'846 messages they count. Neither the cluster
-    nor the pods have to be restarted for that, because a bind mount is the same folder
-    seen twice rather than a copy of it.
+    µLab 2 built the Spark cluster by typing three commands, and it works. Two things
+    those commands cannot do are now needed: give the pods the folder holding the corpus,
+    and give the master a name of its own in cluster DNS. Neither is an option on
+    #raw("kubectl create"). Both are lines in a file.
   ]
   #v(3pt)
-  #step("1", "Put the scripts and the corpus into lab, then prove a pod can see them.")[
-    On the laptop, in the folder holding #raw("kube") and #raw("lab"). The corpus is the
-    20 MB #raw("20news.zip") from ISC Learn; use wherever your browser put it.
+  #step("1", "Put the scripts and the corpus into lab, then apply the file.")[
+    The first three lines run on the laptop, in the folder holding #raw("kube") and
+    #raw("lab"). The corpus is the 20 MB #raw("20news.zip") from ISC Learn.
   ]
   #v(2pt)
   #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data\nls lab/data/20news | wc -l", lang: "console")
@@ -165,19 +165,43 @@
     text(size: 7.8pt)[Count the lines, which here means count the files. It must read *18846*. Anything else means the zip landed somewhere other than #raw("lab/data").],
   )
   #v(4pt)
+  #text(size: 8.5pt, weight: "bold")[Now describe the cluster in a file, and apply it.]
+  #v(1pt)
   #text(size: 8pt)[
-    Now ask a pod that has been running since µLab 2, and was never told about any of
-    this, to count the same files. In the #raw("kubectl") shell:
+    The same Service and two Deployments as µLab 2, written down instead of typed, plus
+    the two things that could not be typed. In the #raw("kubectl") shell:
   ]
   #v(2pt)
-  #raw("kubectl exec deploy/spark-worker -- ls /lab/data/20news | wc -l", lang: "console")
+  #raw("kubectl apply -f https://raw.githubusercontent.com/oesteban/\\\n  isc-302-2026-2027-spark-lab/main/spark-standalone.yaml", lang: "console")
+  #v(2pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    The address is one line, broken here only to fit the page. Type it without the
+    backslash and without the line break.
+  ]
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("exec deploy/spark-worker"),
-    text(size: 7.8pt)[Run a command inside one of the worker pods. #raw("kubectl") picks one and says which.],
-    raw("/lab/data/20news"),
-    text(size: 7.8pt)[The same folder, two hops in: your laptop's #raw("lab") is the cluster container's #raw("/lab"), which is each pod's #raw("/lab").],
+    raw("apply"),
+    text(size: 7.8pt)[Make the cluster match the description: create what is missing, change what differs, leave the rest alone. Safe to run twice.],
+    raw("-f https://…"),
+    text(size: 7.8pt)[#raw("-f") is for #emph[file], and a URL counts as one. #raw("raw.githubusercontent.com") serves a file's contents rather than the web page around it.],
+    raw("volumeMounts: /lab"),
+    text(size: 7.8pt)[In the file, on both Deployments: hand each pod the folder the cluster container sees at #raw("/lab").],
+    raw("hostname: spark-master"),
+    text(size: 7.8pt)[In the file, on the master: give the pod a name cluster DNS answers for, so #raw("--conf spark.driver.host") is never needed again.],
   )
+  #v(3pt)
+  #text(size: 8pt)[
+    It prints three warnings saying these objects were created by hand and it has nothing
+    to compare against. That is true and harmless: it patches them anyway, and each pod is
+    replaced by one that has the folder.
+  ]
+  #v(4pt)
+  #text(size: 8pt)[
+    Once the new pods read #raw("1/1 Running"), ask one of them to count the same files.
+    It has never been told anything about your laptop:
+  ]
+  #v(2pt)
+  #raw("kubectl get pods\nkubectl exec deploy/spark-worker -- ls /lab/data/20news | wc -l", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[files on the laptop], rule(100%),
@@ -187,33 +211,24 @@
   #text(size: 8.5pt, weight: "bold")[Then set the cluster to four workers.]
   #v(1pt)
   #text(size: 8pt)[
-    Every command in this round is a submission to the Spark cluster from µLab 2, and
-    nothing runs on your laptop's own cores. Each worker was given one core, so the
-    cluster's size is its worker count. Four, so that every group runs the same
-    experiment and the numbers mean something when they are compared at the caucus.
+    Every command in this round is a submission to that cluster, and nothing runs on your
+    laptop's own cores. Each worker was given one core, so the cluster's size is its
+    worker count. Four, so that every group runs the same experiment.
   ]
   #v(2pt)
-  #raw("kubectl get pods\nkubectl scale deployment spark-worker --replicas=4\nkubectl logs deploy/spark-master | grep -c \"Registering worker\"", lang: "console")
+  #raw("kubectl scale deployment spark-worker --replicas=4\nkubectl logs deploy/spark-master | grep -c \"Registering worker\"", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("scale … --replicas=4"),
     text(size: 7.8pt)[Edit one field of a Deployment that already exists. Give it fifteen seconds and re-run #raw("kubectl get pods").],
     raw("grep -c \"Registering worker\""),
-    text(size: 7.8pt)[Count the lines in which a worker announced itself to the master. It counts *every* registration since the master started, so a worker that was replaced is counted twice.],
+    text(size: 7.8pt)[Count the lines in which a worker announced itself. The master restarted when the file was applied, so this counts only what has reported in since.],
   )
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[worker pods Running], rule(100%),
     text(size: 8pt)[cores available], rule(100%),
   )
-  #v(4pt)
-  #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
-    #text(size: 8pt)[
-      *If there are no pods at all*, the cluster was lost. Re-apply the manifest from
-      µLab 2 panel 3. The image is already in the cluster's store, so this time the pods
-      start in seconds rather than minutes.
-    ]
-  ]
 ]
 
 #panelb("2 · Some definitions")[

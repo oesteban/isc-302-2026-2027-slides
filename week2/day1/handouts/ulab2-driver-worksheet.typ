@@ -262,15 +262,6 @@
       makes the confusion easy. Panel 4 lists both.
     ],
 
-    text(size: 8.5pt, weight: "bold")[manifest],
-    text(size: 8pt)[
-      *A file describing objects you want to exist, rather than commands that create
-      them.* µLab 1 typed #raw("kubectl create deployment"), one object per command. A
-      manifest lists several, and #raw("kubectl apply") makes the cluster match it:
-      creating what is missing, changing what differs, leaving the rest. Running it twice
-      changes nothing the second time.
-    ],
-
     text(size: 8.5pt, weight: "bold")[driver],
     text(size: 8pt)[
       *The program that runs your Spark code.* It decides what work exists, hands the
@@ -326,89 +317,69 @@
   )
 ]
 
-#panelb("3 · Deploy the master and the workers · step 2")[
+#panelb("3 · Create the master and the workers by hand · step 2")[
   #text(size: 8.5pt)[
     Spark's own cluster is three things: a master process that hands out cores, worker
     processes that supply them, and a name the workers can dial that keeps working when a
-    pod is replaced. In Kubernetes terms that is *two Deployments and one Service*.
+    pod is replaced. In Kubernetes terms that is *one Service and two Deployments*, and
+    µLab 1 already made a Deployment with a single #raw("kubectl create") command. Three
+    objects, so three commands, typed in this order.
+  ]
+  #v(3pt)
+  #step("2", "Create the name first, then the master, then the workers.")[
+    In the #raw("kubectl") shell. The order matters: the master looks its own name up
+    when it starts, so if the Service is not there yet it fails and restarts until it is.
   ]
   #v(2pt)
-  #text(size: 8pt)[
-    µLab 1 made a Deployment by typing #raw("kubectl create deployment whale …"), one
-    object per command. Three objects would be three commands, each with its own
-    arguments to get right, and nothing written down afterwards. Instead they are
-    *described in a file*, and the cluster is told to match it. Read it before you
-    apply it.
-  ]
-  #v(3pt)
-  #raw("kind: Service          name: spark-master
-  clusterIP: None                      # resolve the name to the pod itself
-  selector: { app: spark-master }      # whichever pod carries this label
-  ports: 7077 (submit), 8080 (web)
-
-kind: Deployment       name: spark-master     replicas: 1
-  image: spark:3.5.4-python3
-  command: spark-class org.apache.spark.deploy.master.Master --host spark-master
-  hostname / subdomain: spark-master   # so the pod has a name DNS answers for
-  volumeMounts: /lab  (hostPath /lab, read-only)
-
-kind: Deployment       name: spark-worker     replicas: 2
-  command: spark-class org.apache.spark.deploy.worker.Worker \\
-             spark://spark-master:7077 --cores 1 --memory 1g
-  volumeMounts: /lab  (hostPath /lab, read-only)", block: true)
+  #raw("kubectl create service clusterip spark-master --clusterip=\"None\" --tcp=7077:7077", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("kind"),
-    text(size: 7.8pt)[What sort of object this is. The same word #raw("kubectl get") takes: #raw("kubectl get deployments"), #raw("kubectl get services").],
-    raw("clusterIP: None"),
-    text(size: 7.8pt)[Do not give the Service an address of its own; make the name answer with the pod's address. The master binds to whatever its own name resolves to, and it cannot bind to a Service's address.],
-    raw("selector"),
-    text(size: 7.8pt)[The label a pod must carry to be behind this Service. Not a pod name: that is the whole point, since pod names change.],
-    raw("command"),
-    text(size: 7.8pt)[What to run instead of the image's default. #raw("spark-class") starts one named Java class and stays in the foreground, which is what a container needs.],
-    raw("--host spark-master"),
-    text(size: 7.8pt)[Tells the master which name to publish itself under. It must match what the workers dial, or they connect and are then sent somewhere they cannot reach.],
-    raw("hostname / subdomain"),
-    text(size: 7.8pt)[Gives the pod a name of its own in cluster DNS. Without it the pod is reachable only through the Service, and panel 9 is what happens then.],
-    raw("--cores 1 --memory 1g"),
-    text(size: 7.8pt)[What one worker offers. Deliberately small, so the arithmetic is legible: the cluster has as many cores as it has worker pods.],
-    raw("hostPath /lab"),
-    text(size: 7.8pt)[Give the pod the folder the cluster container sees at #raw("/lab"), which step 1 attached. Both Deployments get it: in µLab 3 the master runs the driver, which reads the script, and the workers run the executors, which read the corpus.],
+    raw("create service clusterip"),
+    text(size: 7.8pt)[Make a Service of the ordinary kind, reachable only from inside the cluster. Nothing here is served to the outside world.],
+    raw("spark-master"),
+    text(size: 7.8pt)[Its name, and therefore *the name that will resolve*. It also becomes the label the Service looks for, #raw("app=spark-master"), which is the label the next command happens to give its pods.],
+    raw("--clusterip=\"None\""),
+    text(size: 7.8pt)[Do not give the Service an address of its own. Make the name answer with the pod's own address instead, because the master has to bind to whatever its name resolves to, and it cannot bind to an address that belongs to no machine.],
+    raw("--tcp=7077:7077"),
+    text(size: 7.8pt)[The port to carry, and the port on the pod to carry it to. 7077 is the one Spark listens on for submissions.],
   )
   #v(4pt)
-  #step("2", "Apply it, then watch the pods appear.")[
-    In the #raw("kubectl") shell. Nothing has been downloaded to your laptop: the file is
-    read straight off the web, which is why there is no clone in this round.
-  ]
-  #v(2pt)
-  #raw("kubectl apply -f https://raw.githubusercontent.com/oesteban/\
-  isc-302-2026-2027-spark-lab/main/spark-standalone.yaml
-kubectl get pods", lang: "console")
-  #v(2pt)
-  #text(size: 7.8pt, fill: luma(120))[
-    The address is one line, broken here only to fit the page. Type it without the
-    backslash and without the line break.
-  ]
+  #raw("kubectl create deployment spark-master --image=spark:3.5.4-python3 \\\n  -- /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master \\\n     --host spark-master", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("apply"),
-    text(size: 7.8pt)[Make the cluster match the description: create what is missing, change what differs, leave the rest alone. Safe to run twice.],
-    raw("-f https://…"),
-    text(size: 7.8pt)[#raw("-f") is for #emph[file], and a URL counts as one: #raw("kubectl") fetches it and reads it. #raw("raw.githubusercontent.com") serves a file's contents rather than the web page around it.],
+    raw("create deployment NAME"),
+    text(size: 7.8pt)[The same command as #raw("kubectl create deployment whale …") in µLab 1. The name also becomes the pods' #raw("app") label, which is what the Service just asked for.],
+    raw("--image=spark:3.5.4-python3"),
+    text(size: 7.8pt)[Which image the pods run. Note there is no registry in the name, so *Docker Hub*, and the cluster will have to fetch it: panel 4 is about where from.],
+    raw("--"),
+    text(size: 7.8pt)[End of #raw("kubectl")'s own arguments. Everything after it is the command to run inside the container, exactly as in µLab 1's Job.],
+    raw("spark-class …Master"),
+    text(size: 7.8pt)[Run one named Java class and stay in the foreground, which is what a container needs. The image's own default would start something else.],
+    raw("--host spark-master"),
+    text(size: 7.8pt)[The master's own argument: which name to publish itself under. It must match what the workers dial, or they connect and are then sent somewhere they cannot reach.],
   )
+  #v(4pt)
+  #raw("kubectl create deployment spark-worker --image=spark:3.5.4-python3 --replicas=2 \\\n  -- /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker \\\n     spark://spark-master:7077 --cores 1 --memory 1g", lang: "console")
   #v(3pt)
-  #text(size: 8pt)[Three objects are created, and it says so:]
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("--replicas=2"),
+    text(size: 7.8pt)[How many worker pods to ask for. Before the #raw("--"), so #raw("kubectl") reads it and Spark never sees it.],
+    raw("spark://spark-master:7077"),
+    text(size: 7.8pt)[Which master to report to. The Service name from the first command, so this stays true however often the master's pod is replaced.],
+    raw("--cores 1 --memory 1g"),
+    text(size: 7.8pt)[What one worker offers. Deliberately small, so the arithmetic is legible: the cluster has as many cores as it has worker pods.],
+  )
+  #v(4pt)
+  #text(size: 8pt)[Then watch the pods appear:]
   #v(2pt)
-  #raw("service/spark-master created
-deployment.apps/spark-master created
-deployment.apps/spark-worker created", block: true)
+  #raw("kubectl get pods", lang: "console")
   #v(3pt)
   #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
     #text(size: 8pt)[
       *The pods will sit in #raw("ContainerCreating") for a while.* One to three minutes
       here, and longer on a shared connection. Nothing is wrong: the cluster is
-      downloading a 535 MB image, and panel 4 is about why it has to. Run
-      #raw("kubectl get pods") every so often until all three read #raw("1/1 Running").
+      downloading a 535 MB image, and panel 4 is about why it has to. Once the master has
+      it the workers start in seconds, because by then it is already in the store.
     ]
   ]
   #v(3pt)
@@ -562,7 +533,7 @@ INFO Master: Registering worker 10.42.0.3:39957 with 1 cores, 1024.0 MiB RAM", b
     looks like a detail and is not: panel 9 says what happens when it runs anywhere else.
   ]
   #v(2pt)
-  #raw("kubectl exec deploy/spark-master -- /opt/spark/bin/spark-submit \\\n  --master spark://spark-master:7077 \\\n  --class org.apache.spark.examples.SparkPi \\\n  local:///opt/spark/examples/jars/spark-examples_2.12-3.5.4.jar 100", lang: "console")
+  #raw("kubectl exec deploy/spark-master -- /opt/spark/bin/spark-submit \\\n  --master spark://spark-master:7077 \\\n  --conf spark.driver.host=spark-master \\\n  --class org.apache.spark.examples.SparkPi \\\n  local:///opt/spark/examples/jars/spark-examples_2.12-3.5.4.jar 100", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("exec"),
@@ -572,7 +543,9 @@ INFO Master: Registering worker 10.42.0.3:39957 with 1 cores, 1024.0 MiB RAM", b
     raw("spark-submit"),
     text(size: 7.8pt)[Spark's launcher: start a driver, ask a master for cores, run the code, print the result, exit.],
     raw("--master spark://…:7077"),
-    text(size: 7.8pt)[Which master to ask. The Service name from panel 2 and port 7077, which is the one the file labelled #emph[submit].],
+    text(size: 7.8pt)[Which master to ask. The Service name and port from step 2.],
+    raw("--conf spark.driver.host=…"),
+    text(size: 7.8pt)[*The one that is easy to leave out.* It tells the driver which name to give the executors so they can call it back. Left out, the driver gives them the pod's own name, which nothing can resolve, and the job hangs for ever. Panel 9 is what that looks like.],
     raw("--class org.apache…SparkPi"),
     text(size: 7.8pt)[Which program inside the jar to run. A jar holds many; this names one.],
     raw("local:///opt/spark/…jar"),
@@ -679,22 +652,21 @@ INFO Master: Registering worker 10.42.0.9:40593 with 1 cores, 1024.0 MiB RAM", b
 
 #panel("9 · Annex · why the driver has to run somewhere that has a name")[
   #text(size: 8pt)[
-    Panel 6 submitted the job from inside the master pod. Submitting from a pod of your
-    own looks tidier and does not work. Executors are told to call the driver back by
-    name, and cluster DNS answers only for pods that are behind a Service. A pod started
-    on its own has no name anyone can resolve, so every executor exits immediately and
-    the driver waits for cores that never arrive, printing this every fifteen seconds:
+    Leave #raw("--conf spark.driver.host=spark-master") out of panel 6 and the job never
+    starts. Executors are told to call the driver back by name, and the name they are
+    given is the master pod's own, something like
+    #raw("spark-master-cc5688b64-lt59r"). Cluster DNS answers for Service names, not for
+    pod names, so every executor fails to resolve it and exits, and the driver waits for
+    cores that never arrive, printing this every fifteen seconds:
   ]
   #v(2pt)
   #raw("WARN TaskSchedulerImpl: Initial job has not accepted any resources; check your
 cluster UI to ensure that workers are registered and have sufficient resources", block: true)
   #v(2pt)
   #text(size: 8pt)[
-    The message blames the workers, and the workers are fine. This is also why the
-    Deployment in panel 3 sets #raw("hostname") and #raw("subdomain"): built with
-    #raw("kubectl create deployment") instead, the master pod would be called
-    #raw("spark-master-fccf6ddcd-dmf5m") and every submission would hang in exactly this
-    way. That was measured, not predicted.
+    The message blames the workers, and the workers are fine. The flag is a workaround
+    for something #raw("kubectl create") cannot do: give a pod a name of its own in
+    cluster DNS. µLab 3 fixes it properly, and the flag is not needed again.
   ]
   #v(3pt)
   #text(size: 8pt)[
