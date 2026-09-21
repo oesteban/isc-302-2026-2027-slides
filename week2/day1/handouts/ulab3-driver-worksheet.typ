@@ -141,37 +141,65 @@
 #v(5pt)
 
 // ══ CORE — fifteen to twenty minutes ══════════════════════════════════════
-#panelb("1 · Check the Spark cluster is still running · step 1")[
+#panelb("1 · Fill the lab folder, then size the cluster · step 1")[
   #text(size: 8.5pt)[
-    Every command in this round is a submission to the Spark cluster built in µLab 2.
-    Nothing here runs on your laptop's own cores, so the first thing to establish is
-    what the cluster currently is: one master, and one core for every worker pod.
+    µLab 2 handed the cluster an empty folder. This round puts things in it: the two
+    scripts you are about to run, and the 18'846 messages they count. Neither the cluster
+    nor the pods have to be restarted for that, because a bind mount is the same folder
+    seen twice rather than a copy of it.
   ]
   #v(3pt)
-  #step("1", "Count the pods, and write down how many cores that gives you.")[
-    Typed in the #raw("kubectl") shell from µLab 2. If that shell was closed, start
-    another one with the same #raw("docker run") line, from the repository folder.
+  #step("1", "Put the scripts and the corpus into lab, then prove a pod can see them.")[
+    On the laptop, in the folder holding #raw("kube") and #raw("lab"). The corpus is the
+    20 MB #raw("20news.zip") from ISC Learn; use wherever your browser put it.
   ]
   #v(2pt)
-  #raw("kubectl get pods\nkubectl logs deploy/spark-master | grep -c \"Registering worker\"", lang: "console")
+  #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data\nls lab/data/20news | wc -l", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("get pods"),
-    text(size: 7.8pt)[List the pods. Expect one #raw("spark-master") and however many #raw("spark-worker") pods µLab 2 left behind, all reading #raw("1/1 Running").],
-    raw("grep -c \"Registering worker\""),
-    text(size: 7.8pt)[Count the lines in which a worker announced itself. Each worker was given #raw("--cores 1"), so this is also the cluster's core count. It counts every registration since the master started, so a worker that was replaced is counted twice.],
+    raw("clone … lab"),
+    text(size: 7.8pt)[The last argument says where to put it, and it must be the #raw("lab") µLab 2 created, because that is the folder the cluster was given. Cloning into it works only while it is *empty*; if this refuses, something is already there.],
+    raw("unzip -d lab/data"),
+    text(size: 7.8pt)[Unpack into that folder. The zip contains a directory called #raw("20news"), so this produces #raw("lab/data/20news") beside the #raw("stopwords.txt") that came with the clone.],
+    raw("| wc -l"),
+    text(size: 7.8pt)[Count the lines, which here means count the files. It must read *18846*. Anything else means the zip landed somewhere other than #raw("lab/data").],
   )
-  #v(3pt)
+  #v(4pt)
   #text(size: 8pt)[
-    Set the cluster to *four* workers, so that every group is running the same experiment
-    and the numbers below mean something when they are compared at the caucus.
+    Now ask a pod that has been running since µLab 2, and was never told about any of
+    this, to count the same files. In the #raw("kubectl") shell:
   ]
   #v(2pt)
-  #raw("kubectl scale deployment spark-worker --replicas=4", lang: "console")
+  #raw("kubectl exec deploy/spark-worker -- ls /lab/data/20news | wc -l", lang: "console")
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("exec deploy/spark-worker"),
+    text(size: 7.8pt)[Run a command inside one of the worker pods. #raw("kubectl") picks one and says which.],
+    raw("/lab/data/20news"),
+    text(size: 7.8pt)[The same folder, two hops in: your laptop's #raw("lab") is the cluster container's #raw("/lab"), which is each pod's #raw("/lab").],
+  )
+  #v(3pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
+    text(size: 8pt)[files on the laptop], rule(100%),
+    text(size: 8pt)[files inside the pod], rule(100%),
+  )
+  #v(4pt)
+  #text(size: 8.5pt, weight: "bold")[Then set the cluster to four workers.]
+  #v(1pt)
+  #text(size: 8pt)[
+    Every command in this round is a submission to the Spark cluster from µLab 2, and
+    nothing runs on your laptop's own cores. Each worker was given one core, so the
+    cluster's size is its worker count. Four, so that every group runs the same
+    experiment and the numbers mean something when they are compared at the caucus.
+  ]
+  #v(2pt)
+  #raw("kubectl get pods\nkubectl scale deployment spark-worker --replicas=4\nkubectl logs deploy/spark-master | grep -c \"Registering worker\"", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("scale … --replicas=4"),
     text(size: 7.8pt)[Edit one field of a Deployment that already exists. Give it fifteen seconds and re-run #raw("kubectl get pods").],
+    raw("grep -c \"Registering worker\""),
+    text(size: 7.8pt)[Count the lines in which a worker announced itself to the master. It counts *every* registration since the master started, so a worker that was replaced is counted twice.],
   )
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,

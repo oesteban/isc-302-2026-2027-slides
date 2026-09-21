@@ -140,30 +140,30 @@
 #v(5pt)
 
 // ══ CORE — fifteen to twenty minutes ══════════════════════════════════════
-#panelb("1 · Put the lab where the cluster can reach it · step 1")[
+#panelb("1 · Give the cluster a folder it can read · step 1")[
   #text(size: 8.5pt)[
     A container can only see the folders it was handed at the moment it was created.
     µLab 1 handed the cluster exactly one, #raw("kube"), so that it had somewhere to
-    write its credentials. This round needs a second one, so anything you put in
-    #raw("lab") on the laptop appears inside the cluster. There is no command that adds
-    a folder to a container afterwards, so the cluster is thrown away and made again.
+    write its credentials. There is no command that adds a second folder afterwards: the
+    only way is to throw the container away and make it again. So make an empty folder
+    now and hand it over now, while rebuilding is free.
   ]
   #v(3pt)
-  #step("1", "Build the lab folder, then hand it over.")[
+  #step("1", "Make the folder, then rebuild the cluster around it.")[
     Work in the same folder you started the cluster in during µLab 1, the one with
-    #raw("kube") in it. The corpus is the 20 MB #raw("20news.zip") from ISC Learn.
+    #raw("kube") in it.
   ]
   #v(2pt)
-  #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data\nls lab/data/20news | wc -l", lang: "console")
+  #raw("mkdir lab", lang: "console")
   #v(3pt)
-  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("clone … lab"),
-    text(size: 7.8pt)[The last argument renames the folder. It *must* be #raw("lab"), because the next command hands a folder of that name to the cluster. The clone itself is under a second: the corpus is not in it.],
-    raw("unzip -d lab/data"),
-    text(size: 7.8pt)[Unpack into that folder. The zip contains a directory called #raw("20news"), so this produces #raw("lab/data/20news") beside the #raw("stopwords.txt") that came with the clone.],
-    raw("| wc -l"),
-    text(size: 7.8pt)[Count the lines, which here means count the files. It must read *18846*. Anything else means the zip landed somewhere other than #raw("lab/data").],
-  )
+  #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
+    #text(size: 8pt)[
+      *Do not skip this line.* If #raw("lab") does not exist when the next command runs,
+      Docker creates it for you and it comes out owned by #raw("root"). Everything you
+      try to write into it afterwards then fails with #raw("Permission denied"), and the
+      only cure is to delete it with #raw("sudo") and start again.
+    ]
+  ]
   #v(4pt)
   #text(size: 8.5pt, weight: "bold")[Now replace the cluster.]
   #v(1pt)
@@ -197,7 +197,7 @@
     raw("-v \"$PWD/kube:/output\""),
     text(size: 7.8pt)[Bind-mount: the #raw("kube") folder here appears inside at #raw("/output"), which is where the credentials file gets written.],
     text(fill: accent, weight: "bold", raw("-v \"$PWD/lab:/lab\"")),
-    text(size: 7.8pt)[*The new one.* The #raw("lab") folder here appears inside the cluster at #raw("/lab"). Everything on this sheet and the next that begins #raw("/lab/") is reaching through this one argument.],
+    text(size: 7.8pt)[*The new one.* The #raw("lab") folder here appears inside the cluster at #raw("/lab"). It is empty, and it stays yours: a bind mount is the same folder seen twice, not a copy, so whatever you put in it later is visible inside at once.],
     raw("rancher/k3s:…"),
     text(size: 7.8pt)[The image: a whole Kubernetes in one binary. Pinned to #raw("v1.36.4-k3s1") so every laptop runs the same version.],
     raw("server"),
@@ -208,15 +208,15 @@
     text(size: 7.8pt)[Where to write the credentials file, and with which permissions. #raw("644") makes it readable by you rather than only by root.],
   )
   #v(4pt)
-  #text(size: 8.5pt, weight: "bold")[Then get a client, and give it the same two folders.]
+  #text(size: 8.5pt, weight: "bold")[Then get a client. It is the µLab 1 line, unchanged.]
   #v(1pt)
   #text(size: 8pt)[
     Linux users who installed #raw("kubectl") in µLab 1 keep using it and skip this box.
-    Everyone else runs the client in its own container, as in µLab 1, with *one mount
-    added*: the client reads the file applied in step 2, so it needs #raw("lab") too.
+    Nothing about the client changes this round: it talks to the cluster over the network
+    and never touches #raw("lab").
   ]
   #v(2pt)
-  #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD/kube:/kube:ro\" -v \"$PWD/lab:/lab:ro\" \\\n  -e KUBECONFIG=/kube/config --entrypoint sh alpine/kubectl", lang: "console")
+  #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD/kube:/kube:ro\" -e KUBECONFIG=/kube/config \\\n  --entrypoint sh alpine/kubectl", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("--rm -it"),
@@ -225,8 +225,6 @@
     text(size: 7.8pt)[Join the cluster container's network instead of getting one. That is why #raw("127.0.0.1:6443") works in here.],
     raw("-v \"$PWD/kube:/kube:ro\""),
     text(size: 7.8pt)[The credentials, read-only. A client has no business editing them.],
-    text(fill: accent, weight: "bold", raw("-v \"$PWD/lab:/lab:ro\"")),
-    text(size: 7.8pt)[*The new one,* and deliberately the same path as inside the cluster: #raw("/lab") means the same folder in the client, in the cluster and in every pod.],
     raw("-e KUBECONFIG=/kube/config"),
     text(size: 7.8pt)[Which cluster to talk to. The path is the one *inside this container*, not on your laptop.],
     raw("--entrypoint sh"),
@@ -236,15 +234,15 @@
   )
   #v(4pt)
   #text(size: 8pt)[
-    Check the cluster answers, and that it can see the lab. The #raw("NAME") is the new
-    container's id, so it is *not* the one µLab 1 showed: this is a different cluster.
+    Check the cluster answers. The #raw("NAME") is the new container's id, so it is *not*
+    the one µLab 1 showed: this is a different cluster.
   ]
   #v(2pt)
-  #raw("kubectl get nodes\nls /lab/data/20news | wc -l", lang: "console")
+  #raw("kubectl get nodes", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[NAME], rule(100%),
-    text(size: 8pt)[files under /lab], rule(100%),
+    text(size: 8pt)[STATUS], rule(100%),
   )
 ]
 
@@ -339,8 +337,8 @@
     µLab 1 made a Deployment by typing #raw("kubectl create deployment whale …"), one
     object per command. Three objects would be three commands, each with its own
     arguments to get right, and nothing written down afterwards. Instead they are
-    *described in a file*, and the cluster is told to match it. The file came with the
-    clone. Read it before you apply it.
+    *described in a file*, and the cluster is told to match it. Read it before you
+    apply it.
   ]
   #v(3pt)
   #raw("kind: Service          name: spark-master
@@ -379,18 +377,24 @@ kind: Deployment       name: spark-worker     replicas: 2
   )
   #v(4pt)
   #step("2", "Apply it, then watch the pods appear.")[
-    In the #raw("kubectl") shell, where step 1 mounted the folder at #raw("/lab"). With
-    #raw("kubectl") on your laptop instead, drop the #raw("/lab/") and run it from the
-    folder you are working in.
+    In the #raw("kubectl") shell. Nothing has been downloaded to your laptop: the file is
+    read straight off the web, which is why there is no clone in this round.
   ]
   #v(2pt)
-  #raw("kubectl apply -f /lab/spark-standalone.yaml\nkubectl get pods", lang: "console")
+  #raw("kubectl apply -f https://raw.githubusercontent.com/oesteban/\
+  isc-302-2026-2027-spark-lab/main/spark-standalone.yaml
+kubectl get pods", lang: "console")
+  #v(2pt)
+  #text(size: 7.8pt, fill: luma(120))[
+    The address is one line, broken here only to fit the page. Type it without the
+    backslash and without the line break.
+  ]
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("apply"),
-    text(size: 7.8pt)[Make the cluster match the file: create what is missing, change what differs, leave the rest alone. Safe to run twice.],
-    raw("-f /lab/spark-standalone.yaml"),
-    text(size: 7.8pt)[Read the description from this file. #raw("-f") is for #emph[file]. The path is the one *inside this container*, not on your laptop.],
+    text(size: 7.8pt)[Make the cluster match the description: create what is missing, change what differs, leave the rest alone. Safe to run twice.],
+    raw("-f https://…"),
+    text(size: 7.8pt)[#raw("-f") is for #emph[file], and a URL counts as one: #raw("kubectl") fetches it and reads it. #raw("raw.githubusercontent.com") serves a file's contents rather than the web page around it.],
   )
   #v(3pt)
   #text(size: 8pt)[Three objects are created, and it says so:]
