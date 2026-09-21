@@ -440,28 +440,33 @@
     has to reach in there to run it.
   ]
   #v(2pt)
-  #raw("docker exec k8s crictl images\ndocker image ls spark:3.5.4-python3", lang: "console")
+  #text(size: 8.5pt, weight: "bold")[First, what the cluster has.]
+  #v(2pt)
+  #raw("docker exec k8s crictl images", lang: "console")
+  #v(2pt)
+  #raw("IMAGE                                        TAG                 IMAGE ID            SIZE
+docker.io/library/spark                      3.5.4-python3       5908cada5243a       535MB", block: true)
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("docker exec k8s"),
     text(size: 7.8pt)[Run a command *inside* the already-running #raw("k8s") container, rather than starting a new one.],
     raw("crictl images"),
-    text(size: 7.8pt)[The cluster's own tool for talking to containerd, and its way of saying #emph[list the images you can start].],
+    text(size: 7.8pt)[The cluster's own tool for talking to containerd, and its way of saying #emph[list the images you can start]. It exists only in there.],
+  )
+  #v(5pt)
+  #text(size: 8.5pt, weight: "bold")[Now, what your laptop has.]
+  #v(2pt)
+  #raw("docker image ls spark:3.5.4-python3", lang: "console")
+  #v(2pt)
+  #raw("REPOSITORY   TAG       IMAGE ID   CREATED   SIZE", block: true)
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("docker image ls NAME"),
-    text(size: 7.8pt)[Docker's list, narrowed to one name. Printing a header and no rows is not an error: it means Docker has no image by that name.],
+    text(size: 7.8pt)[Docker's own list, narrowed to one name. A header with no rows under it is not an error: it means Docker has no image called that.],
   )
   #v(3pt)
   #text(size: 8pt)[
-    The first listing has the Spark image. The second, on almost every laptop in this
-    room, *has nothing at all*, and that is the result to expect:
-  ]
-  #v(2pt)
-  #raw("IMAGE                                        TAG                 IMAGE ID            SIZE
-docker.io/library/spark                      3.5.4-python3       5908cada5243a       535MB
-
-REPOSITORY   TAG       IMAGE ID   CREATED   SIZE", block: true)
-  #v(3pt)
-  #text(size: 8pt)[
+    *A header and nothing else is the expected answer*, and it is the point of this step.
     Nothing on this sheet ever asked you to pull Spark, so your Docker has never seen it.
     The cluster fetched its own copy in step 2 and put it somewhere Docker cannot read.
   ]
@@ -598,15 +603,21 @@ INFO Master: Registering worker 10.42.0.3:39957 with 1 cores, 1024.0 MiB RAM", b
   )
   #v(4pt)
   #text(size: 8pt)[
-    Several hundred lines scroll past and one line matters. On a two-worker cluster the
-    whole thing took *8 seconds*:
+    Several hundred lines of Spark's own logging scroll past, and the answer is at the
+    very bottom. Look for the pair below: the first line is the scheduler saying the
+    computation finished and how long it took, the second is the result. On a two-worker
+    cluster the whole submission took about *8 seconds*, most of it starting a JVM.
   ]
   #v(2pt)
-  #raw("Pi is roughly 3.1406367140636715", block: true)
+  #raw("26/09/21 07:46:35 INFO DAGScheduler: Job 0 finished: reduce at SparkPi.scala:38,
+                                 took 2.272697 s
+Pi is roughly 3.1427459142745913", block: true)
   #v(3pt)
   #text(size: 8pt)[
     The digits after the third will not match anyone else's, including a second run of
-    your own, because the darts are thrown at random. Anything near 3.14 is a success.
+    your own, because the darts are thrown at random. Anything near 3.14 is a success. \
+    If the screen stops moving and nothing like this appears, the job is waiting rather
+    than working: panel 10 is what that means.
   ]
   #v(2pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
