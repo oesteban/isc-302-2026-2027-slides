@@ -181,9 +181,9 @@
   #v(4pt)
   #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
     #text(size: 8pt)[
-      *If there are no pods at all*, the cluster was lost. Re-run the two commands from
-      µLab 2 panel 4 and panel 3, in that order: the image has to be back in the store
-      before the pods can start.
+      *If there are no pods at all*, the cluster was lost. Re-apply the manifest from
+      µLab 2 panel 3. The image is already in the cluster's store, so this time the pods
+      start in seconds rather than minutes.
     ]
   ]
 ]
@@ -579,7 +579,7 @@ print(lines.rdd.getNumPartitions())", block: true)
   #text(size: 8.5pt)[
     Panel 7 varied the partitions and held the cores fixed. Now hold the partitions fixed
     and vary the cores. Every worker offers one core, so the cluster's size is a field in
-    a Deployment, and changing it is the same command µLab 2 used. This is the longest
+    a Deployment, and changing it is the command µLab 1 used on the whale. This is the longest
     run on the sheet, about six minutes on one core against two on four, so start it and
     read the question below while it works.
   ]

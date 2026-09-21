@@ -7,20 +7,25 @@
 //
 // The roles rotate between rounds: whoever drove µLab 1 is not driving this one.
 //
-// This round is the bridge. µLab 1 left a cluster running and taught that the
-// cluster has its own image store; here that fact stops being a demonstration and
-// becomes the obstacle, because the Spark image is 982 MB and the cluster cannot
-// see it. µLab 3 then submits work to what this round builds.
+// This round is the bridge. µLab 1 left a cluster running; this one puts Spark on
+// it, and µLab 3 submits work to what this one builds.
 //
-// The sheet is cut in two by a checkpoint bar. Everything above it is the core;
-// everything below is extension work. AUTHORING.md rule G1 sizes a core at ten
-// minutes, and this one is sized for fifteen to twenty, because two of its five
-// panels wait on a machine: an image import of about forty seconds and a pod
-// rollout. The reader is not the clock here.
+// Two decisions worth not re-opening. The cluster is deployed from a manifest
+// rather than from kubectl create, because kubectl create gives a pod no stable
+// hostname: the driver then advertises a name cluster DNS cannot resolve and every
+// submission hangs for ever, which was measured, not guessed. And the image is
+// left for the cluster to download rather than imported from the laptop, because
+// the whole point of panel 4 is that the two stores are separate; the import is
+// panel 8, where it is an optimisation rather than a mystery.
+//
+// The sheet is cut in two by a checkpoint bar. AUTHORING.md rule G1 sizes a core
+// at ten minutes, and this one is sized for fifteen to twenty, because the cluster
+// spends one to three of them downloading a 535 MB image. The reader is not the
+// clock here.
 //
 // Every number and every line of output quoted below was observed on a real run
-// on 2026-09-21, not reasoned out. The Pi value is the exception and is marked as
-// such, because the estimate is random and differs every time.
+// on 2026-09-21. The Pi value is the exception and is marked as such, because the
+// estimate is random and differs every time.
 //
 // Committed BLANK and it must stay that way: a filled sheet carries a GitHub
 // handle and is personally identifying. It is handed to the teacher at the end
@@ -135,27 +140,29 @@
 #v(5pt)
 
 // ══ CORE — fifteen to twenty minutes ══════════════════════════════════════
-#panelb("1 · Re-create the cluster with the lab folder attached · step 1")[
+#panelb("1 · Put the lab where the cluster can reach it · step 1")[
   #text(size: 8.5pt)[
-    µLab 3 will run a word count over 18'846 files that live in this repository. The
-    cluster from µLab 1 cannot read any of them, and no command will fix that: a
-    container can only see the folders it was handed *at the moment it was created*,
-    and that command said nothing about this repository. So the cluster is thrown away
-    and made again, this time with the folder attached.
+    A container can only see the folders it was handed at the moment it was created.
+    µLab 1 handed the cluster exactly one, #raw("kube"), so that it had somewhere to
+    write its credentials. This round needs a second one, so anything you put in
+    #raw("lab") on the laptop appears inside the cluster. There is no command that adds
+    a folder to a container afterwards, so the cluster is thrown away and made again.
   ]
   #v(3pt)
-  #step("1", "Get the repository, and work from inside it.")[
-    Every command on this sheet is typed on your laptop, from this folder. If the
-    clone is already there from the announcement, #raw("git pull") is enough.
+  #step("1", "Build the lab folder, then hand it over.")[
+    Work in the same folder you started the cluster in during µLab 1, the one with
+    #raw("kube") in it. The corpus is the 20 MB #raw("20news.zip") from ISC Learn.
   ]
   #v(2pt)
-  #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab\ncd isc-302-2026-2027-spark-lab", lang: "console")
+  #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data\nls lab/data/20news | wc -l", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("clone"),
-    text(size: 7.8pt)[Copies the whole repository, history included, into a new folder named after it.],
-    raw("https://github.com/…"),
-    text(size: 7.8pt)[The address. 17.6 MiB to download, which is quick; then 18'846 small files to write to disk, which is not. A checkout that takes a minute is working, not hung.],
+    raw("clone … lab"),
+    text(size: 7.8pt)[The last argument renames the folder. It *must* be #raw("lab"), because the next command hands a folder of that name to the cluster. The clone itself is under a second: the corpus is not in it.],
+    raw("unzip -d lab/data"),
+    text(size: 7.8pt)[Unpack into that folder. The zip contains a directory called #raw("20news"), so this produces #raw("lab/data/20news") beside the #raw("stopwords.txt") that came with the clone.],
+    raw("| wc -l"),
+    text(size: 7.8pt)[Count the lines, which here means count the files. It must read *18846*. Anything else means the zip landed somewhere other than #raw("lab/data").],
   )
   #v(4pt)
   #text(size: 8.5pt, weight: "bold")[Now replace the cluster.]
@@ -165,7 +172,7 @@
     That is intended: nothing from µLab 1 is needed again.
   ]
   #v(2pt)
-  #raw("docker rm -f k8s\ndocker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 -v \"$PWD/kube:/output\" -v \"$PWD:/lab\" \\\n  rancher/k3s:v1.36.4-k3s1 server --disable=traefik \\\n  --write-kubeconfig /output/config --write-kubeconfig-mode 644", lang: "console")
+  #raw("docker rm -f k8s\ndocker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \\\n  -p 6443:6443 -v \"$PWD/kube:/output\" -v \"$PWD/lab:/lab\" \\\n  rancher/k3s:v1.36.4-k3s1 server --disable=traefik \\\n  --write-kubeconfig /output/config --write-kubeconfig-mode 644", lang: "console")
   #v(3pt)
   #text(size: 8pt)[
     This is the µLab 1 command with *one argument added*. The table repeats the rest in
@@ -189,8 +196,8 @@
     text(size: 7.8pt)[Publish the API port to your laptop, so a client outside the container can reach it.],
     raw("-v \"$PWD/kube:/output\""),
     text(size: 7.8pt)[Bind-mount: the #raw("kube") folder here appears inside at #raw("/output"), which is where the credentials file gets written.],
-    text(fill: accent, weight: "bold", raw("-v \"$PWD:/lab\"")),
-    text(size: 7.8pt)[*The new one.* This whole folder, corpus included, appears inside the cluster container at #raw("/lab"). Pods will mount it from there in step 3.],
+    text(fill: accent, weight: "bold", raw("-v \"$PWD/lab:/lab\"")),
+    text(size: 7.8pt)[*The new one.* The #raw("lab") folder here appears inside the cluster at #raw("/lab"). Everything on this sheet and the next that begins #raw("/lab/") is reaching through this one argument.],
     raw("rancher/k3s:…"),
     text(size: 7.8pt)[The image: a whole Kubernetes in one binary. Pinned to #raw("v1.36.4-k3s1") so every laptop runs the same version.],
     raw("server"),
@@ -201,26 +208,27 @@
     text(size: 7.8pt)[Where to write the credentials file, and with which permissions. #raw("644") makes it readable by you rather than only by root.],
   )
   #v(4pt)
-  #text(size: 8.5pt, weight: "bold")[Then get a client, and point it at the folder too.]
+  #text(size: 8.5pt, weight: "bold")[Then get a client, and give it the same two folders.]
   #v(1pt)
   #text(size: 8pt)[
     Linux users who installed #raw("kubectl") in µLab 1 keep using it and skip this box.
-    Everyone else runs the client in its own container, as in µLab 1, with *two changes*:
-    the mount is now the whole folder rather than just #raw("kube"), so that the client
-    can read the file applied in step 3.
+    Everyone else runs the client in its own container, as in µLab 1, with *one mount
+    added*: the client reads the file applied in step 2, so it needs #raw("lab") too.
   ]
   #v(2pt)
-  #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD:/lab:ro\" -e KUBECONFIG=/lab/kube/config \\\n  --entrypoint sh alpine/kubectl", lang: "console")
+  #raw("docker run --rm -it --network container:k8s \\\n  -v \"$PWD/kube:/kube:ro\" -v \"$PWD/lab:/lab:ro\" \\\n  -e KUBECONFIG=/kube/config --entrypoint sh alpine/kubectl", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("--rm -it"),
     text(size: 7.8pt)[Disposable, and interactive: a shell you can type many commands into, deleted when you leave.],
     raw("--network container:k8s"),
     text(size: 7.8pt)[Join the cluster container's network instead of getting one. That is why #raw("127.0.0.1:6443") works in here.],
-    text(fill: accent, weight: "bold", raw("-v \"$PWD:/lab:ro\"")),
-    text(size: 7.8pt)[*Changed.* µLab 1 mounted only #raw("kube"). The client now needs the manifest file as well, so the whole folder comes in, read-only.],
-    text(fill: accent, weight: "bold", raw("-e KUBECONFIG=/lab/kube/config")),
-    text(size: 7.8pt)[*Changed to match.* The credentials are at the same place as before, one level further down the new mount.],
+    raw("-v \"$PWD/kube:/kube:ro\""),
+    text(size: 7.8pt)[The credentials, read-only. A client has no business editing them.],
+    text(fill: accent, weight: "bold", raw("-v \"$PWD/lab:/lab:ro\"")),
+    text(size: 7.8pt)[*The new one,* and deliberately the same path as inside the cluster: #raw("/lab") means the same folder in the client, in the cluster and in every pod.],
+    raw("-e KUBECONFIG=/kube/config"),
+    text(size: 7.8pt)[Which cluster to talk to. The path is the one *inside this container*, not on your laptop.],
     raw("--entrypoint sh"),
     text(size: 7.8pt)[Run a shell instead of the single #raw("kubectl") the image is built for.],
     raw("alpine/kubectl"),
@@ -228,15 +236,15 @@
   )
   #v(4pt)
   #text(size: 8pt)[
-    Check the cluster answers. The #raw("NAME") is the new container's id, so it is *not*
-    the one µLab 1 showed: this is a different cluster.
+    Check the cluster answers, and that it can see the lab. The #raw("NAME") is the new
+    container's id, so it is *not* the one µLab 1 showed: this is a different cluster.
   ]
   #v(2pt)
-  #raw("kubectl get nodes", lang: "console")
+  #raw("kubectl get nodes\nls /lab/data/20news | wc -l", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[NAME], rule(100%),
-    text(size: 8pt)[STATUS], rule(100%),
+    text(size: 8pt)[files under /lab], rule(100%),
   )
 ]
 
@@ -251,8 +259,18 @@
     text(size: 8.5pt, weight: "bold")[image store],
     text(size: 8pt)[
       *The place a container runtime keeps the images it can start.* Your laptop's Docker
-      has one; the cluster has a separate one of its own, and neither can read the other's.
-      µLab 1 showed this by listing them side by side. Step 2 is what to do about it.
+      has one. The cluster runs a different runtime, containerd, with a store of its own,
+      and neither can read the other's files. They use the same names, which is what
+      makes the confusion easy. Panel 4 lists both.
+    ],
+
+    text(size: 8.5pt, weight: "bold")[manifest],
+    text(size: 8pt)[
+      *A file describing objects you want to exist, rather than commands that create
+      them.* µLab 1 typed #raw("kubectl create deployment"), one object per command. A
+      manifest lists several, and #raw("kubectl apply") makes the cluster match it:
+      creating what is missing, changing what differs, leaving the rest. Running it twice
+      changes nothing the second time.
     ],
 
     text(size: 8.5pt, weight: "bold")[driver],
@@ -274,7 +292,7 @@
       *The process that hands out the cluster's cores.* It runs nothing itself. Drivers
       ask it for resources, it decides which machines will supply them, and it keeps a
       list of who is available. Not to be confused with the Kubernetes control plane,
-      which hands out pods; this one hands out cores, and it is a pod itself.
+      which hands out pods. This one hands out cores, and it is a pod itself.
     ],
 
     text(size: 8.5pt, weight: "bold")[Spark worker],
@@ -310,108 +328,21 @@
   )
 ]
 
-#panelb("3 · Put the Spark image into the cluster's image store · step 2")[
+#panelb("3 · Deploy the master and the workers · step 2")[
   #text(size: 8.5pt)[
-    µLab 1 showed that the cluster keeps its own images. That was a demonstration; here
-    it is the obstacle. The Spark image is on your laptop and the cluster cannot see it,
-    so the pods in step 3 would never start. Left to itself the cluster would download
-    its own copy, 535 MB from Docker Hub, sixteen times over one classroom connection.
-    Handing it the copy you already have takes well under a minute and no network at all.
+    Spark's own cluster is three things: a master process that hands out cores, worker
+    processes that supply them, and a name the workers can dial that keeps working when a
+    pod is replaced. In Kubernetes terms that is *two Deployments and one Service*.
   ]
-  #v(3pt)
-  #step("2", "Check the image is on the laptop, then hand it to the cluster.")[
-    Both lines are typed on your laptop, not in the #raw("kubectl") shell.
-  ]
-  #v(2pt)
-  #raw("docker image ls spark:3.5.4-python3", lang: "console")
-  #v(2pt)
-  #text(size: 8pt)[One row means the image is on this laptop:]
-  #v(2pt)
-  #raw("REPOSITORY   TAG             IMAGE ID       CREATED         SIZE
-spark        3.5.4-python3   5908cada5243   21 months ago   982MB", block: true)
   #v(2pt)
   #text(size: 8pt)[
-    No rows at all means the pull in the announcement was missed. Run
-    #raw("docker pull spark:3.5.4-python3") now, and say so out loud: it is 535 MB, and
-    the Lab Master needs to know which machines are downloading.
-  ]
-  #v(4pt)
-  #text(size: 8.5pt, weight: "bold")[Now copy it across.]
-  #v(2pt)
-  #raw("docker save spark:3.5.4-python3 | docker exec -i k8s ctr -n k8s.io images import -", lang: "console")
-  #v(3pt)
-  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("docker save"),
-    text(size: 7.8pt)[Write an image out as a plain stream of bytes. With no #raw("-o") file it goes to standard output.],
-    raw("spark:3.5.4-python3"),
-    text(size: 7.8pt)[Which image to write. NAME then #raw(":") then TAG, the same spelling as everywhere else.],
-    raw("|"),
-    text(size: 7.8pt)[Ordinary shell, nothing to do with Docker: send the left command's output straight into the right command's input, without ever writing a 1 GB file to disk.],
-    raw("docker exec -i k8s"),
-    text(size: 7.8pt)[Run a command *inside* the already-running #raw("k8s") container. #raw("-i") keeps its input open, which is what the pipe needs; there is no #raw("-t") because nothing here is typed by hand.],
-    raw("ctr"),
-    text(size: 7.8pt)[The cluster's own low-level image tool, and the reason this has to be run in there: #raw("ctr") exists only inside that container.],
-    raw("-n k8s.io"),
-    text(size: 7.8pt)[Which namespace of the store to write into. Kubernetes reads only #raw("k8s.io"), and an image imported anywhere else is invisible to it, so the pods still will not start.],
-    raw("images import"),
-    text(size: 7.8pt)[Read an image stream and add it to the store.],
-    raw("-"),
-    text(size: 7.8pt)[Read from standard input rather than from a file. This is the other end of the pipe.],
-  )
-  #v(4pt)
-  #text(size: 8pt)[
-    It prints one line per layer and then a total. Time it: on the teaching machine it
-    took *37 seconds*, and a laptop will be slower. Then check the cluster's own list.
-  ]
-  #v(2pt)
-  #raw("docker exec k8s crictl images", lang: "console")
-  #v(2pt)
-  #raw("IMAGE                                        TAG                 IMAGE ID            SIZE
-docker.io/library/spark                      3.5.4-python3       5908cada5243a       995MB", block: true)
-  #v(3pt)
-  #text(size: 8pt)[
-    Write down the #raw("IMAGE ID") from each of the two listings. They are the same
-    image and they say so, which is exactly why the two stores are easy to confuse.
-  ]
-  #v(2pt)
-  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
-    text(size: 8pt)[laptop ID], rule(100%),
-    text(size: 8pt)[cluster ID], rule(100%),
-    text(size: 8pt)[seconds the import took], rule(100%),
-    text(size: 8pt)[cluster SIZE], rule(100%),
-  )
-]
-
-#panelb("4 · Start the master and two workers · step 3")[
-  #text(size: 8.5pt)[
-    Spark's own cluster is a master that hands out cores and workers that supply them.
-    Both are ordinary programs, so on Kubernetes both are ordinary Deployments, and the
-    file below asks for exactly that. Nothing in it is new except the Service.
+    µLab 1 made a Deployment by typing #raw("kubectl create deployment whale …"), one
+    object per command. Three objects would be three commands, each with its own
+    arguments to get right, and nothing written down afterwards. Instead they are
+    *described in a file*, and the cluster is told to match it. The file came with the
+    clone. Read it before you apply it.
   ]
   #v(3pt)
-  #step("3", "Apply the file, then watch the pods appear.")[
-    Typed in the #raw("kubectl") shell from step 1, where the folder is mounted at
-    #raw("/lab"). With #raw("kubectl") installed on your laptop instead, drop the
-    #raw("/lab/") and run it from the repository folder.
-  ]
-  #v(2pt)
-  #raw("kubectl apply -f /lab/spark-standalone.yaml\nkubectl get pods", lang: "console")
-  #v(3pt)
-  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("apply"),
-    text(size: 7.8pt)[Make the cluster match what the file describes: create what is missing, change what differs, leave the rest. Running it twice is harmless.],
-    raw("-f /lab/spark-standalone.yaml"),
-    text(size: 7.8pt)[Read the description from this file. #raw("-f") is for #emph[file]. The path is the one *inside the client container*, not on your laptop.],
-  )
-  #v(3pt)
-  #text(size: 8pt)[Three objects are created, and it says so:]
-  #v(2pt)
-  #raw("service/spark-master created
-deployment.apps/spark-master created
-deployment.apps/spark-worker created", block: true)
-  #v(4pt)
-  #text(size: 8.5pt, weight: "bold")[What the file asks for, in three parts.]
-  #v(2pt)
   #raw("kind: Service          name: spark-master
   clusterIP: None                      # resolve the name to the pod itself
   selector: { app: spark-master }      # whichever pod carries this label
@@ -419,8 +350,8 @@ deployment.apps/spark-worker created", block: true)
 
 kind: Deployment       name: spark-master     replicas: 1
   image: spark:3.5.4-python3
-  imagePullPolicy: IfNotPresent        # use the store, never download
   command: spark-class org.apache.spark.deploy.master.Master --host spark-master
+  hostname / subdomain: spark-master   # so the pod has a name DNS answers for
   volumeMounts: /lab  (hostPath /lab, read-only)
 
 kind: Deployment       name: spark-worker     replicas: 2
@@ -429,33 +360,117 @@ kind: Deployment       name: spark-worker     replicas: 2
   volumeMounts: /lab  (hostPath /lab, read-only)", block: true)
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("kind"),
+    text(size: 7.8pt)[What sort of object this is. The same word #raw("kubectl get") takes: #raw("kubectl get deployments"), #raw("kubectl get services").],
     raw("clusterIP: None"),
-    text(size: 7.8pt)[Do not give the Service an address of its own; make the name answer with the pod's address. The master has to bind to the address its own name gives, and it cannot bind to a Service's.],
+    text(size: 7.8pt)[Do not give the Service an address of its own; make the name answer with the pod's address. The master binds to whatever its own name resolves to, and it cannot bind to a Service's address.],
     raw("selector"),
     text(size: 7.8pt)[The label a pod must carry to be behind this Service. Not a pod name: that is the whole point, since pod names change.],
-    raw("imagePullPolicy: IfNotPresent"),
-    text(size: 7.8pt)[Use the store if the image is there, and only download if it is not. Without step 2 this is what would trigger the 535 MB download.],
+    raw("command"),
+    text(size: 7.8pt)[What to run instead of the image's default. #raw("spark-class") starts one named Java class and stays in the foreground, which is what a container needs.],
     raw("--host spark-master"),
-    text(size: 7.8pt)[Tells the master which name to publish itself under. It must match what the workers dial, or they connect and are then told to go somewhere they cannot reach.],
+    text(size: 7.8pt)[Tells the master which name to publish itself under. It must match what the workers dial, or they connect and are then sent somewhere they cannot reach.],
+    raw("hostname / subdomain"),
+    text(size: 7.8pt)[Gives the pod a name of its own in cluster DNS. Without it the pod is reachable only through the Service, and panel 9 is what happens then.],
     raw("--cores 1 --memory 1g"),
     text(size: 7.8pt)[What one worker offers. Deliberately small, so the arithmetic is legible: the cluster has as many cores as it has worker pods.],
     raw("hostPath /lab"),
     text(size: 7.8pt)[Give the pod the folder the cluster container sees at #raw("/lab"), which step 1 attached. Both Deployments get it: in µLab 3 the master runs the driver, which reads the script, and the workers run the executors, which read the corpus.],
   )
   #v(4pt)
-  #text(size: 8pt)[
-    Run #raw("kubectl get pods") until all three read #raw("1/1 Running"). It took about
-    twelve seconds on the teaching machine. Write down the three names.
+  #step("2", "Apply it, then watch the pods appear.")[
+    In the #raw("kubectl") shell, where step 1 mounted the folder at #raw("/lab"). With
+    #raw("kubectl") on your laptop instead, drop the #raw("/lab/") and run it from the
+    folder you are working in.
   ]
   #v(2pt)
+  #raw("kubectl apply -f /lab/spark-standalone.yaml\nkubectl get pods", lang: "console")
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("apply"),
+    text(size: 7.8pt)[Make the cluster match the file: create what is missing, change what differs, leave the rest alone. Safe to run twice.],
+    raw("-f /lab/spark-standalone.yaml"),
+    text(size: 7.8pt)[Read the description from this file. #raw("-f") is for #emph[file]. The path is the one *inside this container*, not on your laptop.],
+  )
+  #v(3pt)
+  #text(size: 8pt)[Three objects are created, and it says so:]
+  #v(2pt)
+  #raw("service/spark-master created
+deployment.apps/spark-master created
+deployment.apps/spark-worker created", block: true)
+  #v(3pt)
+  #block(width: 100%, inset: (x: 6pt, y: 4pt), radius: 2pt, fill: luma(245))[
+    #text(size: 8pt)[
+      *The pods will sit in #raw("ContainerCreating") for a while.* One to three minutes
+      here, and longer on a shared connection. Nothing is wrong: the cluster is
+      downloading a 535 MB image, and panel 4 is about why it has to. Run
+      #raw("kubectl get pods") every so often until all three read #raw("1/1 Running").
+    ]
+  ]
+  #v(3pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
     text(size: 8pt)[master pod], rule(100%),
     text(size: 8pt)[READY], rule(24mm),
     text(size: 8pt)[worker pod], rule(100%),
     text(size: 8pt)[READY], rule(24mm),
     text(size: 8pt)[worker pod], rule(100%),
-    text(size: 8pt)[READY], rule(24mm),
+    text(size: 8pt)[seconds until all three], rule(24mm),
   )
+]
+
+#panelb("4 · Compare the cluster's image store with the laptop's · step 3")[
+  #text(size: 8.5pt)[
+    The wait in step 2 was a download, and it is worth knowing what was downloaded and
+    from where. The cluster runs its containers with containerd, not with your laptop's
+    Docker, and the two keep entirely separate collections of images. Neither can read
+    the other's. List both and compare.
+  ]
+  #v(3pt)
+  #step("3", "List the images the cluster has, then the ones the laptop has.")[
+    Both lines are typed *on your laptop*, not in the #raw("kubectl") shell.
+    #raw("crictl") exists only inside the cluster container, which is why the first line
+    has to reach in there to run it.
+  ]
+  #v(2pt)
+  #raw("docker exec k8s crictl images\ndocker image ls spark:3.5.4-python3", lang: "console")
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
+    raw("docker exec k8s"),
+    text(size: 7.8pt)[Run a command *inside* the already-running #raw("k8s") container, rather than starting a new one.],
+    raw("crictl images"),
+    text(size: 7.8pt)[The cluster's own tool for talking to containerd, and its way of saying #emph[list the images you can start].],
+    raw("docker image ls NAME"),
+    text(size: 7.8pt)[Docker's list, narrowed to one name. No rows at all is a perfectly good answer here.],
+  )
+  #v(3pt)
+  #text(size: 8pt)[As observed, with the laptop's copy present only because it had been pulled earlier:]
+  #v(2pt)
+  #raw("IMAGE                                        TAG                 IMAGE ID            SIZE
+docker.io/library/spark                      3.5.4-python3       5908cada5243a       535MB
+
+REPOSITORY   TAG             IMAGE ID       CREATED         SIZE
+spark        3.5.4-python3   5908cada5243   21 months ago   982MB", block: true)
+  #v(3pt)
+  #text(size: 8pt)[
+    The #raw("IMAGE ID") is the same in both, because it is the same image. The two
+    #raw("SIZE") columns disagree because they measure different things, the download and
+    the unpacked copy, not because the images differ.
+  ]
+  #v(3pt)
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
+    text(size: 8pt)[cluster IMAGE ID], rule(100%),
+    text(size: 8pt)[laptop IMAGE ID], rule(100%),
+  )
+  #v(4pt)
+  #text(size: 8.5pt, weight: "bold")[Now answer the first question.]
+  #v(1pt)
+  #text(size: 8pt)[
+    If your laptop already had that image, the cluster downloaded a second copy of
+    something that was sitting on the same disk. Say why it had to. \
+    Panel 2 defines *image store*, and the two listings above were produced by two
+    different programs: read which command each one needed.
+  ]
+  #writing(2)
 ]
 
 #panelb("5 · Read the master's log and find the workers · step 4")[
@@ -485,8 +500,8 @@ kind: Deployment       name: spark-worker     replicas: 2
   #text(size: 8pt)[The three lines that matter, as observed:]
   #v(2pt)
   #raw("INFO Master: Starting Spark master at spark://spark-master:7077
-INFO Master: Registering worker 10.42.0.5:33537 with 1 cores, 1024.0 MiB RAM
-INFO Master: Registering worker 10.42.0.7:42663 with 1 cores, 1024.0 MiB RAM", block: true)
+INFO Master: Registering worker 10.42.0.2:43581 with 1 cores, 1024.0 MiB RAM
+INFO Master: Registering worker 10.42.0.3:39957 with 1 cores, 1024.0 MiB RAM", block: true)
   #v(3pt)
   #text(size: 8pt)[
     The address in the first line is the Service name from panel 2, not a pod. The other
@@ -518,12 +533,11 @@ INFO Master: Registering worker 10.42.0.7:42663 with 1 cores, 1024.0 MiB RAM", b
 #v(6pt)
 
 #text(size: 8pt, style: "italic", fill: luma(110))[
-  Solved means panels 1 to 5 are done: the cluster re-created with the lab folder
-  attached, the Spark image listed by #raw("crictl images"), master and two workers all
-  reading #raw("1/1 Running"), and the master's log naming both workers with the cores
-  each one offered.
+  Solved means panels 1 to 5 are done: the lab folder unzipped and handed to the cluster,
+  master and two workers all reading #raw("1/1 Running"), both image stores listed and
+  compared, and the master's log naming both workers with the cores each one offered.
 ]
-#v(4pt)
+#v(3pt)
 
 #checkpoint
 
@@ -548,7 +562,7 @@ INFO Master: Registering worker 10.42.0.7:42663 with 1 cores, 1024.0 MiB RAM", b
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
     raw("exec"),
-    text(size: 7.8pt)[Run a command inside a container that is already running, the same idea as #raw("docker exec") in step 2, one level in.],
+    text(size: 7.8pt)[Run a command inside a container that is already running, the same idea as #raw("docker exec") in step 3, one level in.],
     raw("--"),
     text(size: 7.8pt)[End of #raw("kubectl")'s own arguments. Everything after it belongs to the command being run, so #raw("--master") is read by Spark and not by #raw("kubectl").],
     raw("spark-submit"),
@@ -564,11 +578,11 @@ INFO Master: Registering worker 10.42.0.7:42663 with 1 cores, 1024.0 MiB RAM", b
   )
   #v(4pt)
   #text(size: 8pt)[
-    Several hundred lines scroll past and one line matters. On the teaching machine the
-    whole thing took *7 seconds*:
+    Several hundred lines scroll past and one line matters. On a two-worker cluster the
+    whole thing took *8 seconds*:
   ]
   #v(2pt)
-  #raw("Pi is roughly 3.1411035141103514", block: true)
+  #raw("Pi is roughly 3.1406367140636715", block: true)
   #v(3pt)
   #text(size: 8pt)[
     The digits after the third will not match anyone else's, including a second run of
@@ -606,43 +620,53 @@ INFO Master: Telling app of lost worker: worker-…-10.42.0.5-33537
 INFO Master: Registering worker 10.42.0.9:40593 with 1 cores, 1024.0 MiB RAM", block: true)
   #v(3pt)
   #text(size: 8pt)[
-    Write down the new pod's name and the new address in the master's log. Then say
-    which of the two put the worker back, the Kubernetes controller or the Spark master,
-    and what the other one did instead. Panel 2 defines what each keeps track of, and
-    the three lines above are in the order the two of them acted.
+    The replacement pod starts in seconds rather than minutes, because the image is now
+    in the cluster's store. Write down the new pod's name and the new address in the
+    master's log, then say which of the two put the worker back, the Kubernetes
+    controller or the Spark master, and what the other one did instead.
   ]
   #writing(2)
 ]
 
 #v(6pt)
 
-#panel("8 · Extra mile · give the cluster more workers than the laptop has cores")[
+#panel("8 · Extra mile · hand the cluster the image instead of letting it download it")[
   #text(size: 8.5pt)[
-    Each worker was told #raw("--cores 1") in step 3, so the cluster's core count is its
-    worker count. Nothing stops you asking for more workers than the laptop has cores.
-    Predict what the master will report before you run it, then find out.
+    Step 2 waited while the cluster downloaded 535 MB that may already have been on the
+    same disk. It does not have to: an image can be written out of one store and read
+    into the other, over a pipe, with no network at all. Time it, and compare with the
+    wait you recorded in step 2.
   ]
   #v(2pt)
-  #raw("kubectl scale deployment spark-worker --replicas=8\nkubectl get pods\nkubectl logs deploy/spark-master | grep -c \"Registering worker\"", lang: "console")
+  #text(size: 8pt)[
+    On your laptop. If #raw("docker image ls") found nothing in panel 4, this needs
+    #raw("docker pull spark:3.5.4-python3") first, which is the download you are trying
+    to avoid, so the payoff is for the *next* cluster rather than this one.
+  ]
+  #v(2pt)
+  #raw("docker save spark:3.5.4-python3 | docker exec -i k8s ctr -n k8s.io images import -", lang: "console")
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 7pt, row-gutter: 3.5pt, align: (top, top),
-    raw("scale … --replicas=8"),
-    text(size: 7.8pt)[Edit one field of a Deployment that already exists. It creates nothing and starts nothing by hand.],
-    raw("grep -c"),
-    text(size: 7.8pt)[Count matching lines instead of printing them. Note it counts *every* registration since the master started, including the ones from step 4 and panel 7.],
+    raw("docker save NAME"),
+    text(size: 7.8pt)[Write an image out as a plain stream of bytes. With no #raw("-o") file it goes to standard output.],
+    raw("|"),
+    text(size: 7.8pt)[Ordinary shell, nothing to do with Docker: send the left command's output straight into the right command's input, without ever writing a 1 GB file to disk.],
+    raw("docker exec -i k8s"),
+    text(size: 7.8pt)[#raw("-i") keeps the container's input open, which is what the pipe needs. There is no #raw("-t") because nothing here is typed by hand.],
+    raw("ctr -n k8s.io"),
+    text(size: 7.8pt)[containerd's own tool, and the namespace Kubernetes reads. An image imported into any other namespace is invisible to it.],
+    raw("images import -"),
+    text(size: 7.8pt)[Read an image stream and add it to the store. The #raw("-") is the other end of the pipe.],
   )
   #v(3pt)
-  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, row-gutter: 7pt, align: bottom,
-    text(size: 8pt)[cores you predicted], rule(100%),
-    text(size: 8pt)[cores reported], rule(100%),
-    text(size: 8pt)[cores the laptop has], rule(100%),
-    text(size: 8pt)[pods Running], rule(100%),
+  #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
+    text(size: 8pt)[seconds to import], rule(100%),
+    text(size: 8pt)[seconds to download, step 2], rule(100%),
   )
   #v(3pt)
   #text(size: 8pt)[
-    Then run panel 6 again and time it. Eight workers of one core each is eight cores as
-    far as the master is concerned. Say whether the laptop agrees, and what the master
-    would have to be told in order to find out.
+    Sixteen laptops downloading the same 535 MB at once is the slowest thing in this
+    room. Say what you would do differently if you were setting this lab up for a class.
   ]
   #writing(2)
 ]
@@ -651,19 +675,22 @@ INFO Master: Registering worker 10.42.0.9:40593 with 1 cores, 1024.0 MiB RAM", b
 
 #panel("9 · Annex · why the driver has to run somewhere that has a name")[
   #text(size: 8pt)[
-    Panel 6 submitted the job from inside the master pod. Submitting from a pod of your own
-    looks tidier and does not work. Executors are told to call the driver back by name,
-    and cluster DNS answers only for pods that are behind a Service. A pod started on its
-    own has no name anyone can resolve, so every executor exits immediately and the
-    driver waits for cores that never arrive, printing this every fifteen seconds:
+    Panel 6 submitted the job from inside the master pod. Submitting from a pod of your
+    own looks tidier and does not work. Executors are told to call the driver back by
+    name, and cluster DNS answers only for pods that are behind a Service. A pod started
+    on its own has no name anyone can resolve, so every executor exits immediately and
+    the driver waits for cores that never arrive, printing this every fifteen seconds:
   ]
   #v(2pt)
   #raw("WARN TaskSchedulerImpl: Initial job has not accepted any resources; check your
 cluster UI to ensure that workers are registered and have sufficient resources", block: true)
   #v(2pt)
   #text(size: 8pt)[
-    The message blames the workers, and the workers are fine. The master pod already has
-    a Service in front of it, which is the whole reason panel 6 borrows it.
+    The message blames the workers, and the workers are fine. This is also why the
+    Deployment in panel 3 sets #raw("hostname") and #raw("subdomain"): built with
+    #raw("kubectl create deployment") instead, the master pod would be called
+    #raw("spark-master-fccf6ddcd-dmf5m") and every submission would hang in exactly this
+    way. That was measured, not predicted.
   ]
   #v(3pt)
   #text(size: 8pt)[
@@ -672,14 +699,14 @@ cluster UI to ensure that workers are registered and have sufficient resources",
     #raw("--master k8s://…") skips all of this: Kubernetes is asked directly for a driver
     pod and executor pods, they exist only while the job runs, and there is no master, no
     workers and nothing standing idle in between. It is also several more things to get
-    right, which is why it is here and not in step 3.
+    right, which is why it is here and not in step 2.
   ]
 ]
 
-#v(8pt)
+#v(5pt)
 #align(center)[
   #text(size: 8pt, fill: luma(130), style: "italic")[
-    Done when the referee can say, without reading this sheet, why the cluster could not
-    start the Spark image until it was handed a copy, and what a Service is for.
+    Done when the referee can say, without reading this sheet, why the cluster downloaded
+    an image the laptop already had, and what a Service is for.
   ]
 ]
