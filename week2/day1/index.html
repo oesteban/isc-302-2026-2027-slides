@@ -20,6 +20,7 @@
 name: title
 layout: true
 class: cover
+
 ---
 count: false
 counter: false
@@ -41,7 +42,7 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data infrastructures (week 3, day 1) — 21.09.2026
+### 302 Data infrastructures (week 2, day 1) — 21.09.2026
 ]
 
 ???
@@ -56,6 +57,12 @@ counter: true
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
   <span style="padding-left: 10px; font-weight: 600;">MapReduce & Apache Spark (21.09.2026)</span>
 </p>
+]
+
+---
+
+.section-mark[
+# Quick quiz
 ]
 
 ---
@@ -98,14 +105,16 @@ Identify storage sys., compute abstractions, and formats
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 8h45 | **Class**: Big Data computation, a historical perspective |
-| 10h05 | .gray-text[Break] |
-| 10h15 | **Roulette**: CACM Spark 2016 paper |
-| 10h45 | **&micro;Lab**: Deploy Spark locally with Docker |
-| 11h15 | **Class**: Apache Spark |
+| 8h45 | Course Moderation |
+| 9h05 | **&micro;Lab 1**: Kubernetes in one container |
+| 9h40 | &micro;Lab 1 wrap-up |
+| 9h50 | **&micro;Lab 2**: Deploy Spark on your own cluster |
+| 10h20 | .gray-text[Break] |
+| 10h30 | **Changing hats**: three presentations |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **&micro;Lab**: scale word count with Spark & Airflow |
+| 12h45 | **&micro;Lab 3**: Count words with DataFrames and with RDDs |
+| 14h00 | **Changing hats**: three presentations |
 | 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
@@ -113,11 +122,193 @@ Identify storage sys., compute abstractions, and formats
 ---
 
 .section-mark[
-# Quick quiz
+# LLM usage
 
-.large[Opens **8h15**, closes **8h45**.]
+.large[(in "Changing Hats" and in general)]
+]
 
-.large[.gray-text[ISC Learn opens and closes it.]]
+---
+
+.section-mark[
+# &micro;Labs organization
+
+.large[New role (*Lab Master*) &amp; referee update]
+]
+
+---
+
+# Point your Docker at the school's registry mirror
+
+.boxed-content.large[
+(Strongly recommended)
+
+```json
+{ "registry-mirrors": ["http://registry.isc3:5000"],
+  "insecure-registries": ["registry.isc3:5000"] }
+```
+]
+
+.cards.cols-2.tight[
+.card[
+.kicker[Linux]
+
+### Edit the daemon file
+
+Merge those two keys into `/etc/docker/daemon.json`, creating the file if it is not there,
+then `sudo systemctl restart docker`.
+
+.foot[Merge, do not overwrite: the file may already hold other settings.]
+]
+.card[
+.kicker[macOS and Windows]
+
+### There is no such file
+
+The daemon runs inside a VM. **Docker Desktop &rarr; Settings &rarr; Docker Engine**, paste
+the same two keys into the JSON shown there, then **Apply &amp; restart**.
+
+.foot[Same two keys, same effect. Only the place you type them differs.]
+]
+]
+
+
+???
+
+insecure-registries is required because the mirror is plain HTTP; Docker refuses a
+non-TLS registry that is not listed.
+
+---
+class: group-roulette
+groups: 5
+seed: 21.09.2026
+
+<br />
+.boxed-content[
+# &micro;Lab 1 .gray-text[· Kubernetes in one container]
+
+.large[
+Handout available on ISC Learn.
+]
+]
+
+---
+
+.section-mark[
+# &micro;Lab 1
+
+.large[Time left: .timer[20 min].]
+]
+
+---
+class: vcenter
+
+# Kubernetes interface (using `kubectl`)
+
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-server"></i>]
+
+.kicker[Nodes]
+
+```
+kubectl get nodes
+```
+
+Nodes run pods, we have created one: the k3s container.
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-cube"></i>]
+
+.kicker[Pods]
+
+```
+kubectl get pods
+```
+
+Containers scheduled together. K8s handles them for you.
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-rotate"></i>]
+
+.kicker[kubectl get deploy, get jobs]
+
+### Controller
+
+Compares declared against actual and closes the gap. It creates the pods.
+]
+]
+
+---
+
+# Deployment and Job
+
+.cards.cols-2[
+.card[
+.kicker[always running]
+
+### Deployment
+
+Keeps **N pods running**. A pod that exits is replaced, **even on exit 0**.
+]
+.card[
+.kicker[run once]
+
+### Job
+
+Runs a pod **until it exits 0**, then stops. Nothing is restarted.
+]
+]
+
+.boxed-content.small[
+```console
+# kubectl create deployment NAME --image=IMG --replicas=3
+# kubectl create job        NAME --image=IMG -- CMD ARGS
+```
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The whale prints its line and exits 0. Pick the wrong one and `RESTARTS` climbs.
+]
+
+---
+
+# Starting a cluster, and a client for it
+
+.boxed-content.small[
+```console
+$ mkdir kube
+$ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
+    -p 6443:6443 -v "$PWD/kube:/output" \
+    rancher/k3s:v1.36.4-k3s1 server --disable=traefik \
+    --write-kubeconfig /output/config --write-kubeconfig-mode 644
+
+$ grep server: kube/config
+    server: https://127.0.0.1:6443
+```
+]
+
+.boxed-content.large.no-bullet[
+* **k3s** is a Kubernetes distribution packaged as one binary. One container, one node, one cluster.
+* The cluster writes its address and credentials to **your laptop**, into `kube/config`.
+* **`kubectl` is not part of the cluster.** It is a client, and it lives wherever you want.
+]
+
+---
+
+# The cluster has its own image store
+
+.boxed-content.large[
+k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores.
+]
+
+.boxed-content.large.no-bullet[
+* `docker images` &rarr; your laptop.
+* `crictl images` &rarr; the cluster.
+* `ghcr.io/<user>/<name>` &rarr; the only path between them.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The cluster pulls with no credentials, so the package must be **public**.
 ]
 
 ---
@@ -126,13 +317,233 @@ groups: 5
 seed: 21.09.2026
 
 .boxed-content[
-# &micro;Lab 1 .gray-text[· Kubernetes in one container]
+# &micro;Lab 2 .gray-text[· Deploying Spark on your own cluster]
 
 .large[
-**20 minutes.** Start a cluster, run one image on it two ways, explain the
-`RESTARTS` column.
+**30 minutes.** Hand the cluster a folder, put a Spark master and two workers on it, and
+read the log that proves the workers found the master.
 ]
 ]
+
+---
+
+# &micro;Lab 2 .gray-text[· the four steps]
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[step 1]
+
+### Hand the cluster a folder
+
+`mkdir lab`, then `docker rm -f k8s` and start it again with `-v "$PWD/lab:/lab"` added.
+
+.foot[A container sees only the folders it was given when it was created. Rebuilding is the only way to add one.]
+]
+.card.small[
+.kicker[step 2]
+
+### Deploy the master, then the workers
+
+`kubectl create service clusterip spark-master --clusterip="None" --tcp=7077:7077`, then a
+Deployment for the master and one for `--replicas=2` workers.
+
+.foot[The name first: the master looks its own name up when it starts. Then `kubectl get pods`, one to three minutes of `ContainerCreating` while 535 MB arrives.]
+]
+.card.small[
+.kicker[step 3]
+
+### Compare the two image stores
+
+`docker exec k8s crictl images` <br /> `docker image ls spark:3.5.4-python3`
+
+.foot[Same `IMAGE ID`, two different `SIZE` columns. Write both ids down.]
+]
+.card.small[
+.kicker[step 4]
+
+### Read the master's log
+
+`kubectl logs deploy/spark-master | grep Master:`
+
+.foot[One line per worker announcing itself, with the cores and the RAM it offers.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Core by 10h10**: the master and both workers
+`Running`, and the log showing two workers registered. **Then**: delete a worker pod and
+watch the master notice.
+]
+
+---
+
+.section-mark[
+# Short break
+
+.large[We reconvene .timer[in 10 minutes].]
+]
+
+---
+
+.section-mark[
+# Changing hats .gray-text[· slot 1]
+
+.large[
+**1** Containers vs. VMs <br />
+**2** Building containers (with Docker) <br />
+**3** Automating image building with CI/CD
+]
+
+.large[.gray-text[15 minutes each, then 10 minutes of questions.]]
+]
+
+---
+
+.section-mark[
+# Lunch break
+
+.large[We reconvene in <span class="timer">1 hour</span>.]
+]
+
+---
+class: group-roulette
+groups: 5
+seed: 21.09.2026
+
+.boxed-content[
+# &micro;Lab 3 .gray-text[· Counting words with DataFrames and with RDDs]
+
+.large[
+**75 minutes.** Count the same words twice, once per API, find the two shuffles in the
+plan, and then make the same count slow on purpose.
+]
+]
+
+---
+
+# &micro;Lab 3 .gray-text[· the four steps]
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[step 1]
+
+### Fill the lab folder, then size the cluster
+
+Clone the lab repository into `lab`, unzip `20news.zip` into `lab/data`, apply
+`spark-standalone.yaml`, then `kubectl scale deployment spark-worker --replicas=4`.
+
+.foot[Prove a pod can see it: `kubectl exec deploy/spark-worker -- ls /lab/data/20news | wc -l`]
+]
+.card.small[
+.kicker[step 2]
+
+### Count with the DataFrame API
+
+`kubectl exec deploy/spark-master -- /opt/spark/bin/spark-submit` `--master spark://spark-master:7077` `/lab/wordcount_df.py /lab/data`
+
+.foot[Record the elapsed time and the input partition count.]
+]
+.card.small[
+.kicker[step 3]
+
+### Start the RDD count in a second shell
+
+The same line with `/lab/wordcount_rdd.py`, submitted from a **second** kubectl shell.
+
+.foot[Two clients, one cluster. This one takes minutes. Start it, then read the step-2 plan while it runs.]
+]
+.card.small[
+.kicker[step 4]
+
+### Find the two shuffles
+
+Scroll back to the plan in the first shell and find the two `Exchange` rows.
+
+.foot[`Exchange` is the line where rows move between partitions.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-flag-checkered"></i> **Core by 13h10**: both counts submitted, both
+plans printed, the two shuffles found. **Then**: `slowdown.py` at three partition counts,
+and the same run again on a one-worker cluster.
+]
+
+---
+
+.section-mark[
+# Changing hats .gray-text[· slot 1, continued]
+
+.large[
+**6** Data streams with Kafka <br />
+.gray-text[and the two who came forward this morning]
+]
+
+.large[.gray-text[15 minutes each, then 10 minutes of questions.]]
+]
+
+---
+
+# Apache Spark (2016)
+
+<object data="images/spark-cacm2016.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
+    <embed src="images/spark-cacm2016.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/spark-cacm2016.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
+
+.gray-text[doi:[10.1145/2934664](https://doi.org/10.1145/2934664)]
+
+---
+
+# Read the Spark paper before Thursday
+
+.boxed-content.large.no-bullet[
+* Zaharia et al. (2016), *Apache Spark: a unified engine for big data processing*,
+  **CACM 59(11)**.
+  <br /> .indent.gray-text[The copy on the previous slide: [`images/spark-cacm2016.pdf`](images/spark-cacm2016.pdf) · doi:[10.1145/2934664](https://doi.org/10.1145/2934664)]
+
+* The history this session did not cover — GFS, MapReduce, Hadoop, and what Spark changed
+  — is in that paper, and in the appendix of this deck.
+
+* **Thursday opens with an oral microexam on it.** Called by roulette, no notes.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Come ready to say what an RDD is, what its main
+features are, and which components of the Spark architecture you can name.
+]
+
+???
+
+---
+
+.section-mark[
+# Quick quiz (repeat)
+]
+
+---
+
+.section-mark[
+# End
+
+.large[
+See you next time: 24.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-24T08:15:00+02:00"></span>)
+
+[<i class="fa-solid fa-circle-left"></i>](../../week1/day2/index.html)
+[<i class="fa-solid fa-home"></i>](#1)
+[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
+]
+]
+
+---
+
+.section-mark[
+# Appendix
+
+.large[Material kept out of the 21.09 delivery, not out of the deck.]
+]
+
 ---
 
 # Why do we need pipelines?
@@ -265,7 +676,6 @@ def reduce(word, counts):
 ```
 ]
 
-
 ---
 name: hadoop1
 
@@ -328,205 +738,6 @@ name: spark1
 
 * **Materialize** the output only at the end of the pipeline.
   <br /> .gray-text[To HDFS or other storage systems (S3, etc.).]
-]
-
----
-
-# Apache Spark (2016)
-
-<object data="images/spark-cacm2016.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
-    <embed src="images/spark-cacm2016.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/spark-cacm2016.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
-
-.gray-text[doi:[10.1145/2934664](https://doi.org/10.1145/2934664)]
-
-
----
-
-.section-mark[
-# Short break
-
-.large[We reconvene .timer[in 10 minutes].]
-]
-
----
-
-# Starting a cluster, and a client for it
-
-.boxed-content.small[
-```console
-$ mkdir kube
-$ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
-    -p 6443:6443 -v "$PWD/kube:/output" \
-    rancher/k3s:v1.36.4-k3s1 server --disable=traefik \
-    --write-kubeconfig /output/config --write-kubeconfig-mode 644
-
-$ grep server: kube/config
-    server: https://127.0.0.1:6443
-```
-]
-
-.boxed-content.large.no-bullet[
-* **k3s** is a Kubernetes distribution packaged as one binary. One container, one node, one cluster.
-* The cluster writes its address and credentials to **your laptop**, into `kube/config`.
-* **`kubectl` is not part of the cluster.** It is a client, and it lives wherever you want.
-]
----
-
-# The cluster has its own image store
-
-.boxed-content.large[
-k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores.
-]
-
-.boxed-content.large.no-bullet[
-* `docker images` &rarr; your laptop.
-* `crictl images` &rarr; the cluster.
-* `ghcr.io/<user>/<name>` &rarr; the only path between them.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> The cluster pulls with no credentials, so the package must be **public**.
-]
----
-
-# &micro;Lab 1 .gray-text[· the six steps]
-
-.cards.cols-3.tight[
-.card.small[
-.kicker[step 1]
-
-### Create the cluster
-
-`docker run -d --name k8s --privileged …` `-v "$PWD/kube:/output"` `rancher/k3s:v1.36.4-k3s1 server` `--write-kubeconfig /output/config`
-
-.foot[Every flag is explained on your sheet.]
-]
-.card.small[
-.kicker[step 2]
-
-### Get a kubectl
-
-**Linux:** `snap install kubectl --classic`, then `export KUBECONFIG=$PWD/kube/config`
-
-**Anywhere:** `docker run --rm -it --network container:k8s -v "$PWD/kube:/kube:ro" -e KUBECONFIG=/kube/config --entrypoint sh alpine/kubectl`
-
-.foot[Either way you are **outside** the cluster, talking to it over one address.]
-]
-.card.small[
-.kicker[step 3]
-
-### Keep a whale running
-
-`kubectl create deployment whale` `--image=ghcr.io/oesteban/whalesay` `--replicas=3`
-
-.foot[Spelled out, unlike step 1: the Docker Hub copy is **amd64 only**. Your sheet says why.]
-]
-.card[
-.kicker[step 4]
-
-### Watch what it does
-
-`watch kubectl get pods`
-
-.foot[Three lines, redrawn every 2 s. `RESTARTS` only goes up. `CrashLoopBackOff` is expected.]
-]
-.card.small[
-.kicker[step 5]
-
-### Run it once instead
-
-`kubectl create job whale` `--image=<same>` `-- cowsay 'a cluster ran me'`
-
-.foot[Same image, same command. Only the kind of object changed.]
-]
-.card[
-.kicker[step 6]
-
-### Read what it printed
-
-`kubectl logs job/whale`
-
-.foot[You never had to find the pod.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 09h45**: the whale ran both ways, and you can say why the Deployment restarts a container that exited **successfully** while the Job does not. Then the referee ticks your sheet and you carry on.
-]
----
-class: vcenter
-
-# Node, pod, controller
-
-.cards.cols-3[
-.card[
-.section-icon.corner[<i class="fa-solid fa-server"></i>]
-
-.kicker[kubectl get nodes]
-
-### Node
-
-Runs pods. You have one: the k3s container.
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-cube"></i>]
-
-.kicker[kubectl get pods]
-
-### Pod
-
-Containers scheduled together. The smallest unit. You never create one directly.
-]
-.card[
-.section-icon.corner[<i class="fa-solid fa-rotate"></i>]
-
-.kicker[kubectl get deploy, get jobs]
-
-### Controller
-
-Compares declared against actual and closes the gap. It creates the pods.
-]
-]
----
-
-# Deployment and Job
-
-.cards.cols-2[
-.card[
-.kicker[always running]
-
-### Deployment
-
-Keeps **N pods running**. A pod that exits is replaced, **even on exit 0**.
-]
-.card[
-.kicker[run once]
-
-### Job
-
-Runs a pod **until it exits 0**, then stops. Nothing is restarted.
-]
-]
-
-.boxed-content.small[
-```console
-# kubectl create deployment NAME --image=IMG --replicas=3
-# kubectl create job        NAME --image=IMG -- CMD ARGS
-```
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> The whale prints its line and exits 0. Pick the wrong one and `RESTARTS` climbs.
-]
----
-
-.section-mark[
-# Lunch break
-
-.large[We reconvene in <span class="timer">1 hour</span>.]
 ]
 
 ---
@@ -596,6 +807,7 @@ nothing.
 .admonition[
 <i class="fa-solid fa-circle-right"></i> `explain()` prints the plan **without running it**. That is why, in your output, the plan appears above the words.
 ]
+
 ---
 
 # Filter, group, order, show
@@ -652,52 +864,7 @@ AdaptiveSparkPlan isFinalPlan=false
 * **`Exchange` is a shuffle**: rows move between partitions. On a cluster, across the network.
 * `HashAggregate` twice &rarr; count within each partition, then combine.
 ]
----
 
-# &micro;Lab 2 .gray-text[· the four steps]
-
-.cards.cols-2.tight[
-.card[
-.kicker[step 1]
-
-### Get the repo
-
-`git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab`
-
-.foot[Then `cd` into it. Every command runs from there.]
-]
-.card[
-.kicker[step 2]
-
-### Count with DataFrames
-
-`make df`
-
-.foot[Record `elapsed` and `input partitions`.]
-]
-.card[
-.kicker[step 3]
-
-### Count with RDDs
-
-`make rdd`
-
-.foot[Same two numbers. Start it, then read the step-2 plan while it runs.]
-]
-.card[
-.kicker[step 4]
-
-### Find the shuffle
-
-In the DataFrame plan, point at the line where rows move between partitions.
-
-.foot[There is more than one.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 13h30**: both counts run, both plans printed, the shuffle identified. **Then**: `.cache()` the filtered words, count twice, explain the difference.
-]
 ---
 
 # RDD vs. DataFrame
@@ -799,6 +966,7 @@ Within a stage, Spark runs **one task per partition**.
 .admonition[
 <i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
 ]
+
 ---
 
 # The same count on a 32-core cluster
@@ -806,6 +974,7 @@ Within a stage, Spark runs **one task per partition**.
 .boxed-content[
 <div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
 ]
+
 ---
 
 # Where the core-time went
@@ -828,83 +997,6 @@ Memory Efficiency:  3.68% of 128.00 GB (4.00 GB/core)
 
 .admonition[
 <i class="fa-solid fa-circle-right"></i> This is the same mistake `make rdd` made on your laptop: one partition per file.
-]
----
-
-# &micro;Lab 3 .gray-text[· the four steps]
-
-.cards.cols-2.tight[
-.card[
-.kicker[step 1]
-
-### One core
-
-`make slow1`
-
-.foot[Three partition counts: 8, 800, 8000.]
-]
-.card[
-.kicker[step 2]
-
-### All your cores
-
-`make slow`
-
-.foot[The same three, on whatever Docker gives you.]
-]
-.card[
-.kicker[step 3]
-
-### Record six numbers
-
-Six wall clocks, and the `distinct words` column beside each.
-
-.foot[That column should never change.]
-]
-.card[
-.kicker[step 4]
-
-### Explain the shape
-
-More cores: every row falls. More partitions: every column rises. Say why, in
-one sentence.
-]
-]
-
-.admonition[
-<i class="fa-solid fa-flag-checkered"></i> **Core by 14h50**: the six numbers and the sentence. **Then**: find the partition count that is fastest on your laptop, and say what it depends on.
-]
----
-
-.section-mark[
-# Quick quiz (repeat)
-
-.large[Opens **15h20**, closes **15h50**.]
-
-.large[.gray-text[ISC Learn opens and closes it.]]
-]
-
----
-
-.section-mark[
-# End
-
-.large[
-See you next time: 24.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09-24T08:15:00+02:00"></span>)
-
-[<i class="fa-solid fa-circle-left"></i>](../../week1/day2/index.html)
-[<i class="fa-solid fa-home"></i>](#1)
-[<i class="fa-solid fa-circle-right"></i>](../../week2/day2/index.html)
-]
-]
-
-
----
-
-.section-mark[
-# Appendix
-
-.large[Material kept out of the 21.09 delivery, not out of the deck.]
 ]
 
 ---
@@ -931,8 +1023,6 @@ Instead of counting the words in 20 Newsgroups, we scale to a much larger datase
 Link: https://dumps.wikimedia.org/simplewiki/latest/simplewiki-latest-pages-articles-multistream.xml.bz2
 ]
 ]
-
-
 
 ---
 
@@ -1089,7 +1179,6 @@ fi
 ]
 
 ???
-
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>
