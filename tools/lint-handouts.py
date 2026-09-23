@@ -68,6 +68,17 @@ The checks, and the bug each one is a memorial to:
    tabulate. It still cannot tell a deliberate omission from a forgotten one,
    so it warns.
 
+9. **The core is at most three panels.** The 21.09 sheets put five and six
+   panels above the checkpoint bar, and groups ran out of clock reading rather
+   than working. AUTHORING.md G1 sizes a core for ten minutes; three panels is
+   what ten minutes holds. Everything else belongs below the bar, where it is
+   not deleted and not optional, merely not in the way.
+
+   An error, not a warning, with an explicit exemption list: the five sheets
+   delivered before this rule existed keep their cores, because rewriting a
+   printed instrument after the fact is not a lint fix. New sheets have no
+   excuse and get none.
+
 8. *(warning)* **Rejected title forms.** AUTHORING.md A1 and A2. Not a grammar
    check: an explicit list of the constructions that were actually rejected,
    which recur because they are the shapes a draft falls into. "Two lines from
@@ -168,6 +179,18 @@ def lineno(src, idx):
     return src.count("\n", 0, idx) + 1
 
 
+# Sheets delivered before the three-panel core rule (check 9) existed. They keep
+# their cores: a printed instrument is not re-cut after the room has used it.
+CORE_CAP = 3
+CORE_CAP_EXEMPT = {
+    "week1/day2/handouts/ulab1-driver-worksheet.typ",
+    "week1/day2/handouts/ulab2-driver-worksheet.typ",
+    "week2/day1/handouts/ulab1-driver-worksheet.typ",
+    "week2/day1/handouts/ulab2-driver-worksheet.typ",
+    "week2/day1/handouts/ulab3-driver-worksheet.typ",
+}
+
+
 def check(path, errors, warnings):
     rel = os.path.relpath(path, ROOT)
     src = open(path, encoding="utf-8").read()
@@ -183,7 +206,9 @@ def check(path, errors, warnings):
     panels = []  # (number, title, line)
     for m in re.finditer(r'#panelb?\(\s*"([^"]*)"', src):
         title = m.group(1)
-        num = re.match(r"\s*(\d+)\s*·", title)
+        # Core panels are titled "Step N · ...", tail panels "N · ...". Both
+        # carry the same panel number, and "panel N" references resolve to either.
+        num = re.match(r"\s*(?:[Ss]tep\s+)?(\d+)\s*·", title)
         panels.append((int(num.group(1)) if num else None, title, lineno(src, m.start())))
 
     steps = set()
@@ -240,6 +265,16 @@ def check(path, errors, warnings):
         if "checkpoint" not in src:
             warn(1, "a ulab worksheet with no checkpoint bar: no boundary between "
                     "the ten-minute core and the extensions (AUTHORING.md G1)")
+
+    # -- 9. the core is at most three panels -------------------------------
+    if base.startswith("ulab") and "checkpoint" in src:
+        bar = src.index("#checkpoint")
+        core = [p for p in panels if lineno(src, src.index(f'"{p[1]}"')) <= lineno(src, bar)]
+        if len(core) > CORE_CAP and rel.replace(os.sep, "/") not in CORE_CAP_EXEMPT:
+            err(lineno(src, bar),
+                f"{len(core)} panels above the checkpoint bar, at most {CORE_CAP} "
+                f"allowed: a ten-minute core does not hold more "
+                f"(AUTHORING.md G1). Move the rest below the bar")
 
     # -- 7. console block with no flag table (warning) ---------------------
     for m in re.finditer(r'#raw\(\s*"((?:[^"\\]|\\.)*)"', src):

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Apache Airflow Project & slides preparation | 24.09.2026</title>
+    <title>Execution plans and workflow orchestration | 24.09.2026</title>
     <meta charset="utf-8">
     <meta name="grammarly" content="false">
     <meta name="google" content="notranslate">
@@ -18,6 +18,7 @@
 name: title
 layout: true
 class: cover
+
 ---
 count: false
 counter: false
@@ -33,47 +34,793 @@ counter: false
 <br />
 <br />
 
-## Apache Airflow Project & slides preparation
+## Execution plans and workflow orchestration
 
 Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 <br />
 
-### 302 Data infrastructures (week 2, day 2) — 24.09.2026
+### 302 Data infrastructures (week 2, day 2) &mdash; 24.09.2026
 ]
 
 ???
 
-
 ---
 name: newsection
 layout: true
+counter: true
 
 .perma-sidebar[
 <p class="rotate">
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0; height: 20px; padding-top: 6px;" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>
-  <span style="padding-left: 10px; font-weight: 600;">Apache Airflow Project & slides preparation (24.09.2026)</span>
+  <span style="padding-left: 10px; font-weight: 600;">Execution plans and workflow orchestration (24.09.2026)</span>
 </p>
+]
+
+---
+
+.section-mark[
+# Quick quiz
+]
+
+---
+
+# Objectives
+
+.cards.goals[
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+**Read** a Spark execution plan and say where the time went
+.gray-text[name the stages, find the shuffles, explain the two partition counts]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+**Predict** what changes in the plan when the input changes shape
+.gray-text[the same text as 18 846 files and as one compressed stream do not read alike]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+**Measure** a speed-up instead of assuming one
+.gray-text[four workers do not finish in a quarter of the time; say which part refused]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+**State** what a workflow engine does that a shell script does not
+.gray-text[failures, logging, retries, and not paying twice for work already done]
+]
+.card[
+.marker[<i class="fa-solid fa-circle-right"></i>]
+
+**Deploy** a workflow engine and run a pipeline on it
+.gray-text[Flyte on your laptop, which is where Monday starts]
+]
 ]
 
 ---
 
 # Schedule
 
-<br />
-
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 8h35 | **Self-guided**: prepare slides for flipped class |
+| 8h45 | Start the three downloads, then: what changed in the &micro;Lab sheets |
+| 8h55 | **Class**: reading an execution plan |
+| 9h20 | **&micro;Lab 1**: counting words on a larger dataset |
+| 9h55 | .gray-text[Break] |
+| 10h05 | **&micro;Lab 2**: one worker, then four |
+| 10h40 | **Class**: why a workflow engine, and which one |
+| 11h05 | **&micro;Lab 3**: deploy Flyte and run a pipeline |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **Self-guided**: train presentation / finalize Airflow pipeline |
+| 12h45 | **Changing hats**: five presentations |
+| 14h50 | What Monday needs from you |
 | 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
 
 ---
+
+# Start these three now
+
+.boxed-content.large[
+All three run by themselves. Start them, then put the laptop down and come back to the
+room: none of them needs you while it works.
+]
+
+.cards.cols-3.tight[
+.card.small[
+.kicker[1 &middot; the lab repository]
+
+### `git pull`
+
+```
+cd lab
+git pull
+```
+
+.foot[Monday's clone does not have today's scripts. &micro;Lab 1 needs this one.]
+]
+.card.small[
+.kicker[2 &middot; two small tools]
+
+### `uv` and `flytectl`
+
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -sL https://ctl.flyte.org/install | \
+  bash -s -- -b $HOME/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+.foot[Seconds each, a few MB. &micro;Lab 3 needs both.]
+]
+.card.small[
+.kicker[3 &middot; the Flyte image]
+
+### 700 MB, in waves
+
+| 8h50 | 9h05 | 9h20 | 9h35 | 9h50 |
+|---|---|---|---|---|
+| G1 | G2 | G3 | G4 | G5 |
+
+.foot[**Your group's slot only.** 700 MB each; seventeen at once and nobody gets it.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> When your slot comes:
+`docker pull cr.flyte.org/flyteorg/flyte-sandbox-bundled:sha-51877f899c9f95e0cb5efe90444eb0c6c6ea48a9`
+&mdash; pull only. Do **not** start it: the Flyte cluster and this morning's Spark cluster
+both want port 6443.
+]
+
+???
+
+The image is the only thing that cannot be recovered in the round. If a pull fails, send
+them to the USB stick rather than letting them retry on the wifi.
+
+---
+
+# What changed in the &micro;Lab sheets
+
+.boxed-content.large[
+Monday's sheets asked you to read five or six panels before you were allowed to touch
+anything. That is not a ten-minute core, and it is why groups ran out of clock.
+]
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[the core]
+
+### Three panels, and nothing else
+
+Everything above the checkpoint bar is now **three panels**: what to do, the command,
+and the number to write down.
+
+.foot[A linter enforces it, so it cannot creep back.]
+]
+.card.small[
+.kicker[the definitions]
+
+### Below the bar, as reference
+
+The vocabulary panel has moved under the checkpoint. Terms are explained where they
+first appear instead.
+
+.foot[You no longer have to read a glossary before you may start.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The extensions did not get smaller and they are
+not optional. They are the rest of the round.
+]
+
+???
+
+Say plainly that this is a response to Monday, not a new policy. The bar moved; the work
+below it did not.
+
+---
+
+# The Lab Master
+
+.boxed-content.large[
+A **Lab Master** is a student whose group has been ticked at the checkpoint, and who then
+stops working on the extensions and answers other groups' questions for the rest of the
+round. One per round; the role moves every round, like driver, mapper and referee.
+]
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[appointment]
+
+### The first group ticked gives one member
+
+The referee's tick is what appoints them. There is no volunteering and no nomination.
+
+.foot[They cannot drive their own group that round: they have left the keyboard.]
+]
+.card.small[
+.kicker[conduct]
+
+### Answer a group that asks, and only that group
+
+No hands on another group's keyboard, which is the mapper's rule applied across groups.
+
+.foot[A group that has not asked is not approached.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The Lab Master keeps the **blocker board** at the
+front: one line per blocker, crossed out when cleared. Two groups on the same blocker, and
+it is said out loud to the room.
+]
+
+???
+
+Seventeen people, one teacher. The group stuck on step 3 is stuck on what somebody else
+cleared ten minutes ago.
+
+---
+
+.section-mark[
+# Reading an execution plan
+
+.large[What Monday's &micro;Lab 3 produced, and what it meant.]
+]
+
+---
+
+# The *20 Newsgroups* dataset
+
+.boxed-content[
+
+.large[Example: `doc_116.txt` (total ~20'000 messages Usenet posts)]
+
+<br />
+
+```Text
+Subject: PC BOARD Layout Help
+From: <EH1QC@CUNYVM.BITNET>
+Organization: City University of New York
+Lines: 8
+
+Hi,  I have a few questions about laying out a PCB. I am using easytrax for dos
+which is a great program. But what my question is When laying out traces what
+thickness should they be? I am mainly designing low voltage low current boards
+for micro controller apps. What should pad sizes be for resistors? I will be
+turning to a commercial PCB maker to produce 1's of these boards and I was
+wondering what is the minimum distance traces should be from each other. Well
+any info would be great. Thanks.
+                                                 Anton
+```
+]
+
+???
+
+---
+
+# Transformations and actions
+
+.cards.cols-2[
+.card[
+.kicker[builds the plan]
+
+### Transformation
+
+`select`, `filter`, `groupBy`, `orderBy`, `join`. Returns a new DataFrame. Reads
+nothing.
+]
+.card[
+.kicker[runs the plan]
+
+### Action
+
+`show`, `take`, `count`, `collect`, `write`. Submits a job and returns data.
+]
+]
+
+.boxed-content.small[
+```console
+>>> counts = words.groupBy("word").count().orderBy(desc("count"))   # returns at once
+>>> counts.take(15)                                                 # 11 s of actual work
+```
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> `explain()` prints the plan **without running it**. That is why, in your output, the plan appears above the words.
+]
+
+---
+
+# Reading the execution plan
+
+.boxed-content.small[
+```text
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Sort [count#8L DESC NULLS LAST], true, 0
+   +- Exchange rangepartitioning(count#8L DESC NULLS LAST, 200), ENSURE_REQUIREMENTS
+      +- HashAggregate(keys=[word#3], functions=[count(1)])
+         +- Exchange hashpartitioning(word#3, 200), ENSURE_REQUIREMENTS
+            +- HashAggregate(keys=[word#3], functions=[partial_count(1)])
+               +- Filter (length(word#3) >= 3)
+                  +- Generate explode(split(lower(value#0), \W+, -1)), false, [word#3]
+                     +- FileScan text [value#0] ... InMemoryFileIndex(18846 paths)
+```
+]
+
+.boxed-content.no-bullet[
+* Read it **bottom-up**. `FileScan` happens first, `Sort` last.
+* **`Exchange` is a shuffle**: rows move between partitions. On a cluster, across the network.
+* `HashAggregate` twice &rarr; count within each partition, then combine.
+]
+
+---
+
+# Results
+
+.boxed-content[
+.pull-right[
+.larger[
+<br />
+File `top15_output.txt`:
+
+```Text
+one	14635
+writes	13344
+article	12275
+people	9473
+university	9431
+know	8631
+get	8343
+think	7602
+time	6711
+use	6673
+new	6385
+good	5946
+even	5380
+see	5191
+god	5062
+```
+]
+]
+
+.pull-left.large[
+<br />
+.no-bullet[
+* <i class="fa-solid fa-ranking-star"></i> The most frequent: <br />
+  .indent[*one*, *writes*, *article*]
+
+* <i class="fa-solid fa-pen-nib"></i> *writes* : <br />
+  .indent[probably should be **ignored**]
+
+* <i class="fa-solid fa-graduation-cap"></i> *university* (5<sup>th</sup>): <br />
+  .indent[also **overestimated**]
+]
+]
+
+]
+
+???
+
+---
+
+# Stages and tasks
+
+.boxed-content.large[
+A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
+plan is a stage boundary.
+
+Within a stage, Spark runs **one task per partition**.
+]
+
+.boxed-content.large.no-bullet[
+* Before the shuffle: **589 tasks**, one per input partition.
+* After it: **27 tasks**, because Spark sized the next stage to the data it actually got.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
+]
+
+---
+
+# The same count on a 32-core cluster
+
+.boxed-content[
+<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
+]
+
+---
+
+# Where the core-time went
+
+.boxed-content.small[
+```text
+Job Wall-clock time: 00:00:55
+Cores per node: 8          (four nodes, 32 cores)
+
+CPU Efficiency:    27.27% of 00:29:20 core-walltime
+Memory Efficiency:  3.68% of 128.00 GB (4.00 GB/core)
+```
+]
+
+.boxed-content.large.no-bullet[
+* 32 cores held for 55 seconds is **29 minutes of core-time**. About **8 minutes** of it did work.
+* The scheduler ran **10 000 tasks** over 20 000 small files.
+* Three quarters of the reservation went on starting, shipping and collecting tasks.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> This is the same mistake `make rdd` made on your laptop: one partition per file.
+]
+
+---
+class: group-roulette
+groups: 5
+seed: 24.09.2026
+
+.boxed-content[
+# &micro;Lab 1 .gray-text[&middot; the same count, on Simple English Wikipedia]
+
+.large[
+**35 minutes.** Count the words again, on a corpus that arrives as **one compressed
+stream** instead of 18 846 files, and read what that does to the plan.
+]
+
+.large[.gray-text[Handout available on ISC Learn.]]
+]
+
+---
+
+# &micro;Lab 1 .gray-text[&middot; the three steps]
+
+.cards.cols-3.tight[
+.card.small[
+.kicker[step 1]
+
+### Re-run Monday's count, unchanged
+
+The 18 846 newsgroup files, the same script, the same arguments. Write down the input
+partition count and the clock.
+
+.foot[This is the baseline the next two steps are different from.]
+]
+.card.small[
+.kicker[step 2]
+
+### Glue that text into one compressed file
+
+Not one byte of the text changes, so the answer cannot. Run the same count on the
+single file and write down the same two numbers.
+
+.foot[Then check the fifteen words against step 1. Same, or not?]
+]
+.card.small[
+.kicker[step 3]
+
+### Read eight times as much text
+
+The Wikipedia corpus, stored the same way as step 2. Two numbers again.
+
+.foot[One of these steps moved the partition count. The other moved the clock.]
+]
+]
+
+.boxed-content.large[
+**Core by 09h40.** Solved means three runs and six numbers on your sheet.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Below the checkpoint the sheet prints the
+script you have been running all morning, and everything after that is a change you
+make to it.
+]
+
+---
+
+.section-mark[
+# Short break
+
+.large[We reconvene .timer[in 10 minutes].]
+]
+
+---
+class: group-roulette
+groups: 5
+seed: 24.09.2026
+
+.boxed-content[
+# &micro;Lab 2 .gray-text[&middot; one worker, then four]
+
+.large[
+**35 minutes.** The same job twice, with one worker and then with four. Two timings, one
+ratio, and the reason the ratio is not four.
+]
+
+.large[.gray-text[Handout available on ISC Learn. Same groups, roles rotate.]]
+]
+
+---
+
+# &micro;Lab 2 .gray-text[&middot; the three steps]
+
+.cards.cols-3.tight[
+.card.small[
+.kicker[step 1]
+
+### Shrink the cluster to one worker, and time the job
+
+```
+kubectl scale deployment spark-worker --replicas=1
+```
+
+.foot[Wait until **Alive Workers** reads 1 on the Spark master UI before you submit.]
+]
+.card.small[
+.kicker[step 2]
+
+### Grow it to four, and time the same job
+
+```
+kubectl scale deployment spark-worker --replicas=4
+```
+
+.foot[Read **Cores in use** off the UI before you scale, and again once it settles.]
+]
+.card.small[
+.kicker[step 3]
+
+### Write the speed-up, and say why it is not four
+
+Divide the first timing by the second. Four times the workers did not buy four times the
+speed; say which part of the job never divided.
+
+.foot[Amdahl's law, day 1, gave you the shape of this answer already.]
+]
+]
+
+.boxed-content.large[
+**Core by 10h25.** Solved means two timings, the speed-up, and one sentence on the part
+that does not divide.
+]
+
+---
+
+.section-mark[
+# Why a workflow engine
+
+.large[And why Monday's is called Flyte.]
+]
+
+---
+
+# What an orchestrator does that a script does not
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[a shell script]
+
+### Runs the steps in order and stops when one fails
+
+Restarting means running it again from the top, including everything that already
+succeeded. Which step failed is in the terminal you closed.
+
+.foot[This is &micro;Lab 2's `make` target, and it is fine until a step takes an hour.]
+]
+.card.small[
+.kicker[an orchestrator]
+
+### Knows what each step needs and what it produced
+
+It records every run, retries a step that failed without redoing the ones that did not,
+and keeps the logs of each step separately from the others.
+
+.foot[Descriptif objective 2, in the words it uses: failures, logging and retries.]
+]
+]
+
+.boxed-content.large[
+The word **orchestration** is doing two jobs in this course. Kubernetes orchestrates
+**services** that are meant to run forever. A workflow engine orchestrates **tasks** in a
+finite graph that is meant to finish. Same word, different problem.
+]
+
+???
+
+They met container orchestration on Monday and will meet workflow orchestration now. The
+conflation is the predictable error, so name it before it happens.
+
+---
+
+# Four ways to describe a pipeline
+
+.boxed-content.data-table.small[
+| | Airflow | Nextflow | Flyte | Dagster |
+|:--|:--|:--|:--|:--|
+| Pipeline is | a Python program | dataflow through channels | typed Python functions | declared assets |
+| Graph comes from | explicit edges (`>>`) | inferred from connections | values passed between tasks | inferred from dependencies |
+| Optimised for | scheduled operations | scientific batch | typed, cached batch | lineage and rebuilds |
+| Per-step containers | possible, not idiomatic | idiomatic, per process | idiomatic, per task | via infrastructure |
+| Resume after failure | retries per task | hash-based `-resume` | `cache=True` per task | stale-asset rebuild |
+| Runs once or forever | forever, on a calendar | once, to completion | once; schedules separate | forever, asset-driven |
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The axis that actually decides it is **scheduled
+operations versus scientific batch**. An operational workflow runs forever on a calendar
+and needs connectors and an audit trail. A scientific pipeline runs an analysis and stops,
+and needs per-step environments and a cheap resume.
+]
+
+???
+
+Airflow is the industry reference and is named in the module descriptif. It is taught
+here, on this slide, as the thing the others are measured against. Our labs use Flyte
+because this course is the second column, not the first.
+
+---
+
+# Passing data: XCom
+
+.boxed-content.large[
+```python
+from airflow.operators.python import PythonOperator
+
+def produce(**ctx):
+    return "hello"
+
+def consume(**ctx):
+    ti = ctx["ti"]
+    print("Got:", ti.xcom_pull(task_ids="produce"))
+
+p = PythonOperator(task_id="produce", python_callable=produce)
+c = PythonOperator(task_id="consume", python_callable=consume, provide_context=True)
+p >> c
+```
+]
+
+.gray-text.larger[Useful sparingly; for larger data, persist to files/objects and pass **references**.]
+
+---
+class: group-roulette
+groups: 5
+seed: 24.09.2026
+
+.boxed-content[
+# &micro;Lab 3 .gray-text[&middot; deploy Flyte and run a pipeline]
+
+.large[
+**40 minutes.** Bring up a Flyte cluster on your own laptop, run a two-task workflow on
+it, and find that run in the console.
+]
+
+.large[.gray-text[Handout available on ISC Learn. This is what Monday starts from.]]
+]
+
+---
+
+# &micro;Lab 3 .gray-text[&middot; the three steps]
+
+.cards.cols-3.tight[
+.card.small[
+.kicker[step 1]
+
+### Start the Flyte cluster on your laptop
+
+```
+flytectl demo start
+```
+
+.foot[One container, the same trick as Monday's k3s. It prints an export line: keep it.]
+]
+.card.small[
+.kicker[step 2]
+
+### Run the two-task workflow on that cluster
+
+`pyflyte run --remote` sends your file to the cluster and runs it there, not here.
+
+.foot[It prints a URL. That URL is step 3.]
+]
+.card.small[
+.kicker[step 3]
+
+### Find the run in the console
+
+Open the URL. Two tasks, both green, with the value that passed between them.
+
+.foot[Write down what the second task received.]
+]
+]
+
+.boxed-content.large[
+**Core by 11h30.** Solved means the console shows one succeeded execution with two tasks.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The extension adds `cache=True` and runs it
+again. The first task does not run twice. That is what Monday is about.
+]
+
+---
+
+.section-mark[
+# Lunch break
+
+.large[We reconvene in <span class="timer">1 hour</span>.]
+]
+
+---
+
+.section-mark[
+# Changing hats .gray-text[&middot; slot 2]
+
+.large[
+**7** Packaging Kubernetes apps with Helm <br />
+**8** Container security: what isolation does not give you <br />
+**9** Caching and typed interfaces in Flyte <br />
+**10** Retries and idempotence: what happens after a task fails <br />
+**11** Slurm and Kubernetes, two ways to schedule work
+]
+
+.large[.gray-text[15 minutes each, then 10 minutes of questions.]]
+]
+
+---
+
+# What Monday needs from you
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[before you close the laptop]
+
+### The sandbox stays installed
+
+`flytectl demo start` is the slow part and you have already paid for it. Do not run
+`flytectl demo teardown`.
+
+.foot[If you do, Monday morning is spent pulling images instead of writing workflows.]
+]
+.card.small[
+.kicker[slot 3, Monday]
+
+### Five presentations, topics 12 to 16
+
+Parquet, partitioning and small files, table formats, object stores, and dataframes with
+pandas, Polars and Arrow.
+
+.foot[Checkpoint 3 is due Sunday 27 September, 18:00.]
+]
+]
+
+.boxed-content.large[
+Monday is led by **Francesco Rubbo**, and it is entirely about Flyte: typed interfaces,
+caching, retries, and per-task containers. Three of you will have taught parts of it this
+afternoon.
+]
+
+.admonition.warning[
+<i class="fa-solid fa-triangle-exclamation"></i> The LLM rule from Monday still holds.
+Checkpoint 1 was not penalised; from checkpoint 2 on, no LLM, and any use is disclosed in
+`LLM_USAGE.md` at the root of your demo repository.
+]
+
+---
+
+.section-mark[
+# Quick quiz (repeat)
+]
+
+---
+
 .section-mark[
 # End
 
@@ -86,6 +833,49 @@ See you next time: 28.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09
 ]
 ]
 
+---
+count: false
+
+.section-mark[
+# Appendix
+]
+
+---
+
+# Before the session: two downloads
+
+.boxed-content.large[
+Both are large and neither can be done during a round. This is the same rule as Monday's
+`20news.zip`.
+]
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[the corpus]
+
+### `simplewiki.txt.bz2`, from ISC Learn
+
+Put it where the lab expects it. It is the input for &micro;Lab 1 and &micro;Lab 2.
+
+.foot[One file, compressed. That is the point of it.]
+]
+.card.small[
+.kicker[the engine]
+
+### The Flyte sandbox image
+
+About 700 MB over the network, 2.4 GB once unpacked, and `flytectl demo start` will not
+run without it. Today it comes down in waves during the morning, one group at a time.
+
+.foot[Pulled once, the sandbox starts in about two minutes.]
+]
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Monday's mirror does **not** help here: Docker's
+`registry-mirrors` setting proxies Docker Hub only, and this image lives on
+`cr.flyte.org`. Pull in your slot, or take it off the USB stick.
+]
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

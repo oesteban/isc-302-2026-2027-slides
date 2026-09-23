@@ -173,6 +173,23 @@ Two forms of this fault, both found on the same sheet:
   about writing anything down. The panel now deletes the Deployment, recreates it, and says
   when to write each line.
 
+### C5 · A value printed next to a field is masked, or it is not printed
+
+A field exists so the reader produces the value. Printing the answer beside it turns
+producing into copying, and a copied field proves nothing at the checkpoint.
+
+Three cases, three treatments:
+
+| what the value is for | treatment |
+|---|---|
+| **Checking** that a prerequisite is intact | Mask the middle: `79 8·· ··1`. Enough to catch a truncated download, not enough to fill the field without looking. |
+| **Calibrating** how long something should take | State the order of magnitude, never the measurement: *"under two minutes"*, not *"110 s"*. Clocks differ by laptop anyway, so an exact figure is both an answer and a lie. |
+| **Revealing** what the round was about | Print it exactly, and put it **below the checkpoint bar**, in the panel that explains it. That is the reward for having written your own number first. |
+
+> The fault that produced this: `Size it reports, in bytes: ______  expected: 79 874 161`.
+> A reader who copies that has not checked their download, which is the one thing the
+> field was there to do.
+
 ---
 
 ## D · Definitions
@@ -337,13 +354,42 @@ Pinned template, identical `project.with(...)` block, then the shared helpers.
 
 #show: project.with(
   doc-type: "document", show-cover: false, show-toc: false, fancy-line: true,
-  title: "…", subtitle: [302 Data infrastructures · week N, day N],
+  title: "µLab N · Week W / Day D · Driver's handout\nWhat the round is about",
+  subtitle: [302 Data infrastructures · week W, day D],
   authors: ("",), date: datetime(year: …, month: …, day: …),
   revision: "1.0", language: "en", logo: auto,
 )
 ```
 
 The version pin is checked across all handouts by `tools/lint-handouts.py`.
+
+### The title is two lines, and which line is which
+
+The first line says **which instrument this is**: the round, where it sits in the
+course, and whose copy it is. The second says **what the round is about**. A reader
+holding four sheets sorts them by the first line and chooses by the second.
+
+```
+µLab 1 · Week 2 / Day 2 · Driver's handout
+Counting words in Spark on a larger dataset
+```
+
+The newline is literal, inside the `title` string. The template joins the two with
+`–` in the running footer, so the second line is not lost on later pages.
+
+Introduced on 2026-09-23. The single-line form it replaced
+(`µLab worksheet · The same count, on Simple English Wikipedia`) named neither the
+round nor the day, so a sheet on a table said nothing about which round it belonged
+to.
+
+### Panels that are steps say so
+
+A core panel carries out a numbered step of the round and is titled
+`Step N · What to do`. A panel below the checkpoint bar is not a step and is titled
+`N · What it is`, continuing the same numbering. Both forms count as panel `N`, so
+`panel 7` resolves whichever kind it is, and `tools/lint-handouts.py` reads both.
+
+The form this replaced repeated itself: `1 · Bring the cluster back · step 1`.
 
 | helper | what it draws |
 |---|---|

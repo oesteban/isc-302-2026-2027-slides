@@ -18,6 +18,7 @@
 name: title
 layout: true
 class: cover
+
 ---
 count: false
 counter: false
@@ -109,7 +110,6 @@ Build, orchestrate, and execute the pipeline of Day 1
 | 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
-
 
 ---
 
@@ -214,7 +214,6 @@ Airflow coordinates tasks, enforces dependencies, and records outcomes & timings
 * .large[<i class="fa-solid fa-flag-checkered"></i> **Run** — a DAG execution]
 ]
 
-
 ---
 
 # Airflow's Components
@@ -290,7 +289,6 @@ with DAG(
 .large[**schedule_interval**: how often (cron preset like `@daily`, `@hourly`, or [cron](https://crontab.guru/)).]
 
 ???
-
 
 ---
 count:false
@@ -385,29 +383,6 @@ with DAG(dag_id="python-task", schedule_interval=None) as dag:
 
 ---
 
-# Passing data: XCom
-
-.boxed-content.large[
-```python
-from airflow.operators.python import PythonOperator
-
-def produce(**ctx):
-    return "hello"
-
-def consume(**ctx):
-    ti = ctx["ti"]
-    print("Got:", ti.xcom_pull(task_ids="produce"))
-
-p = PythonOperator(task_id="produce", python_callable=produce)
-c = PythonOperator(task_id="consume", python_callable=consume, provide_context=True)
-p >> c
-```
-]
-
-.gray-text.larger[Useful sparingly; for larger data, persist to files/objects and pass **references**.]
-
----
-
 # Good DAG hygiene (for this course)
 <br />
 .boxed-content.no-bullet[
@@ -441,7 +416,6 @@ without causing corruption, duplication, or unintended side effects.
 * Safe to re-run: If a task is retried after a failure, or triggered again by accident, it won't “double-count” or otherwise break downstream steps.
 * No destructive side effects: It doesn't accumulate garbage
   (e.g., append duplicates, create different filenames each time) unless that's the intended behavior.
-
 
 ---
 
@@ -485,7 +459,6 @@ Now, open **http://localhost:8080** and log in with `airflow / airflow`.
 ]
 
 ---
-
 
 .section-mark[
 # Q&A
@@ -587,7 +560,6 @@ seed: 28.09.2026
 
 ]
 
-
 ---
 
 .section-mark[
@@ -635,7 +607,6 @@ seed: 28.09.2026
 
 ???
 
-
 ---
 
 .section-mark[
@@ -673,7 +644,6 @@ See you next time: 1.10.2026 @ 8h15 (in <span class="timer" data-until="2026-10-
 [<i class="fa-solid fa-circle-right"></i>](../../week3/day2/index.html)
 ]
 ]
-
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

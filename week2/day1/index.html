@@ -673,68 +673,6 @@ name: spark1
 
 ---
 
-# The *20 Newsgroups* dataset
-
-.boxed-content[
-
-.large[Example: `doc_116.txt` (total ~20'000 messages Usenet posts)]
-
-<br />
-
-```Text
-Subject: PC BOARD Layout Help
-From: <EH1QC@CUNYVM.BITNET>
-Organization: City University of New York
-Lines: 8
-
-Hi,  I have a few questions about laying out a PCB. I am using easytrax for dos
-which is a great program. But what my question is When laying out traces what
-thickness should they be? I am mainly designing low voltage low current boards
-for micro controller apps. What should pad sizes be for resistors? I will be
-turning to a commercial PCB maker to produce 1's of these boards and I was
-wondering what is the minimum distance traces should be from each other. Well
-any info would be great. Thanks.
-                                                 Anton
-```
-]
-
-???
-
----
-
-# Transformations and actions
-
-.cards.cols-2[
-.card[
-.kicker[builds the plan]
-
-### Transformation
-
-`select`, `filter`, `groupBy`, `orderBy`, `join`. Returns a new DataFrame. Reads
-nothing.
-]
-.card[
-.kicker[runs the plan]
-
-### Action
-
-`show`, `take`, `count`, `collect`, `write`. Submits a job and returns data.
-]
-]
-
-.boxed-content.small[
-```console
->>> counts = words.groupBy("word").count().orderBy(desc("count"))   # returns at once
->>> counts.take(15)                                                 # 11 s of actual work
-```
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> `explain()` prints the plan **without running it**. That is why, in your output, the plan appears above the words.
-]
-
----
-
 # Filter, group, order, show
 
 .boxed-content.larger[
@@ -764,31 +702,6 @@ if __name__ == "__main__":
 ]
 
 ???
-
----
-
-# Reading the execution plan
-
-.boxed-content.small[
-```text
-== Physical Plan ==
-AdaptiveSparkPlan isFinalPlan=false
-+- Sort [count#8L DESC NULLS LAST], true, 0
-   +- Exchange rangepartitioning(count#8L DESC NULLS LAST, 200), ENSURE_REQUIREMENTS
-      +- HashAggregate(keys=[word#3], functions=[count(1)])
-         +- Exchange hashpartitioning(word#3, 200), ENSURE_REQUIREMENTS
-            +- HashAggregate(keys=[word#3], functions=[partial_count(1)])
-               +- Filter (length(word#3) >= 3)
-                  +- Generate explode(split(lower(value#0), \W+, -1)), false, [word#3]
-                     +- FileScan text [value#0] ... InMemoryFileIndex(18846 paths)
-```
-]
-
-.boxed-content.no-bullet[
-* Read it **bottom-up**. `FileScan` happens first, `Sort` last.
-* **`Exchange` is a shuffle**: rows move between partitions. On a cluster, across the network.
-* `HashAggregate` twice &rarr; count within each partition, then combine.
-]
 
 ---
 
@@ -823,106 +736,6 @@ AdaptiveSparkPlan isFinalPlan=false
 ]
 
 ???
-
----
-
-# Results
-
-.boxed-content[
-.pull-right[
-.larger[
-<br />
-File `top15_output.txt`:
-
-```Text
-one	14635
-writes	13344
-article	12275
-people	9473
-university	9431
-know	8631
-get	8343
-think	7602
-time	6711
-use	6673
-new	6385
-good	5946
-even	5380
-see	5191
-god	5062
-```
-]
-]
-
-.pull-left.large[
-<br />
-.no-bullet[
-* <i class="fa-solid fa-ranking-star"></i> The most frequent: <br />
-  .indent[*one*, *writes*, *article*]
-
-* <i class="fa-solid fa-pen-nib"></i> *writes* : <br />
-  .indent[probably should be **ignored**]
-
-* <i class="fa-solid fa-graduation-cap"></i> *university* (5<sup>th</sup>): <br />
-  .indent[also **overestimated**]
-]
-]
-
-]
-
-???
-
----
-
-# Stages and tasks
-
-.boxed-content.large[
-A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
-plan is a stage boundary.
-
-Within a stage, Spark runs **one task per partition**.
-]
-
-.boxed-content.large.no-bullet[
-* Before the shuffle: **589 tasks**, one per input partition.
-* After it: **27 tasks**, because Spark sized the next stage to the data it actually got.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
-]
-
----
-
-# The same count on a 32-core cluster
-
-.boxed-content[
-<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
-]
-
----
-
-# Where the core-time went
-
-.boxed-content.small[
-```text
-Job Wall-clock time: 00:00:55
-Cores per node: 8          (four nodes, 32 cores)
-
-CPU Efficiency:    27.27% of 00:29:20 core-walltime
-Memory Efficiency:  3.68% of 128.00 GB (4.00 GB/core)
-```
-]
-
-.boxed-content.large.no-bullet[
-* 32 cores held for 55 seconds is **29 minutes of core-time**. About **8 minutes** of it did work.
-* The scheduler ran **10 000 tasks** over 20 000 small files.
-* Three quarters of the reservation went on starting, shipping and collecting tasks.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> This is the same mistake `make rdd` made on your laptop: one partition per file.
-]
 
 ---
 class: group-roulette
@@ -1104,6 +917,7 @@ fi
 ]
 
 ???
+
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>

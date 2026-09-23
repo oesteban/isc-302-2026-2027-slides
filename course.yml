@@ -20,10 +20,9 @@
 cohort: "2026-2027"
 short_year: "26-27"
 
-# Where the rendered decks are served. See the planning notes, risk R5: the 26-27
-# decks repo is PRIVATE, and GitHub Pages on a private repo needs a paid plan.
-# If Pages is unavailable, change this to whatever actually serves the slides
-# and re-run; every deck URL and all 8 QR codes follow from this one value.
+# Where the rendered decks are served. The repo was made PUBLIC on 2026-09-11 and
+# Pages builds it from GitHub Actions, so risk R5 is closed. Change this value and
+# re-run reyear.py to move the site; every deck URL and all 8 QR codes follow from it.
 base_url: "https://oesteban.github.io/isc-302-2026-2027-slides"
 repo_url: "https://github.com/oesteban/isc-302-2026-2027-slides"
 
@@ -89,13 +88,14 @@ days:
     date: 2026-09-21
     replaces: 2026-09-21
     start: "08:15"
-    title: "MapReduce and Apache Spark"             # was week3/day1, Mon 28.09
+    title: "Local Kubernetes deployment (+Spark dip)"  # retitled live on 21.09
+                                                    # when the theory was cut
 
   - id: week2/day2
     date: 2026-09-24
     replaces: 2026-09-24
     start: "08:15"
-    title: "Container orchestration at scale: Kubernetes and Slurm"
+    title: "Execution plans and workflow orchestration"
                                                     # was: Mon 21.09
 
   - id: week3/day1
