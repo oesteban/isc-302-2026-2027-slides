@@ -70,7 +70,7 @@ counter: true
 |:--:|:--|
 | 8h15 | Quick quiz (**not graded**) |
 | 8h45 | **Class**: GFS, MapReduce, Hadoop and Spark |
-| 9h15 | **Class**: the Kubernetes objects behind Monday's labs |
+| 9h15 | **&micro;Lab Review**: Kubernetes |
 | 9h25 | **&micro;Lab 1**: counting words on a larger dataset |
 | 10h05 | .gray-text[Break] |
 | 10h15 | **&micro;Lab 2**: one worker, then four |
@@ -78,21 +78,16 @@ counter: true
 | 11h45 | .gray-text[Lunch break] |
 | | |
 | 12h45 | **Changing hats**: three presentations |
-| 14h00 | **&micro;Lab 3**: deploy Flyte and run a pipeline |
-| 15h20 | **Quiz** & Individual time |
+| 14h00 | **&micro;Lab 3**: Deploy Flyte and run a pipeline |
+| 15h45 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
 
 ???
 
-- Morning: the theory Monday did not cover (GFS, MapReduce, Hadoop, Spark), then the Kubernetes objects Monday's labs relied on, then two Spark µLabs on the cluster built on Monday.
-- Around noon and after lunch: the five presentations of changing-hats slot 2 (topics 7 to 11).
-- Afternoon: µLab 3 installs Flyte on the laptop. Monday 28.09 starts from that installation.
-- The Flyte image has to be pulled during the morning (next slide), otherwise µLab 3 cannot start at 14h00.
-
 ---
 
-# Start these three now
+# Download the *Flyte sandbox* .gray-text[(by groups)]
 
 .boxed-content.large[
 All three run by themselves. Start them, then put the laptop down and come back to the
@@ -148,15 +143,6 @@ both want port 6443.
 ]
 
 ???
-
-- All three commands run on the laptop, in an ordinary terminal (not inside the `k8s` container, not in a kubectl shell).
-- `git pull` updates the lab repository cloned on Monday. µLab 1 uses scripts that were added after Monday.
-- `uv` is a Python package and environment manager. It downloads its own Python interpreter, which matters because `flytekit` only installs on Python 3.10 to 3.12.
-- `flytectl` is the command-line client that starts and stops the Flyte sandbox.
-- The Flyte image is about 700 MB. Seventeen laptops pulling it at the same time saturate the room's network, so each group pulls in its own slot.
-- `docker pull` only downloads the image. `flytectl demo start` (µLab 3) is what runs it.
-- Port 6443 is the port of a Kubernetes API server. Monday's cluster (the `k8s` container) publishes it, and the Flyte sandbox is another Kubernetes cluster that publishes it too. Two containers cannot publish the same host port.
-- If the pull fails on the wifi, the image is on the USB stick.
 
 ---
 
