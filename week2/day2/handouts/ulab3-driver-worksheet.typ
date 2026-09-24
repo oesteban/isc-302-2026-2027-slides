@@ -162,7 +162,7 @@
     Spark back later with its data.
   ]
   #v(3pt)
-  #raw("docker rm -f ui\ndocker stop k8s\nflytectl demo start", lang: "bash", block: true)
+  #raw("docker rm -f ui\ndocker stop k8s\ntime flytectl demo start", lang: "bash", block: true)
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 3pt, align: (top, top),
     text(size: 7.8pt, weight: "bold")[`docker rm -f ui`],
@@ -173,6 +173,9 @@
 
     text(size: 7.8pt, weight: "bold")[`flytectl demo start`],
     text(size: 7.8pt)[Creates a container named #raw("flyte-sandbox") holding a Kubernetes cluster with Flyte installed on it. It publishes 6443 for the cluster and *30080* for the web console.],
+
+    text(size: 7.8pt, weight: "bold")[`time`],
+    text(size: 7.8pt)[Times whatever follows it, and prints the figure once that has finished. It belongs to the shell rather than being a program, so it needs no installing. It is there because the field below asks for a number, and this is where the number comes from.],
   )
   #v(4pt)
   #text(size: 8.5pt)[
@@ -195,8 +198,10 @@
   )
   #v(2pt)
   #text(size: 7.8pt, fill: luma(120))[
-    With the image already on your laptop this is about two minutes. Much longer
-    means it is still pulling, and panel 7 says what to do.
+    `time` prints it after everything else. In `bash` it is the figure on the line
+    beginning `real`; in `zsh` it is the one in front of the word `total`. With the
+    image already on your laptop this is about two minutes. Much longer means it is
+    still pulling, and panel 7 says what to do.
   ]
 ]
 
@@ -204,15 +209,33 @@
 
 #panelb("Step 2 · Run the two-task workflow on that cluster")[
   #text(size: 8.5pt)[
-    `hello.py` lives in the lab repository, and it was added this week. Go into `lab`
-    and look: if `ls hello.py` comes up empty, `git pull` and look again. It has two tasks and one workflow: `split` turns a sentence into a list of
-    words, `tally` counts them. The point is not the count. It is that the list of
-    words leaves one task and arrives in another, and that Flyte checked the two
-    types agreed before anything ran.
+    `hello.py` is in `lab`: the folder you cloned on 21.09 from
+    `github.com/oesteban/isc-302-2026-2027-spark-lab`, and the one µLab 1 and µLab 2
+    handed to the Spark cluster this morning as `/lab`. The repository is named after
+    Spark because that is what it held first. `hello.py` was added to it this week, so
+    a clone nobody has pulled since 21.09 does not have it yet:
   ]
   #v(4pt)
   #raw("cd lab\nls hello.py || git pull", lang: "bash", block: true)
   #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 8pt, align: (top, top),
+    text(size: 7.8pt, weight: "bold")[`||`],
+    text(size: 7.8pt)[Runs what follows only if what precedes it failed. `ls` fails when the file is not there, and then, and only then, `git pull` fetches it.],
+  )
+  #v(3pt)
+  #text(size: 7.8pt, fill: luma(110))[
+    In a fresh folder, or cannot find the old clone? Clone it again rather than hunt
+    for it, and carry on from `cd lab`. This round reads no corpus, so a bare clone is
+    all of it: #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab")
+  ]
+  #v(4pt)
+  #text(size: 8.5pt)[
+    The file holds two tasks and one workflow: `split` turns a sentence into a list of
+    words, `tally` counts them. The point is not the count. It is that the list of
+    words leaves one task and arrives in another, and that Flyte checked the two types
+    agreed before anything ran.
+  ]
+  #v(4pt)
   #raw("uv run --python 3.12 --with flytekit==1.16.28 \\\n  pyflyte run --remote hello.py count_words --sentence \"the quick brown fox jumps\"",
        lang: "bash", block: true)
   #v(4pt)
@@ -316,12 +339,12 @@
 
 #v(5pt)
 
-#panel("5 · Extension · make the second run cost nothing")[
+#panel("5 · Extension · using the cache")[
   #text(size: 8.5pt)[
-    #text(weight: "bold")[What this shows, before you do it.] Both tasks ran in
-    containers and took about 37 s. Nothing about `split` depends on anything but
-    its input. If the input has not changed, running it again is waste. Flyte can
-    be told that.
+    Both tasks ran in containers and took about 37 s. Nothing about `split` depends
+    on anything but its input, so running it a second time on the same sentence
+    repeats work that has already been done. Flyte can be told to keep a result
+    instead of recomputing it. Turn that on, run it twice, and measure.
   ]
   #v(4pt)
   #text(size: 8.5pt)[
@@ -344,6 +367,20 @@
     Waiting matters: a task's result only enters the cache when it finishes, so two
     runs fired back to back both miss.
   ]
+  #v(4pt)
+  #text(size: 8.5pt)[
+    Both figures come off one screen. `pyflyte` returns before either run finishes,
+    so its own four seconds are not the answer:
+  ]
+  #v(3pt)
+  #raw("flytectl get execution -p flytesnacks -d development", lang: "bash", block: true)
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 3pt, align: (top, top),
+    text(size: 7.8pt, weight: "bold")[`-p` and `-d`],
+    text(size: 7.8pt)[The project and the domain the sandbox created for you, `flytesnacks` and `development`. Every execution you have run today is listed under them, newest last.],
+  )
+  #v(3pt)
+  #text(size: 8pt)[Read the *ELAPSED TIME* column for your two runs.]
   #v(4pt)
   #grid(columns: (auto, 1fr, auto, 1fr), column-gutter: 6pt, align: bottom,
     text(size: 8pt)[First run, elapsed], rule(100%),
@@ -386,7 +423,7 @@
 
 #v(5pt)
 
-#panel("7 · Annex · getting past three things that go wrong")[
+#panel("7 · Annex · troubleshooting")[
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 4pt, align: (top, top),
     text(size: 8pt, weight: "bold")[`Bind for 0.0.0.0:6443 failed: port is already allocated`],
     text(size: 8pt)[The Spark cluster is still running. `docker stop k8s`, then start the sandbox again. This is panel 1 and it is the most common failure of the round.],

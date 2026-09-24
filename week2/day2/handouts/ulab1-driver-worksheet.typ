@@ -152,6 +152,16 @@
   #v(4pt)
   #text(size: 7.8pt, fill: luma(110))[
     All three run in the folder that holds `lab`, the one you cloned into on 21.09.
+    Starting in a fresh folder, or `lab` is gone? Clone it again, and unpack into it
+    the same `20news.zip` from ISC Learn that 21.09 used:
+  ]
+  #v(2pt)
+  #raw("git clone https://github.com/oesteban/isc-302-2026-2027-spark-lab lab\nunzip ~/Downloads/20news.zip -d lab/data", lang: "bash", block: true)
+  #v(2pt)
+  #text(size: 7.8pt, fill: luma(110))[
+    A clone carries the scripts and `stopwords.txt`, not the 18 846 newsgroup files,
+    which is why the second line is there. A clone made today is already current, so
+    skip the pull and run the other two lines.
   ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 3pt, align: (top, top),
@@ -248,10 +258,10 @@
 
 #panelb("Step 2 · Store the same text as one file, and run it again")[
   #text(size: 8.5pt)[
-    #text(weight: "bold")[What this is meant to show, before you run it.] Step 1 read
-    18 846 files. Now glue them into a single compressed file and read that instead.
-    Not one byte of text changes, so the answer cannot change. Everything about how
-    Spark goes about it can.
+    Step 1 read 18 846 files. Now glue exactly those bytes into one compressed file
+    and read that instead, so that the only difference between the two runs is how the
+    text is stored on disk. Holding everything else fixed is what makes the two sets of
+    numbers worth comparing.
   ]
   #v(4pt)
   #lbl("on your laptop", fill: luma(110))
@@ -456,7 +466,7 @@
 
 #v(5pt)
 
-#panel("7 · Annex · a refused pull, and a cluster that is gone")[
+#panel("7 · Annex · troubleshooting")[
   #text(size: 8.5pt)[
     *`git pull` refuses.* If somebody in your group edited one of the lab's own
     scripts on 21.09, git stops rather than overwrite that edit, and says

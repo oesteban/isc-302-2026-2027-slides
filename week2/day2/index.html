@@ -986,15 +986,14 @@ class: group-roulette
 groups: 5
 seed: 24.09.2026
 
+<br />
+
 .boxed-content[
-# &micro;Lab 2 .gray-text[&middot; one worker, then four]
+# &micro;Lab 2
 
 .large[
-**40 minutes.** The same job twice, with one worker and then with four. Two timings, one
-ratio, and the reason the ratio is not four.
+Testing scaling
 ]
-
-.large[.gray-text[Handout available on ISC Learn. Same groups, roles rotate.]]
 ]
 
 ???
@@ -1002,51 +1001,6 @@ ratio, and the reason the ratio is not four.
 - The aim: measure a speed-up instead of assuming it, and name the part of the job that does not get faster with more workers.
 - Same groups as µLab 1; the roles rotate again.
 
----
-
-# &micro;Lab 2 .gray-text[&middot; the three steps]
-
-.cards.cols-3.tight[
-.card.small[
-.kicker[step 1]
-
-### Shrink the cluster to one worker, and time the job
-
-```
-kubectl scale deployment spark-worker --replicas=1
-```
-
-.foot[Wait until **Alive Workers** reads 1 on the Spark master UI before you submit.]
-]
-.card.small[
-.kicker[step 2]
-
-### Grow it to four, and time the same job
-
-```
-kubectl scale deployment spark-worker --replicas=4
-```
-
-.foot[Read **Cores in use** off the UI before you scale, and again once it settles.]
-]
-.card.small[
-.kicker[step 3]
-
-### Write the speed-up, and say why it is not four
-
-Divide the first timing by the second. Four times the workers did not buy four times the
-speed; say which part of the job never divided.
-
-.foot[Amdahl's law, day 1, gave you the shape of this answer already.]
-]
-]
-
-.boxed-content.large[
-**Core by 10h35.** Solved means two timings, the speed-up, and one sentence on the part
-that does not divide.
-]
-
-???
 
 - `kubectl scale deployment spark-worker --replicas=4` changes one number stored in the Deployment. The Deployment's controller then creates or deletes pods until that many exist, and each new worker pod registers itself with the Spark master.
 - It does not start Docker containers on the laptop, does not change the cores of existing workers, and does not restart the Spark master.

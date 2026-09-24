@@ -110,7 +110,7 @@ A claim about location must also be **provable by something the reader can run**
 a client is not the cluster with `command -v k3s` proves nothing to someone who does not
 already know the answer; `docker ps` showing two containers does.
 
-### B4 · Say what the exercise is meant to show, before it is done
+### B4 · Give the need and the reason before an exercise, never the outcome
 
 Withholding the point does not make an exercise interesting, it makes it unattemptable. A
 reader who does not know what they are looking for cannot look.
@@ -122,6 +122,21 @@ the lever is still handed over; only the answer is withheld.
 > mistery, it is more likely they will actually get to do what they are asked. Keep the
 > mistery for the extra-mile extension, you can get artistic there. Here we are teaching."*
 > (2026-09-20)
+
+**Amended 2026-09-24.** The rule as first written ("say what the exercise is meant to
+show") was read as a licence to print the finding. Four panels across the 24.09 sheets
+opened with a bold *What this shows, before you do it*, and then gave it away: *the
+answer cannot change*, *it will not*, *the ceiling moves*. A panel that hands over its
+result leaves nothing to do but type.
+
+The line runs between the **need** and the **outcome**. Say why the exercise exists,
+what is being held fixed and what is being varied, and what the reader will have to
+compare at the end. Do not say what the comparison will show. A title gives it away as
+efficiently as a paragraph: *make the second run cost nothing* and *say why it is not
+four* both name the answer above the work.
+
+> *"Don't spoil the movie. Explain the need, why we are going to talk about this, but
+> let them experience the what themselves."* (2026-09-24)
 
 ---
 

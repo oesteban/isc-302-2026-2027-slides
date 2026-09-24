@@ -134,10 +134,10 @@
 // ══ CORE — three panels, ten minutes ══════════════════════════════════════
 #panelb("Step 1 · Take the one-worker clock again")[
   #text(size: 8.5pt)[
-    #text(weight: "bold")[What this round is meant to show, before you start.]
-    Four workers have four times the cores of one. If the work divides cleanly, the
-    same job should finish in a quarter of the time. It will not, and the size of
-    the gap is the measurement.
+    Four workers have four times the cores of one, so a job that divided cleanly
+    would finish in a quarter of the time. Whether it does, and by how much it misses
+    if it does not, is a thing to measure rather than to reason about. This round
+    measures it: the same job at one worker, then at four.
   ]
   #v(4pt)
   #text(size: 8.5pt)[
@@ -167,14 +167,17 @@
   #v(3pt)
   #lbl("on your laptop", fill: luma(110))
   #v(2pt)
-  #raw("docker run -d --name ui -p 8080:8080 -v \"$PWD/kube:/kube:ro\" \\\n  -e KUBECONFIG=/kube/config alpine/kubectl \\\n  --server https://host.docker.internal:6443 --insecure-skip-tls-verify \\\n  port-forward --address 0.0.0.0 deploy/spark-master 8080:8080", lang: "bash", block: true)
+  #raw("docker run -d --name ui -p 8080:8080 -v \"$PWD/kube:/kube:ro\" \\\n  --add-host host.docker.internal:host-gateway \\\n  -e KUBECONFIG=/kube/config alpine/kubectl \\\n  --server https://host.docker.internal:6443 --insecure-skip-tls-verify \\\n  port-forward --address 0.0.0.0 deploy/spark-master 8080:8080", lang: "bash", block: true)
   #v(3pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 3pt, align: (top, top),
     raw("-p 8080:8080"),
     text(size: 7.8pt)[Publishes the UI on your laptop. This is the argument that makes it reachable from a browser.],
 
+    raw("--add-host host.docker.internal:host-gateway"),
+    text(size: 7.8pt)[Defines that name inside the container as the machine Docker itself runs on. Docker Desktop, on macOS and Windows, supplies the name on its own; Docker Engine on Linux does not, and the container then exits straight away. The line is harmless where the name already exists, so it is printed for everybody.],
+
     raw("--server ... host.docker.internal"),
-    text(size: 7.8pt)[From inside a container, your laptop is called `host.docker.internal`, not `127.0.0.1`.],
+    text(size: 7.8pt)[From inside a container, your laptop is called `host.docker.internal`, not `127.0.0.1`, which would be the container itself.],
 
     raw("port-forward ... 8080:8080"),
     text(size: 7.8pt)[Tunnels the UI out through the API server, the one port the cluster already publishes. Nothing about the cluster changes.],
@@ -248,7 +251,7 @@
 
 #v(5pt)
 
-#panelb("Step 3 · Write the speed-up, and say why it is not four")[
+#panelb("Step 3 · Write the speed-up, and explain the number you get")[
   #text(size: 8.5pt)[
     Four workers have four times the cores of one. Divide A by B, and see how much
     of that four you actually got.
@@ -310,8 +313,8 @@
   ]
   #v(3pt)
   #text(size: 8.5pt)[
-    Read the last two rows before you do panel 5. They say that the *file format*
-    was worth more than the extra workers.
+    The last two rows are the ones panel 5 sends you to reproduce. Read them before
+    you start it.
   ]
   #v(3pt)
   #text(size: 8pt, fill: luma(110))[
@@ -326,9 +329,10 @@
 
 #panel("5 · Extension · take the compression away")[
   #text(size: 8.5pt)[
-    #text(weight: "bold")[What this shows.] A compressed stream has to be decoded
-    before it can be split, and that decode is serial in long runs. Give Spark the
-    same text with nothing to decode and the ceiling moves.
+    Every run so far has read a compressed file, and decoding it is work Spark does
+    before it can count anything. This extension takes that work away and changes
+    nothing else, so that the four clocks you end up with separate what the file
+    format costs from what the extra workers buy.
   ]
   #v(4pt)
   #lbl("on your laptop", fill: luma(110))
@@ -376,13 +380,13 @@
 
 #v(5pt)
 
-#panel("7 · Annex · three things that go wrong, and how to fix them")[
+#panel("7 · Annex · troubleshooting")[
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 4pt, align: (top, top),
     text(size: 8pt, weight: "bold")[Why steps 1 and 2 ask for the second run],
     text(size: 8pt)[The operating system keeps recently read files in memory. The first run of a file pays for the disk, every run after it does not, and the difference is large enough to swamp what you are trying to measure. Comparing a first run against a second would tell you about the disk instead of about the workers.],
 
     text(size: 8pt, weight: "bold")[The page will not open],
-    text(size: 8pt)[Check three things, in order. *One*, `docker ps` should list `ui`; if it exited, `docker logs ui` says why. *Two*, the address must begin `http://`: the UI is served over plain HTTP and Firefox will silently try `https` otherwise, which fails with no useful message. *Three*, if you ran `kubectl port-forward` yourself instead of the container above, it must not be from inside the kubectl client: that container is on the *cluster's* network rather than your laptop's, so it forwards to a `localhost` your browser cannot reach.],
+    text(size: 8pt)[Check four things, in order. *One*, `docker ps` should list `ui`; if it exited, `docker logs ui` says why, and the two answers worth knowing are `dial tcp: lookup host.docker.internal ... no such host`, which means the `--add-host` line above was left out, and `deployments.apps "spark-master" not found`, which means the cluster you reached has no Spark on it and step 1 of µLab 1 has to be redone. *Two*, the address must begin `http://`: the UI is served over plain HTTP and Firefox will silently try `https` otherwise, which fails with no useful message. *Three*, `docker rm -f ui` before every retry: a container that exited keeps the name. *Four*, if you ran `kubectl port-forward` yourself instead of the container above, it must not be from inside the kubectl client: that container is on the *cluster's* network rather than your laptop's, so it forwards to a `localhost` your browser cannot reach.],
 
     text(size: 8pt, weight: "bold")[A job that waits],
     text(size: 8pt)[If a previous submission is still registered, yours gets no cores and simply waits, reporting a clock that is mostly queueing. In the client, `kubectl logs deploy/spark-master | grep "Registered app"` shows what the master thinks is running; `kubectl delete pod -l app=spark-master` clears a stuck one.],

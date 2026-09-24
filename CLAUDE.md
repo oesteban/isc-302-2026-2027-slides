@@ -23,8 +23,8 @@ The short form, for a draft in progress:
 - **B2** **Every argument of every command line is explained**, in a flag table. Flags,
   positional arguments, `--`, `&&`, pipes, everything.
 - **B3** Every command says where it runs: which machine, which shell, which container.
-- **B4** Say what an exercise is meant to show *before* it is done. Suspense only inside a
-  panel marked **Extra mile**.
+- **B4** Before an exercise, give the **need** and the reason, never the outcome. Not the
+  finding, not in the title. Suspense only inside a panel marked **Extra mile**.
 - **C1** Every question names the command, panel or output that answers it. No path, no
   question.
 - **C2/C3** Never ask about an undefined term, and define every word the reader will see
