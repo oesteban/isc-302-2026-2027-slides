@@ -143,7 +143,7 @@ and the built PDFs are committed so that printing needs no toolchain:
 
 | source | output |
 |---|---|
-| `week1/day0/handouts/referee-grid.typ` | 1 page, the mini-lab referee's grid |
+| `week1/day0/handouts/referee-grid.typ` | 1 page, the referee's log as run up to 21.09: one driver, one mapper, two referees |
 | `week1/day1/handouts/docker-primer-worksheet.typ` | 2 pages, the pair's sheet for the first µLab |
 | `week1/day1/handouts/flipped-worksheets.typ` | 17 pages, one brief per flipped-class topic |
 | `week1/day2/handouts/ulab1-driver-worksheet.typ` | 5 pages, the driver's sheet, µLab 1 of day 2 |
@@ -151,6 +151,10 @@ and the built PDFs are committed so that printing needs no toolchain:
 | `week2/day1/handouts/ulab1-driver-worksheet.typ` | 8 pages, Kubernetes in one container |
 | `week2/day1/handouts/ulab2-driver-worksheet.typ` | 6 pages, deploying Spark on that cluster |
 | `week2/day1/handouts/ulab3-driver-worksheet.typ` | 6 pages, counting words with DataFrames and with RDDs |
+| `week2/day2/handouts/referee-grid.typ` | 1 page, the referee's log from 24.09: two drivers, one mapper, one referee |
+| `week2/day2/handouts/ulab1-driver-worksheet.typ` | 4 pages, the same count on a larger corpus |
+| `week2/day2/handouts/ulab2-driver-worksheet.typ` | 3 pages, one worker, then four |
+| `week2/day2/handouts/ulab3-driver-worksheet.typ` | 3 pages, deploying Flyte and running a pipeline |
 
 Rebuild with `typst compile <file>.typ` and stage the PDF with the source;
 `lint-handouts.py` fails on a PDF older than its `.typ`. The topics are data,

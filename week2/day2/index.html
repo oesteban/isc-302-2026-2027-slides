@@ -443,6 +443,62 @@ name: spark1
 
 ---
 
+# RDD and DataFrame
+
+.boxed-content.data-table.large[
+| | RDD | DataFrame |
+|:--|:--|:--|
+| Records | any Python object | rows with named, typed columns |
+| Operations | functions you write | `select`, `filter`, `groupBy`, `join` |
+| Plan | runs as written | rewritten by Spark before it runs |
+]
+
+.boxed-content.large[
+Both are partitioned, immutable and lazy. A DataFrame runs on RDDs underneath.
+]
+
+???
+
+- **RDD**: the first Spark API. An RDD holds records of any type, and the program transforms them with functions (lambdas) that Spark runs as they are written. Spark cannot look inside a lambda, so it cannot tell which fields it reads or whether two steps could be merged.
+- **DataFrame** (Spark 1.3, 2015): a distributed table. Every column has a name and a type (the **schema**), and operations are relational: select columns, filter rows, group, join, aggregate.
+- Because the operations are declared and the schema is known, Spark's optimiser (**Catalyst**) rewrites the plan before running it:
+  - it reads only the columns that are used (column pruning);
+  - it moves filters as early as possible (predicate pushdown);
+  - it counts within each partition before a shuffle, so less data moves.
+- Relational operations run inside the JVM executors. With RDDs in PySpark, every lambda runs in a separate Python process, and each record is serialised to it and back.
+- Both APIs share the RDD properties from the previous slide: data split into **partitions**, **immutable** (an operation returns a new dataset), and **lazy** (transformations build a plan, an action runs it).
+- The two word-count scripts that follow do the same work, one per API: `flatMap`, `map`, `reduceByKey` with RDDs; `explode`, `groupBy`, `count` with DataFrames. On Monday's µLab 3, the DataFrame version was the faster one.
+- Use RDDs when the data has no tabular shape or the logic does not fit relational operations. Use DataFrames for everything else.
+
+---
+
+# Stages and tasks
+
+.boxed-content.large.no-bullet[
+* A **partition** is the slice of the data that one task works on.
+
+* A **stage** runs with no shuffle inside it. Each `Exchange` in the plan starts a new one.
+
+* Within a stage, Spark runs **one task per partition**.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
+]
+
+???
+
+- A **partition** is a piece of a DataFrame or RDD, held by one executor and processed by one task.
+- A **task** is the unit of work Spark sends to one core: one stage's operations applied to one partition.
+- A **stage** is a sequence of narrow operations that run without moving data between partitions. A shuffle (`Exchange` in the plan printed by `explain()`) ends one stage and starts the next.
+- The plan is read bottom-up: `FileScan` first, the final `Sort` last. The `FileScan` line lists the input paths.
+- The number of tasks in the first stage follows the input: how many files there are, and how large each one is. The `input partitions` line printed by the lab script counts them.
+- After a shuffle, Spark sizes the next stage to the data it actually received, so the partition count can change from one stage to the next.
+- Every task has a fixed cost (scheduling it, sending it to an executor, collecting its result), whatever the amount of data it processes. Many tiny partitions mean that fixed cost is paid many times.
+- µLab 1 changes only the shape of the input and records the partition count and the time for each shape.
+
+---
+
 # Apache Spark (2016)
 
 <object data="images/spark-cacm2016.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
@@ -719,9 +775,9 @@ fi
 ---
 
 .section-mark[
-# The Kubernetes objects behind Monday's labs
+# &micro;Lab Review
 
-.large[Four slides from Monday, before &micro;Lab 1 uses them again.]
+.large[Kubernetes]
 ]
 
 ???
@@ -784,6 +840,8 @@ Compares declared against actual and closes the gap. It creates the pods.
 
 # Deployment and Job
 
+<br />
+
 .cards.cols-2[
 .card[
 .kicker[always running]
@@ -801,7 +859,7 @@ Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 ]
 ]
 
-.boxed-content.small[
+.boxed-content.large[
 ```console
 # kubectl create deployment NAME --image=IMG --replicas=3
 # kubectl create job        NAME --image=IMG -- CMD ARGS
@@ -809,7 +867,7 @@ Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> The whale prints its line and exits 0. Pick the wrong one and `RESTARTS` climbs.
+<i class="fa-solid fa-circle-right"></i> The whale prints its line and exits 0.
 ]
 
 ???
@@ -825,7 +883,7 @@ Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 
 # Starting a cluster, and a client for it
 
-.boxed-content.small[
+.boxed-content[
 ```console
 $ mkdir kube
 $ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
@@ -886,51 +944,14 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 - The cluster has no GitHub credentials, so the package must be public (GitHub profile, *Packages*, package settings).
 
 ---
-
-# Stages and tasks
-
-.boxed-content.large[
-A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
-plan is a stage boundary.
-
-Within a stage, Spark runs **one task per partition**.
-]
-
-.boxed-content.large.no-bullet[
-* A **partition** is the slice of the data that one task works on. The `input partitions` line of your output counts them.
-* Before the first shuffle, the input's storage decides the partition count.
-* After a shuffle, Spark sizes the next stage to the data it actually received.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
-]
-
-???
-
-- A **partition** is a piece of a DataFrame or RDD, held by one executor and processed by one task.
-- A **task** is the unit of work Spark sends to one core: one stage's operations applied to one partition.
-- A **stage** is a sequence of narrow operations that run without moving data between partitions. A shuffle (`Exchange` in the plan printed by `explain()`) ends one stage and starts the next.
-- The plan is read bottom-up: `FileScan` first, the final `Sort` last. The `FileScan` line lists the input paths.
-- The number of tasks in the first stage follows the input: how many files there are, and how large each one is.
-- Every task has a fixed cost (scheduling it, sending it to an executor, collecting its result), whatever the amount of data it processes. Many tiny partitions mean that fixed cost is paid many times.
-- µLab 1 changes only the shape of the input and records the partition count and the time for each shape.
-
----
 class: group-roulette
-groups: 5
+groups: 4
 seed: 24.09.2026
 
+<br />
+
 .boxed-content[
-# &micro;Lab 1 .gray-text[&middot; the same count, on Simple English Wikipedia]
-
-.large[
-**40 minutes.** Count the words again, on a corpus that arrives as **one compressed
-stream** instead of 18 846 files, and read what that does to the plan.
-]
-
-.large[.gray-text[On ISC Learn: the handout, and the corpus as *Simple English Wikipedia
-dataset*. One file, `simplewiki.txt.bz2`, 80 MB; step 3 reads it.]]
+# &micro;Lab 1 .gray-text[&middot; Simple English Wikipedia]
 ]
 
 ???
@@ -940,54 +961,6 @@ dataset*. One file, `simplewiki.txt.bz2`, 80 MB; step 3 reads it.]]
 - Same cluster as Monday (`docker start k8s` if it is stopped), same script, same arguments. Only the shape of the input changes.
 - The aim: see how the way the input is stored decides the number of partitions, and the number of partitions decides the number of tasks.
 - Roles rotate: whoever drove on Monday does not drive today.
-
----
-
-# &micro;Lab 1 .gray-text[&middot; the three steps]
-
-.cards.cols-3.tight[
-.card.small[
-.kicker[step 1]
-
-### Pull, then re-run Monday's count
-
-`git -C lab pull` first, from the folder holding `lab`. Then the 18 846 newsgroup files,
-same script, same arguments. Write down the input partition count and the clock.
-
-.foot[This is the baseline the next two steps are different from.]
-]
-.card.small[
-.kicker[step 2]
-
-### Glue that text into one compressed file
-
-Not one byte of the text changes, so the answer cannot. Run the same count on the
-single file and write down the same two numbers.
-
-.foot[Then check the fifteen words against step 1. Same, or not?]
-]
-.card.small[
-.kicker[step 3]
-
-### Read eight times as much text
-
-The Wikipedia corpus, stored the same way as step 2. Two numbers again.
-
-.foot[One of these steps moved the partition count. The other moved the clock.]
-]
-]
-
-.boxed-content.large[
-**Core by 09h45.** Solved means three runs and six numbers on your sheet.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Below the checkpoint the sheet prints the
-script you have been running all morning, and everything after that is a change you
-make to it.
-]
-
-???
 
 - Every run prints two numbers at the end: `input partitions` and `elapsed`. Both go on the sheet as soon as the run finishes.
 - Step 1 to step 2: the text is the same, so the fifteen words and their counts must be the same. What changes is the number of files, and with it the number of partitions and tasks.
