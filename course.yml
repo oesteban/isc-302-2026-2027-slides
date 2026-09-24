@@ -95,7 +95,7 @@ days:
     date: 2026-09-24
     replaces: 2026-09-24
     start: "08:15"
-    title: "Execution plans and workflow orchestration"
+    title: "MapReduce & Apache Spark"
                                                     # was: Mon 21.09
 
   - id: week3/day1
