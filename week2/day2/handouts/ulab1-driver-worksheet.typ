@@ -132,25 +132,52 @@
 )
 #v(5pt)
 // ══ CORE — three panels, ten minutes ══════════════════════════════════════
-#panelb("Step 1 · Bring the cluster back, and re-run Monday's count")[
+#panelb("Step 1 · Update the lab folder, bring the cluster back, re-run Monday's count")[
   #text(size: 8.5pt)[
-    Start Monday's cluster, put the new corpus where it can read it, and set the
-    cluster to one worker. The corpus is for step 3; this step re-runs the count you
-    already know, unchanged, so that steps 2 and 3 have something to be different
-    from.
+    Pull today's scripts into `lab`, start Monday's cluster, put the new corpus where
+    it can read it, and set the cluster to one worker. The corpus is for step 3; this
+    step re-runs the count you already know, unchanged, so that steps 2 and 3 have
+    something to be different from.
+  ]
+  #v(4pt)
+  #text(size: 8.5pt)[
+    The corpus is on *ISC Learn*, filed under *Simple English Wikipedia dataset*:
+    one file, `simplewiki.txt.bz2`, about 80 MB. Download it now if you have not
+    already. Only step 3 reads it, so it can finish downloading while you work.
   ]
   #v(4pt)
   #lbl("on your laptop", fill: luma(110))
   #v(2pt)
-  #raw("docker start k8s\ncp ~/Downloads/simplewiki.txt.bz2 lab/data/", lang: "bash", block: true)
+  #raw("git -C lab pull\ndocker start k8s\ncp ~/Downloads/simplewiki.txt.bz2 lab/data/", lang: "bash", block: true)
+  #v(4pt)
+  #text(size: 7.8pt, fill: luma(110))[
+    All three run in the folder that holds `lab`, the one you cloned into on 21.09.
+  ]
   #v(4pt)
   #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 3pt, align: (top, top),
+    raw("git -C lab pull"),
+    text(size: 7.8pt)[Brings today's scripts into that clone. `-C lab` runs git inside `lab` without moving you out of this folder, which the next two lines need. If you already pulled at 8h45 it answers `Already up to date.` and costs a second. If it refuses, use panel 7.],
+
     raw("docker start k8s"),
     text(size: 7.8pt)[Starts the stopped container that holds the cluster. If it answers `No such container`, use panel 7.],
 
     raw("cp ... lab/data/"),
-    text(size: 7.8pt)[`lab` is mounted into the cluster at `/lab`, so a file dropped here is visible to every pod.],
+    text(size: 7.8pt)[Puts the downloaded corpus where the cluster can reach it: `lab` is mounted into the cluster at `/lab`, so a file dropped here is visible to every pod. The path is where a browser saves by default; if yours saved the file somewhere else, type that path instead.],
   )
+  #v(4pt)
+  #text(size: 8.5pt)[
+    That pull is not housekeeping. Steps 2 and 3 pass a second argument to
+    `wordcount_df.py`, and Monday's copy of that script has no second argument: it
+    reads the 18 846 files whatever you hand it, and says nothing. You would write
+    step 1's answer down three times and never see an error. Check the pull landed:
+  ]
+  #v(3pt)
+  #raw("grep INPUT lab/wordcount_df.py", lang: "bash", block: true)
+  #v(3pt)
+  #text(size: 8.5pt)[
+    Four lines is today's script. No output at all is Monday's, and the pull has to
+    happen before you go on.
+  ]
   #v(4pt)
   #text(size: 8.5pt)[
     Now open a *kubectl client*. You did this on 21.09 and the command has not
@@ -429,9 +456,26 @@
 
 #v(5pt)
 
-#panel("7 · Annex · if the cluster is gone")[
+#panel("7 · Annex · a refused pull, and a cluster that is gone")[
   #text(size: 8.5pt)[
-    `docker start k8s` answers `No such container` only if you removed the cluster
+    *`git pull` refuses.* If somebody in your group edited one of the lab's own
+    scripts on 21.09, git stops rather than overwrite that edit, and says
+    `Your local changes to the following files would be overwritten by merge`. Put the
+    edit aside and pull again:
+  ]
+  #v(3pt)
+  #raw("git -C lab stash\ngit -C lab pull", lang: "bash", block: true)
+  #v(3pt)
+  #grid(columns: (auto, 1fr), column-gutter: 8pt, row-gutter: 3pt, align: (top, top),
+    raw("git -C lab stash"),
+    text(size: 7.8pt)[Puts your edit away and restores the file git shipped. The edit is kept, not thrown away: `git -C lab stash pop` brings it back after the round.],
+
+    raw("git -C lab pull"),
+    text(size: 7.8pt)[The same line as step 1. With nothing edited, it now goes through.],
+  )
+  #v(5pt)
+  #text(size: 8.5pt)[
+    *The cluster is gone.* `docker start k8s` answers `No such container` only if you removed the cluster
     rather than stopping it. Rebuilding it is not new work and it is not reprinted
     here: it is *µLab 3 of 21.09, panel 1, Start again from nothing*, which creates
     the container, starts a client with the manifest mounted, and applies it. Work

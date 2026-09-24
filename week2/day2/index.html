@@ -87,31 +87,13 @@ counter: true
 
 ---
 
-# Download the *Flyte sandbox* .gray-text[(by groups)]
+# Preparatory setup
 
-.boxed-content.large[
-All three run by themselves. Start them, then put the laptop down and come back to the
-room: none of them needs you while it works.
-]
+.boxed-content[
 
-.cards.cols-3.tight[
-.card.small[
-.kicker[1 &middot; the lab repository]
+## 1  `uv` and `flytectl`
 
-### `git pull`
-
-```
-cd lab
-git pull
-```
-
-.foot[Monday's clone does not have today's scripts. &micro;Lab 1 needs this one.]
-]
-.card.small[
-.kicker[2 &middot; two small tools]
-
-### `uv` and `flytectl`
-
+.large[
 ```
 curl -LsSf \
   https://astral.sh/uv/install.sh | sh
@@ -119,27 +101,18 @@ curl -sL https://ctl.flyte.org/install \
   | bash -s -- -b $HOME/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
 ```
-
-.foot[Seconds each, a few MB. &micro;Lab 3 needs both.]
-]
-.card.small[
-.kicker[3 &middot; the Flyte image]
-
-### 700 MB, in waves
-
-| 8h50 | 9h05 | 9h20 | 9h35 | 9h50 |
-|---|---|---|---|---|
-| G1 | G2 | G3 | G4 | G5 |
-
-.foot[**Your group's slot only.** 700 MB each; seventeen at once and nobody gets it.]
-]
 ]
 
-.admonition[
-<i class="fa-solid fa-circle-right"></i> When your slot comes:
-`docker pull cr.flyte.org/flyteorg/flyte-sandbox-bundled:sha-51877f899c9f95e0cb5efe90444eb0c6c6ea48a9`
-&mdash; pull only. Do **not** start it: the Flyte cluster and this morning's Spark cluster
-both want port 6443.
+## 2 Flyte's Docker image .gray-text[(by groups)]
+
+* Image name: `cr.flyte.org/flyteorg/flyte-sandbox-bundled`
+* Digest: `sha-51877f899c9f95e0cb5efe90444eb0c6c6ea48a9`
+
+.small[
+```
+docker pull cr.flyte.org/flyteorg/flyte-sandbox-bundled:sha-51877f899c9f95e0cb5efe90444eb0c6c6ea48a9
+```
+]
 ]
 
 ???
@@ -478,12 +451,12 @@ name: spark1
     </embed>
 </object>
 
-.gray-text[doi:[10.1145/2934664](https://doi.org/10.1145/2934664) &middot; questions in the section test are drawn from this paper.]
+.gray-text[doi:[10.1145/2934664](https://doi.org/10.1145/2934664) &middot; some questions in the exam of 1 October may be drawn from this paper.]
 
 ???
 
 - Zaharia et al., *Apache Spark: A Unified Engine for Big Data Processing*, Communications of the ACM 59(11), 2016.
-- The section test (01.10) has questions drawn from this paper. Read it in full.
+- Some questions in the exam of 1 October may be drawn from this paper. Read it in full.
 - What to be able to explain after reading it:
   - what an RDD is, and its properties (partitioned, immutable, lineage, caching);
   - why lineage makes RDDs fault-tolerant without replicating the data;
@@ -913,6 +886,37 @@ k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores
 - The cluster has no GitHub credentials, so the package must be public (GitHub profile, *Packages*, package settings).
 
 ---
+
+# Stages and tasks
+
+.boxed-content.large[
+A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
+plan is a stage boundary.
+
+Within a stage, Spark runs **one task per partition**.
+]
+
+.boxed-content.large.no-bullet[
+* A **partition** is the slice of the data that one task works on. The `input partitions` line of your output counts them.
+* Before the first shuffle, the input's storage decides the partition count.
+* After a shuffle, Spark sizes the next stage to the data it actually received.
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
+]
+
+???
+
+- A **partition** is a piece of a DataFrame or RDD, held by one executor and processed by one task.
+- A **task** is the unit of work Spark sends to one core: one stage's operations applied to one partition.
+- A **stage** is a sequence of narrow operations that run without moving data between partitions. A shuffle (`Exchange` in the plan printed by `explain()`) ends one stage and starts the next.
+- The plan is read bottom-up: `FileScan` first, the final `Sort` last. The `FileScan` line lists the input paths.
+- The number of tasks in the first stage follows the input: how many files there are, and how large each one is.
+- Every task has a fixed cost (scheduling it, sending it to an executor, collecting its result), whatever the amount of data it processes. Many tiny partitions mean that fixed cost is paid many times.
+- µLab 1 changes only the shape of the input and records the partition count and the time for each shape.
+
+---
 class: group-roulette
 groups: 5
 seed: 24.09.2026
@@ -925,11 +929,14 @@ seed: 24.09.2026
 stream** instead of 18 846 files, and read what that does to the plan.
 ]
 
-.large[.gray-text[Handout available on ISC Learn.]]
+.large[.gray-text[On ISC Learn: the handout, and the corpus as *Simple English Wikipedia
+dataset*. One file, `simplewiki.txt.bz2`, 80 MB; step 3 reads it.]]
 ]
 
 ???
 
+- The corpus download is 80 MB from ISC Learn, filed as *Simple English Wikipedia dataset*. Only step 3 needs it, so it can finish while the group works through steps 1 and 2.
+- The round opens with `git -C lab pull`. Today's `wordcount_df.py` takes the input as a second argument; Monday's clone has a version that ignores it and always reads `data/20news/*.txt`. A group that skips the pull writes step 1's answer down three times and never sees an error. `grep INPUT lab/wordcount_df.py` settles it: four lines today, nothing on Monday's copy. The sheet says all of this in step 1.
 - Same cluster as Monday (`docker start k8s` if it is stopped), same script, same arguments. Only the shape of the input changes.
 - The aim: see how the way the input is stored decides the number of partitions, and the number of partitions decides the number of tasks.
 - Roles rotate: whoever drove on Monday does not drive today.
@@ -942,10 +949,10 @@ stream** instead of 18 846 files, and read what that does to the plan.
 .card.small[
 .kicker[step 1]
 
-### Re-run Monday's count, unchanged
+### Pull, then re-run Monday's count
 
-The 18 846 newsgroup files, the same script, the same arguments. Write down the input
-partition count and the clock.
+`git -C lab pull` first, from the folder holding `lab`. Then the 18 846 newsgroup files,
+same script, same arguments. Write down the input partition count and the clock.
 
 .foot[This is the baseline the next two steps are different from.]
 ]
@@ -999,7 +1006,7 @@ make to it.
 ???
 
 - Leave the Spark cluster running: µLab 2 uses it.
-- Check the download slot of your group on the "Start these three now" slide.
+- Check that the Flyte image pull from the *Preparatory downloads* slide has started.
 
 ---
 class: group-roulette
@@ -1144,6 +1151,11 @@ it, and find that run in the console.
 .large[.gray-text[Handout available on ISC Learn. This is what Monday starts from.]]
 ]
 
+.admonition.warning[
+<i class="fa-solid fa-triangle-exclamation"></i> Do **not** run `flytectl demo teardown` at the
+end of this lab: Monday 28.09 starts from this sandbox.
+]
+
 ???
 
 - **Flyte** is a workflow engine: it runs pipelines written as Python functions (tasks) connected into a workflow, each task in its own container, on a Kubernetes cluster.
@@ -1234,7 +1246,7 @@ See you next time: 28.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09
 ???
 
 - Monday 28.09 is about Flyte and starts from the sandbox installed in µLab 3. Keep it installed.
-- Read the Spark paper (Zaharia et al., 2016) before the section test on 01.10.
+- Read the Spark paper (Zaharia et al., 2016) before the exam of 1 October.
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
