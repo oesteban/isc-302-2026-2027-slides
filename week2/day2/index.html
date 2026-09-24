@@ -45,6 +45,9 @@ Oscar Esteban &lt;<code>oscar.esteban@hevs.ch</code>>
 
 ???
 
+- The deck URL and the QR code open these slides, notes included (press `p` for presenter view).
+- The notes under each slide are written to be studied from. Where a slide answers a question of the week 2 quiz, the note says which one (Q1 to Q38).
+
 ---
 name: newsection
 layout: true
@@ -63,42 +66,12 @@ counter: true
 # Quick quiz
 ]
 
----
+???
 
-# Objectives
-
-.cards.goals[
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-**Read** a Spark execution plan and say where the time went
-.gray-text[name the stages, find the shuffles, explain the two partition counts]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-**Predict** what changes in the plan when the input changes shape
-.gray-text[the same text as 18 846 files and as one compressed stream do not read alike]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-**Measure** a speed-up instead of assuming one
-.gray-text[four workers do not finish in a quarter of the time; say which part refused]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-**State** what a workflow engine does that a shell script does not
-.gray-text[failures, logging, retries, and not paying twice for work already done]
-]
-.card[
-.marker[<i class="fa-solid fa-circle-right"></i>]
-
-**Deploy** a workflow engine and run a pipeline on it
-.gray-text[Flyte on your laptop, which is where Monday starts]
-]
-]
+- Not graded. It measures what the class knows before today's material, and the same quiz is repeated at the end of the day.
+- Questions 1 to 28 are about GFS, MapReduce, HDFS and Spark: this morning's class answers them.
+- Questions 29 to 38 are about the Kubernetes cluster, the Spark cluster on it, and the µLabs of today.
+- Answer from what you know now. A wrong answer this morning costs nothing and shows what to listen for.
 
 ---
 
@@ -107,20 +80,28 @@ counter: true
 .boxed-content.program-table[
 | Time | Content |
 |:--:|:--|
-| 8h45 | Start the three downloads, then: what changed in the &micro;Lab sheets |
-| 8h55 | **Class**: reading an execution plan |
-| 9h20 | **&micro;Lab 1**: counting words on a larger dataset |
-| 9h55 | .gray-text[Break] |
-| 10h05 | **&micro;Lab 2**: one worker, then four |
-| 10h40 | **Class**: why a workflow engine, and which one |
-| 11h05 | **&micro;Lab 3**: deploy Flyte and run a pipeline |
+| 8h15 | Quick quiz (**not graded**) |
+| 8h45 | **Class**: GFS, MapReduce, Hadoop and Spark |
+| 9h15 | **Class**: the Kubernetes objects behind Monday's labs |
+| 9h25 | **&micro;Lab 1**: counting words on a larger dataset |
+| 10h05 | .gray-text[Break] |
+| 10h15 | **&micro;Lab 2**: one worker, then four |
+| 10h55 | **Changing hats**: two presentations |
 | 11h45 | .gray-text[Lunch break] |
 | | |
-| 12h45 | **Changing hats**: five presentations |
-| 14h50 | What Monday needs from you |
+| 12h45 | **Changing hats**: three presentations |
+| 14h00 | **&micro;Lab 3**: deploy Flyte and run a pipeline |
+| 14h40 | &micro;Lab 3 extensions & individual time |
 | 15h20 | **Quiz** & Individual time |
 | 16h10 | .gray-text[End] |
 ]
+
+???
+
+- Morning: the theory Monday did not cover (GFS, MapReduce, Hadoop, Spark), then the Kubernetes objects Monday's labs relied on, then two Spark µLabs on the cluster built on Monday.
+- Around noon and after lunch: the five presentations of changing-hats slot 2 (topics 7 to 11).
+- Afternoon: µLab 3 installs Flyte on the laptop. Monday 28.09 starts from that installation.
+- The Flyte image has to be pulled during the morning (next slide), otherwise µLab 3 cannot start at 14h00.
 
 ---
 
@@ -150,9 +131,10 @@ git pull
 ### `uv` and `flytectl`
 
 ```
-curl -LsSf https://astral.sh/uv/install.sh | sh
-curl -sL https://ctl.flyte.org/install | \
-  bash -s -- -b $HOME/.local/bin
+curl -LsSf \
+  https://astral.sh/uv/install.sh | sh
+curl -sL https://ctl.flyte.org/install \
+  | bash -s -- -b $HOME/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
@@ -180,287 +162,782 @@ both want port 6443.
 
 ???
 
-The image is the only thing that cannot be recovered in the round. If a pull fails, send
-them to the USB stick rather than letting them retry on the wifi.
+- All three commands run on the laptop, in an ordinary terminal (not inside the `k8s` container, not in a kubectl shell).
+- `git pull` updates the lab repository cloned on Monday. µLab 1 uses scripts that were added after Monday.
+- `uv` is a Python package and environment manager. It downloads its own Python interpreter, which matters because `flytekit` only installs on Python 3.10 to 3.12.
+- `flytectl` is the command-line client that starts and stops the Flyte sandbox.
+- The Flyte image is about 700 MB. Seventeen laptops pulling it at the same time saturate the room's network, so each group pulls in its own slot.
+- `docker pull` only downloads the image. `flytectl demo start` (µLab 3) is what runs it.
+- Port 6443 is the port of a Kubernetes API server. Monday's cluster (the `k8s` container) publishes it, and the Flyte sandbox is another Kubernetes cluster that publishes it too. Two containers cannot publish the same host port. Quiz: Q30, Q38.
+- If the pull fails on the wifi, the image is on the USB stick.
 
 ---
 
-# What changed in the &micro;Lab sheets
-
-.boxed-content.large[
-Monday's sheets asked you to read five or six panels before you were allowed to touch
-anything. That is not a ten-minute core, and it is why groups ran out of clock.
-]
-
-.cards.cols-2.tight[
-.card.small[
-.kicker[the core]
-
-### Three panels, and nothing else
-
-Everything above the checkpoint bar is now **three panels**: what to do, the command,
-and the number to write down.
-
-.foot[A linter enforces it, so it cannot creep back.]
-]
-.card.small[
-.kicker[the definitions]
-
-### Below the bar, as reference
-
-The vocabulary panel has moved under the checkpoint. Terms are explained where they
-first appear instead.
-
-.foot[You no longer have to read a glossary before you may start.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> The extensions did not get smaller and they are
-not optional. They are the rest of the round.
-]
-
-???
-
-Say plainly that this is a response to Monday, not a new policy. The bar moved; the work
-below it did not.
-
----
-
-# The Lab Master
-
-.boxed-content.large[
-A **Lab Master** is a student whose group has been ticked at the checkpoint, and who then
-stops working on the extensions and answers other groups' questions for the rest of the
-round. One per round; the role moves every round, like driver, mapper and referee.
-]
-
-.cards.cols-2.tight[
-.card.small[
-.kicker[appointment]
-
-### The first group ticked gives one member
-
-The referee's tick is what appoints them. There is no volunteering and no nomination.
-
-.foot[They cannot drive their own group that round: they have left the keyboard.]
-]
-.card.small[
-.kicker[conduct]
-
-### Answer a group that asks, and only that group
-
-No hands on another group's keyboard, which is the mapper's rule applied across groups.
-
-.foot[A group that has not asked is not approached.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> The Lab Master keeps the **blocker board** at the
-front: one line per blocker, crossed out when cleared. Two groups on the same blocker, and
-it is said out loud to the room.
-]
-
-???
-
-Seventeen people, one teacher. The group stuck on step 3 is stuck on what somebody else
-cleared ten minutes ago.
-
----
-
-.section-mark[
-# Reading an execution plan
-
-.large[What Monday's &micro;Lab 3 produced, and what it meant.]
-]
-
----
-
-# The *20 Newsgroups* dataset
+# Why do we need pipelines?
 
 .boxed-content[
+<object type="image/svg+xml" data="images/big-data-workflow-03.svg" style="width: 100%; padding-top: 20pt;"></object>
+]
 
-.large[Example: `doc_116.txt` (total ~20'000 messages Usenet posts)]
+???
+
+- The same diagram as week 1: data goes from capture and storage, through preprocessing and modelling, to its use.
+- Every box is a step that reads data and writes data. A pipeline is the chain of those steps.
+- This morning is about the left half: storing a large amount of data and computing over it (filtering, transforming, aggregating).
+- The question behind the whole history that follows: what happens to this chain when the data no longer fits on one machine?
+
+---
+class: stepwise-svg
+
+# Let's jump back to 1998
+
+.boxed-content[
+<object type="image/svg+xml" data="images/big-data-google.svg" style="width: 100%; padding-top: 20pt;"></object>
+]
+
+???
+
+- Google's search engine, as a data pipeline, in three stages:
+  - **Crawling**: download a URL, parse its links, download the new links.
+  - **Indexing**: extract the keywords of each page, index them, update them as pages change.
+  - **Ranking**: run PageRank, then combine keywords with the ranking to answer a query.
+- **PageRank** is named after Larry Page. It ranks a page by the links that point to it from other pages, weighted by the rank of those pages.
+- In the same years, Doug Cutting and Mike Cafarella built **Nutch**, an open-source search engine, on a single machine: one CPU core, 1 GB of RAM, eight disks in RAID 1 (1 TB), about 3 000 USD. It indexed about 100 pages per second.
+- One machine kept the operations simple, and it capped the index at about 100 million pages. The web was already larger than that.
+- Both teams needed the pipeline to run on many machines at once.
+
+---
+
+# Growing problems
+.boxed-content.large.no-bullet[
+* .larger[<i class="fa-solid fa-money-bill-trend-up"></i> **Cost**: data **movement** and **materialization**:]
+  * .larger.gray-text[Store **very large files** for cheap.]
+  * .larger.gray-text[**High throughput** over low latency.]
+]
+
+???
+
+- With data spread over many machines, two operations dominate the running time:
+  - **Data movement**: copying bytes over the network, from one machine to another.
+  - **Materialization**: writing an intermediate result to disk, so that the next step can read it back.
+- CPU work (for example, counting words) is cheap next to both. Quiz: Q22.
+- The requirements that follow:
+  - store very large files on cheap hardware;
+  - favour **throughput** (bytes processed per second, over the whole job) over **latency** (time to answer one request).
+- A batch job over the whole web can take hours. Its cost is measured in machines and disks per terabyte processed.
+
+---
+count: false
+
+# Solution
+
+.boxed-content.large.no-bullet[
+* .larger[<i class="fa-solid fa-money-bill-trend-up"></i> **Cost**: data **movement** and **materialization**:]
+  * .larger.gray-text[Store **very large files** for cheap.]
+  * .larger.gray-text[**High throughput** over low latency.]
 
 <br />
 
-```Text
-Subject: PC BOARD Layout Help
-From: <EH1QC@CUNYVM.BITNET>
-Organization: City University of New York
-Lines: 8
+* .larger[<i class="fa-solid fa-folder-tree"></i> Resolved with a new **file system**:]
+  * .larger.gray-text[Running on ***commodity* hardware** (Cheap computers, fast to scale in numbers).]
+  * .larger.gray-text[**Fault tolerance** implemented by software.]
+]
 
-Hi,  I have a few questions about laying out a PCB. I am using easytrax for dos
-which is a great program. But what my question is When laying out traces what
-thickness should they be? I am mainly designing low voltage low current boards
-for micro controller apps. What should pad sizes be for resistors? I will be
-turning to a commercial PCB maker to produce 1's of these boards and I was
-wondering what is the minimum distance traces should be from each other. Well
-any info would be great. Thanks.
-                                                 Anton
+???
+
+- Google's answer was a distributed file system, the Google File System (GFS).
+- **Commodity hardware**: many ordinary, inexpensive machines instead of a few expensive servers or a storage array (NAS). Growing the system means adding machines.
+- With thousands of cheap machines, a disk or a machine fails every day. The GFS paper: *"The system is built from many inexpensive commodity components that often fail. It must constantly monitor itself and detect, tolerate, and recover promptly from component failures on a routine basis."*
+- **Fault tolerance in software**: the file system keeps copies (replicas) of every piece of data on several machines and makes new copies when one is lost.
+- What made GFS and HDFS cheap at scale (Quiz: Q9):
+  - large sequential reads and writes, which disks do well;
+  - commodity hardware, with failure treated as normal;
+  - replication done by software.
+- Expensive proprietary NAS arrays are the opposite design.
+
+---
+name: gfs1
+
+# GFS (2003)
+
+<object data="images/gfs-sosp2003.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
+    <embed src="images/gfs-sosp2003.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/gfs-sosp2003.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
+
+.gray-text[https://research.google/pubs/the-google-file-system/]
+
+???
+
+- Ghemawat, Gobioff and Leung, *The Google File System*, SOSP 2003.
+- Section 2.1 lists the assumptions: component failures are the norm, files are huge, most writes append, most reads are large and sequential.
+- The design on the next slide follows from those assumptions.
+
+---
+name: gfs2
+
+# GFS — how data is distributed
+
+.boxed-content.large.no-bullet[
+* <i class="fa-solid fa-file"></i> **Files** are divided in fixed-size chunks
+  <br /> .indent.gray-text[**64 MB** each.]
+  <br />
+* <i class="fa-solid fa-copy"></i> **Default 3 replicas**
+  <br /> .indent.gray-text[on different **chunkservers** (rack-aware placement).]
+  <br />
+* <i class="fa-solid fa-server"></i> A single **Master** keeps **metadata in memory**
+  <br /> .indent.gray-text[a table of (filename&chunk, locations).]
+  <br />
+* <i class="fa-solid fa-terminal"></i> **Clients** ask the Master for **chunk locations**
+  <br /> .indent.gray-text[however, read/write occurs **directly to chunkservers**.]
+]
+
+???
+
+- A file is cut into fixed-size **chunks** of 64 MB. Quiz: Q2.
+- Each chunk is stored **3 times**, on 3 different **chunkservers** (the machines that hold data). Rack-aware placement puts copies in different racks, so one failed rack switch does not lose all three.
+- Large chunks keep the list of all chunks small enough to fit in the Master's RAM, and they make every read long and sequential.
+- The **Master** holds only **metadata**: the namespace (file names), and for each chunk the chunkservers that hold it.
+- Reading a file:
+  1. the client asks the Master which chunkservers hold chunk N of the file;
+  2. the client reads the bytes **directly from a chunkserver**.
+- File data never passes through the Master. If it did, the single Master would be the bottleneck and the cluster could not grow. Quiz: Q1, Q18 (both false statements).
+- The table of chunk locations is also what lets a scheduler run a computation on a machine that already holds the data (data locality, two slides ahead).
+
+---
+name: mr2
+class: stepwise-svg
+
+# MapReduce (2004)
+
+.boxed-content.center[
+<object type="image/svg+xml"
+        data="images/map-reduce.svg"
+        id="svg-mapreduce-quiz"
+        style="width:95%"></object>
+]
+
+???
+
+- MapReduce is a programming model and its runtime. The programmer writes two functions, `map` and `reduce`. The framework runs them on many machines and handles distribution, scheduling and failures.
+- The steps in the figure, for a word count:
+  - **Input**: the documents, stored in GFS as chunks.
+  - **Split**: the input is divided into **input splits**. A split is a logical slice of the input, used to assign one map task. It is usually aligned with one chunk (or HDFS block), but it is a different concept: a chunk is a unit of storage and replication, a split is a unit of work. Quiz: Q10, Q24.
+  - **Map**: each map task reads its split and emits `(key, value)` pairs, here `(token, 1)` for every word. Millions of pairs.
+  - **Shuffle**: pairs with the same key are brought together. Reducers **pull** the map outputs over the network. This is the data-movement cost from the "Growing problems" slide. Quiz: Q25.
+  - **Reduce**: each reduce task receives one key with all its values and combines them: `(apple, [1, 1, 1, 1])` becomes `(apple, 4)`.
+  - **Output**: the reducers write the final table to GFS.
+- **Data locality**: the scheduler asks the file system where the replicas of each split are, and starts the map task on one of those machines. The task runs on a machine that stores its input, and reads it from a local disk. Quiz: Q3.
+- **Materialization points** (where data is written to disk, Quiz: Q4, Q5, Q8):
+  - the map output, written to the **mapper's local disk** (not to GFS);
+  - the final reduce output, written to GFS/HDFS.
+- Reading the input from GFS is not a materialization point: that data was already on disk before the job started.
+- Map outputs are temporary. Replicating them 3 times in GFS would cost network and disk for data that is deleted once the job ends. If a mapper's machine dies, the framework re-runs that map task.
+
+---
+
+# MapReduce (2004)
+
+<object data="images/mapreduce-osdi04.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
+    <embed src="images/mapreduce-osdi04.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/mapreduce-osdi04.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
+
+.gray-text[https://research.google/pubs/mapreduce-simplified-data-processing-on-large-clusters/]
+
+???
+
+- Dean and Ghemawat, *MapReduce: Simplified Data Processing on Large Clusters*, OSDI 2004.
+- Figure 1 of the paper is the execution overview: the input is split into M pieces, M map tasks, R reduce tasks, and intermediate files on the mappers' local disks.
+- Section 3.3 (fault tolerance): a failed map task is simply re-executed, because its input is still in GFS.
+- Section 3.4 (locality): the master schedules map tasks on or near a machine that holds a replica of the input.
+
+---
+name: mr3
+
+# MapReduce — word count (pseudocode)
+
+.boxed-content.large[
+
+``` Python
+def map(_, line):
+    for w in tokenize(line.lower()):
+        if w and w not in STOPWORDS:
+            yield (w, 1)
+
+def shuffle(pairs):
+    grouped = defaultdict(list)
+    for k, v in pairs:
+        grouped[k].append(v)
+    return grouped.items()
+
+def reduce(word, counts):
+    return (word, sum(counts))
 ```
 ]
 
 ???
 
+- `map` is called once per line. It emits one pair `(word, 1)` per word that is not a stopword. `yield` emits a pair and continues the loop: one line produces many pairs.
+- Stopwords are frequent words that carry no topic ("the", "and", "of"). They are removed before counting.
+- `shuffle` groups all values by key. The programmer does not write this function: the framework does it, across machines, by sending each key to the reducer responsible for it. It is written out here to show what happens between the two user functions. Quiz: Q25.
+- `reduce` is called once per word, with the list of all its counts, and returns the total.
+- `map` sees one line at a time and `reduce` sees one key at a time. Neither needs the whole dataset, which is what lets the framework run thousands of copies of each in parallel.
+- The same three steps come back in Spark as `flatMap`, `map` and `reduceByKey` (the "RDD vs. DataFrame" slide).
+
+---
+name: hadoop1
+
+![:img Hadoop, 40%](https://upload.wikimedia.org/wikipedia/commons/0/0e/Hadoop_logo.svg)
+
+.boxed-content.large[
+* Cutting and Cafarella were working on *Nutch* (an open-source web search engine).
+  <br /> .indent.gray-text[Google published GFS in 2003, MapReduce in 2004.]
+
+* In January 2006, D. Cutting was hired by Yahoo!
+  <br /> .indent.gray-text[By 2016, Hadoop was adopted by Facebook, Twitter, Amazon AWS, Microsoft, LinkedIn, etc.]
+
+* Hadoop re-implements Google's ideas: **HDFS** & **MapReduce**.
+
+* **Data locality**: send compute to where blocks live.
+]
+
+???
+
+- Google published the designs and kept the code. Cutting and Cafarella implemented both papers for Nutch.
+- In 2006 Cutting joined Yahoo!, and the storage and processing part of Nutch became a separate Apache project: **Hadoop**.
+- Hadoop has two parts, one per Google paper:
+  - **HDFS** (Hadoop Distributed File System), the open-source counterpart of GFS;
+  - **Hadoop MapReduce**, the open-source counterpart of MapReduce.
+- **Data locality**: the scheduler places each map task on a node that holds a replica of its input block. What makes this possible is the file system's table of block locations, not faster networks or a central storage device. Quiz: Q3.
+
 ---
 
-# Transformations and actions
+# HDFS — overview (vs GFS)
+
+.boxed-content.large[
+* **NameNode** (metadata) / **DataNodes** (blocks)
+* Large **blocks**, replication, streaming reads
+* Write-once, read-many reality (append came later)
+
+.center[
+![:img Official HDFS architecture diagram, 48%](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/images/hdfsarchitecture.png)
+]
+]
+
+???
+
+- HDFS uses its own names for the GFS roles:
+
+  | GFS | HDFS |
+  |---|---|
+  | Master | NameNode |
+  | chunkserver | DataNode |
+  | chunk (64 MB) | block (64 MB at first, 128 MB by default today) |
+
+- The **NameNode** stores the namespace and the block-to-DataNode map. It stores no file contents and it is not on the data path: clients read and write blocks directly on DataNodes. Quiz: Q7, Q18.
+- **Write-once, read-many**: a file is written, closed, and then only read. Appending to an existing file was added to HDFS later; GFS had record-append from the start. Quiz: Q6.
+- There are no random in-place updates: a byte in the middle of an existing file cannot be overwritten. To change data, a new file is written. Quiz: Q21.
+- The NameNode is one machine with limited memory and it holds no data, so heavy work (a reducer, for example) placed on it gains no locality and puts the whole file system at risk. Quiz: Q28.
+
+---
+name: mr_limits
+
+
+# MapReduce limitations
+
+.boxed-content.large[
+* **Iterative ML/graph** workloads: too many **re-reads** and **shuffles**.
+
+* **Materialization** between stages → heavy **disk I/O**.
+
+* Limited **optimization** opportunities at the MapReduce job level.
+
+* Users wanted **interactive** and **iterative** workloads.
+]
+
+???
+
+- A MapReduce job is one map, one shuffle, one reduce. A longer computation is a chain of jobs.
+- Each job in the chain writes its output to HDFS (3 replicas) and the next job reads it back. A chained pipeline therefore spends most of its time on disk and network I/O: it is disk-bound. Quiz: Q8.
+- **Iterative** algorithms (PageRank, k-means, gradient descent) read the same data once per iteration. In MapReduce, every iteration reads it again from HDFS. Quiz: Q14, Q27.
+- The framework sees each job separately, and only as opaque `map` and `reduce` functions. It cannot merge two jobs, skip a column, or reorder a filter.
+- **Interactive** queries (ask, look at the answer, ask again) take minutes per question when every question is a new job that re-reads the data.
+
+---
+name: spark1
+
+# Apache Spark (2009-2016)
+
+.boxed-content.large[
+* **HDFS** becomes a long-term storage layer.
+
+* Immediate access now with **Resilient Distributed Dataset** (RDD).
+  <br /> .gray-text[Data is loaded from HDFS **once**, then cached in memory.]
+
+* Operations are chained in a **DAG**
+
+* **Materialize** the output only at the end of the pipeline.
+  <br /> .gray-text[To HDFS or other storage systems (S3, etc.).]
+]
+
+???
+
+- Spark started at UC Berkeley's AMPLab in 2009 (Matei Zaharia) and became an Apache project.
+- Storage and computation become separate layers. HDFS, or an object store such as S3, keeps the data long-term; Spark computes over it. Either layer can be replaced without changing the other. Quiz: Q28.
+- **RDD** (Resilient Distributed Dataset): a collection of records that is
+  - **partitioned**: split into pieces spread over the machines of the cluster;
+  - **immutable**: an operation creates a new RDD and never modifies an existing one;
+  - **fault-tolerant through lineage**: Spark records the operations that built each RDD from its inputs. If a partition is lost, Spark recomputes it from that record instead of keeping replicas. Quiz: Q11.
+- An RDD can be **cached** in the executors' memory. An iterative algorithm reads the data from HDFS once and then works on the in-memory copy. Quiz: Q14, Q27.
+- The operations of a program form a **DAG** (directed acyclic graph). Spark sees the whole graph before running it, so it can group operations into stages and keep shuffles (wide dependencies) to a minimum. Quiz: Q23.
+- Intermediate results stay in memory. Only the final result is written to storage.
+
+---
+
+# Apache Spark (2016)
+
+<object data="images/spark-cacm2016.pdf" type="application/pdf" style="margin-top: 15px;" width="90%" height="75%">
+    <embed src="images/spark-cacm2016.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="images/spark-cacm2016.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
+
+.gray-text[doi:[10.1145/2934664](https://doi.org/10.1145/2934664) &middot; questions in the section test are drawn from this paper.]
+
+???
+
+- Zaharia et al., *Apache Spark: A Unified Engine for Big Data Processing*, Communications of the ACM 59(11), 2016.
+- The section test (01.10) has questions drawn from this paper. Read it in full.
+- What to be able to explain after reading it:
+  - what an RDD is, and its properties (partitioned, immutable, lineage, caching);
+  - why lineage makes RDDs fault-tolerant without replicating the data;
+  - which workloads the paper says Spark unifies (SQL, streaming, machine learning, graph processing) and why one engine for all of them helps;
+  - the main components of the Spark architecture you can name (driver, cluster manager, executors, and the libraries on top of the core).
+
+---
+
+.section-mark[
+# Word count in Spark
+]
+
+???
+
+- The next slides are the 2025-26 word-count script, the one behind Monday's µLab 3.
+- Monday's lab repository has the current version (`wordcount_df.py` and `wordcount_rdd.py`). The logic is the same.
+
+---
+
+# Script *PySpark* (1)
+
+.boxed-content[
+```python
+#!/usr/bin/env python
+"""
+Spark job reading the 20 Newsgroups text files from an NFS path,
+applying a stopword filter, and printing the top 15 most frequent tokens.
+"""
+
+import os
+from pathlib import Path
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+DATA_DIR = Path(os.getenv("SCRATCH", str(Path.home()))) / "datasets"
+STOPWORDS_PATH = DATA_DIR / "stopwords.txt"
+NEWSGROUPS_PATH = DATA_DIR / "newsgroups"
+
+# Create a set of stop words we don't want to count such as "the"
+stopword_list = {
+  line.strip().lower()
+  for line in STOPWORDS_PATH.read_text().splitlines() if line.strip()
+}
+
+```
+]
+
+???
+
+- This part is ordinary Python, and it runs only on the **driver** (the process that runs your script and builds the plan).
+- `SCRATCH` is the environment variable of the HPC cluster's scratch directory, where this version of the script was run. On Monday's cluster the data sits under `/lab/data` instead.
+- The stopword list is a Python `set` held in the driver's memory. Spark ships a copy of it to the executors along with the tasks that use it.
+
+---
+count: false
+
+# Script *PySpark* (2)
+
+.boxed-content.larger[
+```python
+def main():
+    # 1. Initialize Spark
+    spark = SparkSession.builder \
+        .appName("WordCountOnNFS") \
+        .getOrCreate()
+
+    # 2. Read text files as a DataFrame (one column: "value")
+    text_df = spark.read.text(f"{NEWSGROUPS_PATH}/*.txt")
+
+    # 3. Split each line into tokens, explode into rows
+    words_df = text_df.select(
+        F.explode(
+            F.split(F.col("value"), r"\W+")
+        ).alias("token")
+    )
+
+    # 4. Convert to lowercase
+    words_df = words_df.select(F.lower(F.col("token")).alias("token"))
+
+```
+]
+
+???
+
+- `SparkSession` is the entry point: it connects the driver to the cluster.
+- `spark.read.text` returns a **DataFrame** with one column, `value`, and one row per line of text.
+- With `*.txt` over 18 846 files, Spark creates about one partition per file: many tiny partitions, and one task per partition. µLab 1 measures what that costs.
+- `F.split(..., r"\W+")` cuts a line at every run of non-word characters. `F.explode` turns the resulting list into one row per token.
+- None of these lines reads any data. They are **transformations**: each one adds a step to the plan and returns immediately.
+- These transformations are **narrow**: each output partition depends on one input partition, and no data moves between machines. Quiz: Q19.
+
+---
+
+# Filter, group, order, show
+
+.boxed-content.larger[
+```python
+    # 5. Filter out empty strings, numeric tokens, and stopwords
+    words_df = words_df.filter(
+        (F.col("token") != "") &
+        (~F.col("token").rlike("^[0-9]+$")) &
+        (~F.col("token").isin(stopword_list))
+    )
+
+    # 6. Group by token, count occurrences
+    counts_df = words_df.groupBy("token").count()
+
+    # 7. Get the top 15 words by descending frequency
+    top_15 = counts_df.orderBy(F.desc("count")).limit(15)
+
+    # 8. Show results
+    top_15.show(truncate=False)
+
+    spark.stop()
+
+if __name__ == "__main__":
+    main()
+```
+
+]
+
+???
+
+- `filter` is narrow: it keeps or drops each row within its own partition.
+- `groupBy("token").count()` is **wide**: all rows with the same token must end up in the same partition, so rows move between partitions. That movement is a **shuffle** (`Exchange` in the plan). Quiz: Q13, Q19.
+- `orderBy` is wide too: a global sort needs rows from every partition. `groupBy` and `orderBy` each add one shuffle to the plan, which is what Monday's µLab 3 found.
+- A **stage** is a run of narrow operations with no shuffle inside. Stage boundaries fall at wide transformations. A `map`, a `filter`, or reading a new source does not start a new stage, and neither does `coalesce` (narrow unless asked to shuffle). Quiz: Q17.
+- Using the DataFrame API does not remove shuffles: `groupBy` and `orderBy` shuffle whatever API expresses them. Quiz: Q12.
+- `show` is an **action**: it asks for a result, and only then does Spark run the plan.
+- The DataFrame API is **declarative**: the code says *what* to compute (group, count, order). Spark's optimiser chooses *how*: it can drop unused columns, move a filter earlier, and count within each partition before the shuffle, so less data moves. Quiz: Q15, Q26.
+- Reading a **columnar** format such as Parquet instead of text lets the reader skip columns that are not used (column pruning) and skip blocks whose statistics rule out a filter (predicate pushdown). Quiz: Q16.
+
+---
+
+# RDD vs. DataFrame
+
+.boxed-content[
+```python
+    # 2. Read text files into RDD
+    text_rdd = spark.sparkContext.textFile(f"{NEWSGROUPS_PATH}/*.txt")
+
+    # 3-4. Convert to lowercase and split into tokens
+    tokens_rdd = text_rdd.flatMap(
+        lambda line: re.split(r"\W+", line.lower())
+    )
+
+    # 5. Filter out empty strings, numeric tokens, and stopwords
+    filtered_rdd = tokens_rdd.filter(
+        lambda token: (
+            token != "" and
+            not re.match(r'^[0-9]+$', token) and
+            token not in stopword_list
+        )
+    )
+
+    # 6. Map each token to (token, 1), then reduce
+    word_counts = filtered_rdd.map(lambda w: (w, 1)) \
+                              .reduceByKey(lambda a, b: a + b)
+
+    # 7. Retrieve the top 15 by descending frequency
+    top_15 = word_counts.takeOrdered(15, key=lambda x: -x[1])
+```
+]
+
+???
+
+- The same count written with the RDD API. It maps directly onto the MapReduce pseudocode:
+  - `flatMap`: one line in, many tokens out (the `map` loop);
+  - `map(lambda w: (w, 1))`: the `(word, 1)` pairs;
+  - `reduceByKey`: the shuffle and the `reduce` together. It is a wide transformation. Quiz: Q13.
+- Narrow: `map`, `filter`, `flatMap`. Wide: `reduceByKey`, `groupBy`, and `join` in the general case (a join is narrow only when both sides are already partitioned the same way). Quiz: Q13.
+- The lambdas are Python functions that Spark cannot look inside. It must run them exactly as written, on every record, in a Python process next to the JVM executor.
+- The DataFrame version describes the same computation with relational operations (`select`, `filter`, `groupBy`), which the optimiser can rearrange and run inside the JVM. This is why the DataFrame count was faster on Monday. Quiz: Q26.
+- RDDs are still the layer underneath DataFrames, and the right tool when the data has no tabular shape.
+
+---
+
+# Submission in HPC with *Slurm* (1)
+
+.boxed-content.larger[
+```bash
+#!/bin/bash
+#SBATCH --job-name=SparkWordCount
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --time=01:00:00
+
+module load spark/3.5.5
+
+# 1. Identify allocated nodes
+scontrol show hostnames $SLURM_NODELIST > node_list.txt
+
+# 2. Pick the first node as Spark master
+MASTER_NODE=$(head -n 1 node_list.txt)
+
+# 3. Start Spark master on MASTER_NODE
+if [ "$HOSTNAME" = "$MASTER_NODE" ]; then
+  $SPARK_HOME/sbin/start-master.sh
+fi
+```
+
+]
+
+???
+
+- **Slurm** is the job scheduler of most HPC clusters. A user submits a batch script with `sbatch`; Slurm waits until the requested resources are free, reserves them, and runs the script.
+- The `#SBATCH` lines are the resource request (Quiz: Q20):
+  - `--nodes=4`: four machines;
+  - `--ntasks-per-node=1`: one process per machine (despite the word "node", this counts tasks);
+  - `--cpus-per-task=8`: eight cores for each process;
+  - `--time=01:00:00`: the job is killed after one hour.
+- Total cores = nodes x ntasks-per-node x cpus-per-task = 4 x 1 x 8 = 32.
+- `module load spark/3.5.5` puts that Spark version on the `PATH` (the cluster's software is installed as modules).
+- `$SLURM_NODELIST` holds the names of the machines Slurm gave the job, in a compressed form; `scontrol show hostnames` prints one name per line.
+- The script then builds a Spark standalone cluster by hand, inside the reservation: the first node becomes the Spark master.
+
+---
+count: false
+
+# Submission in HPC with *Slurm* (2)
+
+.boxed-content[
+```bash
+# 4. Start Spark workers on each allocated node
+for node in $(cat node_list.txt); do
+  srun -N1 -w "$node" "$SPARK_HOME/sbin/start-worker.sh" "spark://$MASTER_NODE:7077"
+done
+
+# 5. Submit the Spark job
+$SPARK_HOME/bin/spark-submit \
+  --master spark://$MASTER_NODE:7077 \
+  --deploy-mode client \
+  $PWD/wordcount.py
+
+# 6. Stop Spark workers
+for node in $(cat node_list.txt); do
+  ssh $node "$SPARK_HOME/sbin/stop-worker.sh"
+done
+
+# 7. Stop Spark master on MASTER_NODE
+if [ "$HOSTNAME" = "$MASTER_NODE" ]; then
+  $SPARK_HOME/sbin/stop-master.sh
+fi
+```
+
+]
+
+???
+
+- `srun -N1 -w "$node"` runs one command on one specific node of the reservation: here, a Spark worker that registers with the master at port 7077.
+- `spark-submit --master spark://...:7077` sends the word-count application to that master. `--deploy-mode client` runs the driver on the machine where `spark-submit` was typed.
+- Steps 6 and 7 stop the workers and the master. When the script ends, Slurm releases the four nodes.
+- Compare with Monday's cluster:
+  - **Slurm**: you ask for machines and a time limit, and your script decides what runs on them. The reservation is fixed for the whole job.
+  - **Kubernetes**: you declare objects (a Deployment of `spark-worker` pods), and controllers keep them running and place them on nodes. `kubectl scale` changes the worker count while the cluster runs.
+  - In both, Spark itself decides which task runs on which executor. Slurm and Kubernetes only provide the machines or pods.
+- Topic 11 of today's changing hats compares the two schedulers in depth.
+
+---
+
+.section-mark[
+# The Kubernetes objects behind Monday's labs
+
+.large[Four slides from Monday, before &micro;Lab 1 uses them again.]
+]
+
+???
+
+- On Monday µLab 1 built a Kubernetes cluster in one container and µLab 2 ran Spark on it. The slides that explain the objects involved were skipped.
+- µLab 1 and µLab 2 of today run on that same cluster, and µLab 2 scales it.
+
+---
+class: vcenter
+
+# Kubernetes interface (using `kubectl`)
+
+.cards.cols-3[
+.card[
+.section-icon.corner[<i class="fa-solid fa-server"></i>]
+
+.kicker[Nodes]
+
+```
+kubectl get nodes
+```
+
+Nodes run pods, we have created one: the k3s container.
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-cube"></i>]
+
+.kicker[Pods]
+
+```
+kubectl get pods
+```
+
+Containers scheduled together. K8s handles them for you.
+]
+.card[
+.section-icon.corner[<i class="fa-solid fa-rotate"></i>]
+
+.kicker[kubectl get deploy, get jobs]
+
+### Controller
+
+Compares declared against actual and closes the gap. It creates the pods.
+]
+]
+
+???
+
+- `kubectl` is a client program. It sends requests to the cluster's **API server** (port 6443) and prints the answers. It is not part of the cluster and can run on any machine that has the cluster's address and credentials. Quiz: Q29, Q30.
+- A **node** is a machine that runs pods. Monday's cluster has one node: the `k8s` container on the laptop.
+- A **pod** is one or more containers that are scheduled together on the same node and share its network address. It is the smallest thing Kubernetes runs.
+- A **controller** is a loop inside the cluster that compares the declared state (for example, "3 pods of this Deployment") with the actual state, and creates or deletes objects until they match.
+- Three components restart or place things, at three levels (Quiz: Q32):
+  - **kubelet**: the agent on each node. When a container inside a pod stops, the kubelet starts it again in place, and `RESTARTS` goes up.
+  - **controller**: when a whole pod is deleted, the Deployment's controller sees one pod missing and creates a new pod, with a new name.
+  - **scheduler**: decides which node a new pod goes to.
+- `kubectl describe pod` shows these components by name in its `Events` block (`From: kubelet`, `From: default-scheduler`).
+
+---
+
+# Deployment and Job
 
 .cards.cols-2[
 .card[
-.kicker[builds the plan]
+.kicker[always running]
 
-### Transformation
+### Deployment
 
-`select`, `filter`, `groupBy`, `orderBy`, `join`. Returns a new DataFrame. Reads
-nothing.
+Keeps **N pods running**. A pod that exits is replaced, **even on exit 0**.
 ]
 .card[
-.kicker[runs the plan]
+.kicker[run once]
 
-### Action
+### Job
 
-`show`, `take`, `count`, `collect`, `write`. Submits a job and returns data.
+Runs a pod **until it exits 0**, then stops. Nothing is restarted.
 ]
 ]
 
 .boxed-content.small[
 ```console
->>> counts = words.groupBy("word").count().orderBy(desc("count"))   # returns at once
->>> counts.take(15)                                                 # 11 s of actual work
+# kubectl create deployment NAME --image=IMG --replicas=3
+# kubectl create job        NAME --image=IMG -- CMD ARGS
 ```
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> `explain()` prints the plan **without running it**. That is why, in your output, the plan appears above the words.
-]
-
----
-
-# Reading the execution plan
-
-.boxed-content.small[
-```text
-== Physical Plan ==
-AdaptiveSparkPlan isFinalPlan=false
-+- Sort [count#8L DESC NULLS LAST], true, 0
-   +- Exchange rangepartitioning(count#8L DESC NULLS LAST, 200), ENSURE_REQUIREMENTS
-      +- HashAggregate(keys=[word#3], functions=[count(1)])
-         +- Exchange hashpartitioning(word#3, 200), ENSURE_REQUIREMENTS
-            +- HashAggregate(keys=[word#3], functions=[partial_count(1)])
-               +- Filter (length(word#3) >= 3)
-                  +- Generate explode(split(lower(value#0), \W+, -1)), false, [word#3]
-                     +- FileScan text [value#0] ... InMemoryFileIndex(18846 paths)
-```
-]
-
-.boxed-content.no-bullet[
-* Read it **bottom-up**. `FileScan` happens first, `Sort` last.
-* **`Exchange` is a shuffle**: rows move between partitions. On a cluster, across the network.
-* `HashAggregate` twice &rarr; count within each partition, then combine.
-]
-
----
-
-# Results
-
-.boxed-content[
-.pull-right[
-.larger[
-<br />
-File `top15_output.txt`:
-
-```Text
-one	14635
-writes	13344
-article	12275
-people	9473
-university	9431
-know	8631
-get	8343
-think	7602
-time	6711
-use	6673
-new	6385
-good	5946
-even	5380
-see	5191
-god	5062
-```
-]
-]
-
-.pull-left.large[
-<br />
-.no-bullet[
-* <i class="fa-solid fa-ranking-star"></i> The most frequent: <br />
-  .indent[*one*, *writes*, *article*]
-
-* <i class="fa-solid fa-pen-nib"></i> *writes* : <br />
-  .indent[probably should be **ignored**]
-
-* <i class="fa-solid fa-graduation-cap"></i> *university* (5<sup>th</sup>): <br />
-  .indent[also **overestimated**]
-]
-]
-
+<i class="fa-solid fa-circle-right"></i> The whale prints its line and exits 0. Pick the wrong one and `RESTARTS` climbs.
 ]
 
 ???
 
----
-
-# Stages and tasks
-
-.boxed-content.large[
-A **stage** is a run of work with no shuffle inside it. Every `Exchange` in the
-plan is a stage boundary.
-
-Within a stage, Spark runs **one task per partition**.
-]
-
-.boxed-content.large.no-bullet[
-* Before the shuffle: **589 tasks**, one per input partition.
-* After it: **27 tasks**, because Spark sized the next stage to the data it actually got.
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Partitions are not free. Each one is a task to schedule, ship to a core, and collect back.
-]
+- A **Deployment** declares a number of pods that should be running at all times. Its pods get `restartPolicy: Always`: the kubelet restarts a stopped container whatever its exit code, 0 included.
+- A **Job** declares a task that should run to completion. Its pod runs until the container exits with code 0, and then nothing is restarted.
+- Monday's whale (`ghcr.io/oesteban/whalesay`) prints a message and exits 0. Created as a Deployment, its pods cycle through `Running`, `Completed` and `CrashLoopBackOff`. Quiz: Q31.
+- `CrashLoopBackOff` means the container keeps stopping and the kubelet waits longer and longer between restarts. Here the image works as intended; a Deployment is the wrong kind of object for a program that exits.
+- The Spark master and workers are long-running services, so they are Deployments. A word count is a program that finishes, so a Job is the matching object.
+- In `kubectl create job NAME --image=IMG -- CMD ARGS`, everything after `--` is the command run inside the container, not a kubectl option.
 
 ---
 
-# The same count on a 32-core cluster
-
-.boxed-content[
-<div class="asciicast" id="spark" data-speed="4" data-cols="146" data-rows="33" style="padding-top: 25px"></div>
-]
-
----
-
-# Where the core-time went
+# Starting a cluster, and a client for it
 
 .boxed-content.small[
-```text
-Job Wall-clock time: 00:00:55
-Cores per node: 8          (four nodes, 32 cores)
+```console
+$ mkdir kube
+$ docker run -d --name k8s --privileged --tmpfs /run --tmpfs /var/run \
+    -p 6443:6443 -v "$PWD/kube:/output" \
+    rancher/k3s:v1.36.4-k3s1 server --disable=traefik \
+    --write-kubeconfig /output/config --write-kubeconfig-mode 644
 
-CPU Efficiency:    27.27% of 00:29:20 core-walltime
-Memory Efficiency:  3.68% of 128.00 GB (4.00 GB/core)
+$ grep server: kube/config
+    server: https://127.0.0.1:6443
 ```
 ]
 
 .boxed-content.large.no-bullet[
-* 32 cores held for 55 seconds is **29 minutes of core-time**. About **8 minutes** of it did work.
-* The scheduler ran **10 000 tasks** over 20 000 small files.
-* Three quarters of the reservation went on starting, shipping and collecting tasks.
+* **k3s** is a Kubernetes distribution packaged as one binary. One container, one node, one cluster.
+* The cluster writes its address and credentials to **your laptop**, into `kube/config`.
+* **`kubectl` is not part of the cluster.** It is a client, and it lives wherever you want.
+]
+
+???
+
+- The command Monday's µLab 1 ran, on the laptop:
+  - `-d --name k8s`: run in the background, as a container named `k8s`;
+  - `--privileged --tmpfs /run --tmpfs /var/run`: k3s starts containers of its own, which needs full access to the host kernel and writable runtime directories;
+  - `-p 6443:6443`: publish the API server's port on the laptop;
+  - `-v "$PWD/kube:/output"`: share the laptop's `kube` folder with the container;
+  - `server --disable=traefik`: run a k3s server, without its bundled ingress controller (Traefik), which the labs do not use;
+  - `--write-kubeconfig /output/config --write-kubeconfig-mode 644`: write the client configuration into the shared folder, readable by everyone.
+- `kube/config` (the **kubeconfig**) holds the API server address (`https://127.0.0.1:6443`) and the credentials. Any `kubectl` that reads this file can control the cluster.
+- What listens on 6443 is the Kubernetes API server. Quiz: Q30.
+- `kubectl` runs outside the cluster, here in a separate container or on the laptop, and talks to 6443. Quiz: Q29.
+- The Flyte sandbox of µLab 3 is also a k3s cluster in one container and also publishes 6443. That is why `k8s` has to be stopped before it starts. Quiz: Q38.
+
+---
+
+# The cluster has its own image store
+
+.boxed-content.large[
+k3s runs **containerd**. Your laptop runs the **Docker daemon**. Separate stores.
+]
+
+.boxed-content.large.no-bullet[
+* `docker images` &rarr; your laptop.
+* `crictl images` &rarr; the cluster.
+* `ghcr.io/<user>/<name>` &rarr; the only path between them.
 ]
 
 .admonition[
-<i class="fa-solid fa-circle-right"></i> This is the same mistake `make rdd` made on your laptop: one partition per file.
+<i class="fa-solid fa-circle-right"></i> The cluster pulls with no credentials, so the package must be **public**.
 ]
+
+???
+
+- A **container runtime** is the program that pulls images and runs containers. The laptop's is the Docker daemon. k3s brings its own, **containerd**, running inside the `k8s` container.
+- Each runtime keeps its own image store. An image in `docker images` on the laptop is invisible to the cluster.
+- This is why the first Spark pod on Monday took minutes to start even though `spark:3.5.4-python3` was already on the laptop: the cluster downloaded the 535 MB image again into its own store. Quiz: Q33.
+- `crictl` is the command-line client for containerd. It exists only inside the `k8s` container: `docker exec k8s crictl images`.
+- To get your own image into the cluster, push it to a registry (GitHub Container Registry, `ghcr.io`) and let the cluster pull it from there.
+- The cluster has no GitHub credentials, so the package must be public (GitHub profile, *Packages*, package settings).
 
 ---
 class: group-roulette
@@ -471,12 +948,18 @@ seed: 24.09.2026
 # &micro;Lab 1 .gray-text[&middot; the same count, on Simple English Wikipedia]
 
 .large[
-**35 minutes.** Count the words again, on a corpus that arrives as **one compressed
+**40 minutes.** Count the words again, on a corpus that arrives as **one compressed
 stream** instead of 18 846 files, and read what that does to the plan.
 ]
 
 .large[.gray-text[Handout available on ISC Learn.]]
 ]
+
+???
+
+- Same cluster as Monday (`docker start k8s` if it is stopped), same script, same arguments. Only the shape of the input changes.
+- The aim: see how the way the input is stored decides the number of partitions, and the number of partitions decides the number of tasks.
+- Roles rotate: whoever drove on Monday does not drive today.
 
 ---
 
@@ -515,7 +998,7 @@ The Wikipedia corpus, stored the same way as step 2. Two numbers again.
 ]
 
 .boxed-content.large[
-**Core by 09h40.** Solved means three runs and six numbers on your sheet.
+**Core by 09h45.** Solved means three runs and six numbers on your sheet.
 ]
 
 .admonition[
@@ -524,6 +1007,14 @@ script you have been running all morning, and everything after that is a change 
 make to it.
 ]
 
+???
+
+- Every run prints two numbers at the end: `input partitions` and `elapsed`. Both go on the sheet as soon as the run finishes.
+- Step 1 to step 2: the text is the same, so the fifteen words and their counts must be the same. What changes is the number of files, and with it the number of partitions and tasks.
+- Opening a file and scheduling a task each cost a fixed amount of time, whatever the size of the file. With thousands of small files, those fixed costs are larger than the counting itself. Quiz: Q36.
+- Step 2 to step 3: the storage shape stays the same and the amount of text grows. Compare which of the two numbers moves.
+- The plan printed by `explain()` shows the input in its `FileScan` line: count the paths it lists in each run.
+
 ---
 
 .section-mark[
@@ -531,6 +1022,11 @@ make to it.
 
 .large[We reconvene .timer[in 10 minutes].]
 ]
+
+???
+
+- Leave the Spark cluster running: µLab 2 uses it.
+- Check the download slot of your group on the "Start these three now" slide.
 
 ---
 class: group-roulette
@@ -541,12 +1037,17 @@ seed: 24.09.2026
 # &micro;Lab 2 .gray-text[&middot; one worker, then four]
 
 .large[
-**35 minutes.** The same job twice, with one worker and then with four. Two timings, one
+**40 minutes.** The same job twice, with one worker and then with four. Two timings, one
 ratio, and the reason the ratio is not four.
 ]
 
 .large[.gray-text[Handout available on ISC Learn. Same groups, roles rotate.]]
 ]
+
+???
+
+- The aim: measure a speed-up instead of assuming it, and name the part of the job that does not get faster with more workers.
+- Same groups as µLab 1; the roles rotate again.
 
 ---
 
@@ -588,106 +1089,71 @@ speed; say which part of the job never divided.
 ]
 
 .boxed-content.large[
-**Core by 10h25.** Solved means two timings, the speed-up, and one sentence on the part
+**Core by 10h35.** Solved means two timings, the speed-up, and one sentence on the part
 that does not divide.
 ]
+
+???
+
+- `kubectl scale deployment spark-worker --replicas=4` changes one number stored in the Deployment. The Deployment's controller then creates or deletes pods until that many exist, and each new worker pod registers itself with the Spark master. Quiz: Q35.
+- It does not start Docker containers on the laptop, does not change the cores of existing workers, and does not restart the Spark master.
+- The **Spark master** keeps the list of workers and hands their cores and memory out to applications. It runs no tasks and stores no data. **Workers** run the executors, and executors run the tasks. Quiz: Q34.
+- The Spark master web UI shows `Alive Workers` and `Cores in use`. Wait for the number you asked for before submitting, or the timing measures a cluster that is still changing size.
+- **Speed-up** = time with one worker / time with four workers.
+- Why it is less than four (Quiz: Q37):
+  - part of the run is not divided among workers at all: starting the application, planning, and collecting the result on the driver;
+  - a stage runs at most as many tasks at once as it has partitions: with fewer partitions than cores, some cores wait.
+- Amdahl's law (week 1): if a fraction *s* of the run is serial, the speed-up with *N* workers is at most 1 / (*s* + (1 - *s*) / *N*). It can never exceed 1 / *s*, however many workers are added.
 
 ---
 
 .section-mark[
-# Why a workflow engine
+# Changing hats .gray-text[&middot; slot 2, before lunch]
 
-.large[And why Monday's is called Flyte.]
+.large[
+**7** Packaging Kubernetes apps with Helm <br />
+**8** Container security: what isolation does not give you
 ]
 
----
-
-# What an orchestrator does that a script does not
-
-.cards.cols-2.tight[
-.card.small[
-.kicker[a shell script]
-
-### Runs the steps in order and stops when one fails
-
-Restarting means running it again from the top, including everything that already
-succeeded. Which step failed is in the terminal you closed.
-
-.foot[This is &micro;Lab 2's `make` target, and it is fine until a step takes an hour.]
-]
-.card.small[
-.kicker[an orchestrator]
-
-### Knows what each step needs and what it produced
-
-It records every run, retries a step that failed without redoing the ones that did not,
-and keeps the logs of each step separately from the others.
-
-.foot[Descriptif objective 2, in the words it uses: failures, logging and retries.]
-]
-]
-
-.boxed-content.large[
-The word **orchestration** is doing two jobs in this course. Kubernetes orchestrates
-**services** that are meant to run forever. A workflow engine orchestrates **tasks** in a
-finite graph that is meant to finish. Same word, different problem.
+.large[.gray-text[15 minutes each, then 10 minutes of questions.]]
 ]
 
 ???
 
-They met container orchestration on Monday and will meet workflow orchestration now. The
-conflation is the predictable error, so name it before it happens.
+- Two presentations before lunch, three after.
+- 15 minutes of presentation and 10 minutes of questions each. Questions from the audience are expected.
 
 ---
 
-# Four ways to describe a pipeline
+.section-mark[
+# Lunch break
 
-.boxed-content.data-table.small[
-| | Airflow | Nextflow | Flyte | Dagster |
-|:--|:--|:--|:--|:--|
-| Pipeline is | a Python program | dataflow through channels | typed Python functions | declared assets |
-| Graph comes from | explicit edges (`>>`) | inferred from connections | values passed between tasks | inferred from dependencies |
-| Optimised for | scheduled operations | scientific batch | typed, cached batch | lineage and rebuilds |
-| Per-step containers | possible, not idiomatic | idiomatic, per process | idiomatic, per task | via infrastructure |
-| Resume after failure | retries per task | hash-based `-resume` | `cache=True` per task | stale-asset rebuild |
-| Runs once or forever | forever, on a calendar | once, to completion | once; schedules separate | forever, asset-driven |
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> The axis that actually decides it is **scheduled
-operations versus scientific batch**. An operational workflow runs forever on a calendar
-and needs connectors and an audit trail. A scientific pipeline runs an analysis and stops,
-and needs per-step environments and a cheap resume.
+.large[We reconvene in <span class="timer">1 hour</span>.]
 ]
 
 ???
 
-Airflow is the industry reference and is named in the module descriptif. It is taught
-here, on this slide, as the thing the others are measured against. Our labs use Flyte
-because this course is the second column, not the first.
+- If your group has not pulled the Flyte image yet, start the pull now: µLab 3 cannot start without it.
 
 ---
 
-# Passing data: XCom
+.section-mark[
+# Changing hats .gray-text[&middot; slot 2, after lunch]
 
-.boxed-content.large[
-```python
-from airflow.operators.python import PythonOperator
-
-def produce(**ctx):
-    return "hello"
-
-def consume(**ctx):
-    ti = ctx["ti"]
-    print("Got:", ti.xcom_pull(task_ids="produce"))
-
-p = PythonOperator(task_id="produce", python_callable=produce)
-c = PythonOperator(task_id="consume", python_callable=consume, provide_context=True)
-p >> c
-```
+.large[
+**9** Caching and typed interfaces in Flyte <br />
+**10** Retries and idempotence: what happens after a task fails <br />
+**11** Slurm and Kubernetes, two ways to schedule work
 ]
 
-.gray-text.larger[Useful sparingly; for larger data, persist to files/objects and pass **references**.]
+.large[.gray-text[15 minutes each, then 10 minutes of questions.]]
+]
+
+???
+
+- Topic 9 introduces the Flyte features that µLab 3's extension and Monday's class use (`cache=True`, typed task inputs and outputs).
+- Topic 10 covers what a workflow engine does after a task fails. **Idempotence**: running a task twice with the same input leaves the same result as running it once, which is what makes a retry safe.
+- Topic 11 extends the comparison between the Slurm script this morning and Monday's Kubernetes cluster.
 
 ---
 class: group-roulette
@@ -704,6 +1170,12 @@ it, and find that run in the console.
 
 .large[.gray-text[Handout available on ISC Learn. This is what Monday starts from.]]
 ]
+
+???
+
+- **Flyte** is a workflow engine: it runs pipelines written as Python functions (tasks) connected into a workflow, each task in its own container, on a Kubernetes cluster.
+- The aim: have a working Flyte installation on every laptop and one pipeline already run on it. Monday 28.09 starts from there.
+- Stop the Spark cluster first (`docker stop k8s`). The Flyte sandbox publishes port 6443 too. Quiz: Q38.
 
 ---
 
@@ -742,7 +1214,7 @@ Open the URL. Two tasks, both green, with the value that passed between them.
 ]
 
 .boxed-content.large[
-**Core by 11h30.** Solved means the console shows one succeeded execution with two tasks.
+**Core by 14h25.** Solved means the console shows one succeeded execution with two tasks.
 ]
 
 .admonition[
@@ -750,74 +1222,27 @@ Open the URL. Two tasks, both green, with the value that passed between them.
 again. The first task does not run twice. That is what Monday is about.
 ]
 
----
+???
 
-.section-mark[
-# Lunch break
-
-.large[We reconvene in <span class="timer">1 hour</span>.]
-]
-
----
-
-.section-mark[
-# Changing hats .gray-text[&middot; slot 2]
-
-.large[
-**7** Packaging Kubernetes apps with Helm <br />
-**8** Container security: what isolation does not give you <br />
-**9** Caching and typed interfaces in Flyte <br />
-**10** Retries and idempotence: what happens after a task fails <br />
-**11** Slurm and Kubernetes, two ways to schedule work
-]
-
-.large[.gray-text[15 minutes each, then 10 minutes of questions.]]
-]
-
----
-
-# What Monday needs from you
-
-.cards.cols-2.tight[
-.card.small[
-.kicker[before you close the laptop]
-
-### The sandbox stays installed
-
-`flytectl demo start` is the slow part and you have already paid for it. Do not run
-`flytectl demo teardown`.
-
-.foot[If you do, Monday morning is spent pulling images instead of writing workflows.]
-]
-.card.small[
-.kicker[slot 3, Monday]
-
-### Five presentations, topics 12 to 16
-
-Parquet, partitioning and small files, table formats, object stores, and dataframes with
-pandas, Polars and Arrow.
-
-.foot[Checkpoint 3 is due Sunday 27 September, 18:00.]
-]
-]
-
-.boxed-content.large[
-Monday is led by **Francesco Rubbo**, and it is entirely about Flyte: typed interfaces,
-caching, retries, and per-task containers. Three of you will have taught parts of it this
-afternoon.
-]
-
-.admonition.warning[
-<i class="fa-solid fa-triangle-exclamation"></i> The LLM rule from Monday still holds.
-Checkpoint 1 was not penalised; from checkpoint 2 on, no LLM, and any use is disclosed in
-`LLM_USAGE.md` at the root of your demo repository.
-]
+- `flytectl demo start` creates a container named `flyte-sandbox`, holding a k3s cluster with Flyte installed on it. It publishes 6443 (the cluster's API server) and 30080 (the Flyte web console).
+- If it fails with `Bind for 0.0.0.0:6443 failed: port is already allocated`, the `k8s` container still holds the port: `docker stop k8s`, then start again. Stopping keeps the Spark cluster on disk; it does not delete it. Quiz: Q38.
+- The export line sets the environment variable that tells `pyflyte` where the sandbox is. Run it in the terminal you use for step 2.
+- `pyflyte run --remote` packages the Python file, registers it with the Flyte cluster, and starts an execution there. Without `--remote`, the workflow would run as plain Python on the laptop.
+- `uv run --python 3.12 --with flytekit==1.16.28` runs `pyflyte` with a Python version `flytekit` supports, without installing anything globally.
+- In the console, each task is a node of the graph. The value passed from the first task to the second is shown as the second task's input.
+- Extension: with `cache=True` on a task and the same inputs, the second execution reuses the stored output of the first instead of running the task again.
+- Do **not** run `flytectl demo teardown` at the end: Monday starts from this sandbox.
 
 ---
 
 .section-mark[
 # Quick quiz (repeat)
 ]
+
+???
+
+- The same questions as this morning. Compare your two sets of answers: the questions you changed are the ones today taught you.
+- Every question is answered in the notes of one of today's slides. The note says "Quiz: Qn".
 
 ---
 
@@ -833,55 +1258,18 @@ See you next time: 28.09.2026 @ 8h15 (in <span class="timer" data-until="2026-09
 ]
 ]
 
----
-count: false
+???
 
-.section-mark[
-# Appendix
-]
-
----
-
-# Before the session: two downloads
-
-.boxed-content.large[
-Both are large and neither can be done during a round. This is the same rule as Monday's
-`20news.zip`.
-]
-
-.cards.cols-2.tight[
-.card.small[
-.kicker[the corpus]
-
-### `simplewiki.txt.bz2`, from ISC Learn
-
-Put it where the lab expects it. It is the input for &micro;Lab 1 and &micro;Lab 2.
-
-.foot[One file, compressed. That is the point of it.]
-]
-.card.small[
-.kicker[the engine]
-
-### The Flyte sandbox image
-
-About 700 MB over the network, 2.4 GB once unpacked, and `flytectl demo start` will not
-run without it. Today it comes down in waves during the morning, one group at a time.
-
-.foot[Pulled once, the sandbox starts in about two minutes.]
-]
-]
-
-.admonition[
-<i class="fa-solid fa-circle-right"></i> Monday's mirror does **not** help here: Docker's
-`registry-mirrors` setting proxies Docker Hub only, and this image lives on
-`cr.flyte.org`. Pull in your slot, or take it off the USB stick.
-]
+- Monday 28.09 is about Flyte and starts from the sandbox installed in µLab 3. Keep it installed.
+- Read the Spark paper (Zaharia et al., 2016) before the section test on 01.10.
 
 </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script src="../../remark/core/engine.js"></script>
+    <script src="../../remark/ext/svg-preload.js"></script>
     <script src="../../remark/ext/svg-theme.js"></script>
     <script src="../../remark/ext/nav-controls.js"></script>
+    <script src="../../remark/ext/stepwise-svg.js"></script>
     <script src="../../remark/ext/timer.js"></script>
     <script src="../../remark/ext/roulette.js"></script>
     <script>Roulette.init(slideshow);</script>

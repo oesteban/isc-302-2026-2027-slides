@@ -142,12 +142,19 @@
 // ══ CORE — three panels, ten minutes ══════════════════════════════════════
 #panelb("Step 1 · Check your two tools, then start the Flyte cluster")[
   #text(size: 8.5pt)[
-    The round needs `flytectl` and `uv`, both installed this morning. Check them
-    first. If either line prints nothing, install it now from the 08h45 slide; it
-    takes seconds, and everything below depends on it.
+    The round needs two small tools on your laptop. Check for them first, because
+    everything below depends on both.
   ]
   #v(3pt)
   #raw("flytectl version\nuv --version", lang: "bash", block: true)
+  #v(3pt)
+  #text(size: 8.5pt)[
+    Either one missing? Install it here and now. This is seconds and a few MB, not
+    the image download, and the third line is what puts them on your path in the
+    terminal you are already in.
+  ]
+  #v(3pt)
+  #raw("curl -LsSf https://astral.sh/uv/install.sh | sh\ncurl -sL https://ctl.flyte.org/install | bash -s -- -b $HOME/.local/bin\nexport PATH=\"$HOME/.local/bin:$PATH\"", lang: "bash", block: true)
   #v(4pt)
   #text(size: 8.5pt)[
     Now free the port. The Spark cluster and the Flyte one both publish *6443*, and
@@ -197,13 +204,14 @@
 
 #panelb("Step 2 · Run the two-task workflow on that cluster")[
   #text(size: 8.5pt)[
-    `hello.py` came in with this morning's `git pull`, so run this from inside `lab`. It has two tasks and one workflow: `split` turns a sentence into a list of
+    `hello.py` lives in the lab repository, and it was added this week. Go into `lab`
+    and look: if `ls hello.py` comes up empty, `git pull` and look again. It has two tasks and one workflow: `split` turns a sentence into a list of
     words, `tally` counts them. The point is not the count. It is that the list of
     words leaves one task and arrives in another, and that Flyte checked the two
     types agreed before anything ran.
   ]
   #v(4pt)
-  #raw("cd lab", lang: "bash", block: true)
+  #raw("cd lab\nls hello.py || git pull", lang: "bash", block: true)
   #v(3pt)
   #raw("uv run --python 3.12 --with flytekit==1.16.28 \\\n  pyflyte run --remote hello.py count_words --sentence \"the quick brown fox jumps\"",
        lang: "bash", block: true)
