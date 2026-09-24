@@ -162,6 +162,79 @@ time: 45
 
 ---
 
+# What an orchestrator does that a script does not
+
+.cards.cols-2.tight[
+.card.small[
+.kicker[a shell script]
+
+### Runs the steps in order and stops when one fails
+
+Restarting means running it again from the top, including everything that already
+succeeded. Which step failed is in the terminal you closed.
+
+.foot[A `make` target or a `run.sh` works this way, and it is fine until a step takes an hour.]
+]
+.card.small[
+.kicker[an orchestrator]
+
+### Knows what each step needs and what it produced
+
+It records every run, retries a step that failed without redoing the ones that did not,
+and keeps the logs of each step separately from the others.
+
+.foot[Descriptif objective 2, in the words it uses: failures, logging and retries.]
+]
+]
+
+.boxed-content.large[
+The word **orchestration** is doing two jobs in this course. Kubernetes orchestrates
+**services** that are meant to run forever. A workflow engine orchestrates **tasks** in a
+finite graph that is meant to finish. Same word, different problem.
+]
+
+???
+
+- Container orchestration (Kubernetes) came on 21.09 and 24.09: services kept running, pods restarted, replicas scaled.
+- Workflow orchestration is today's subject: a finite graph of tasks that runs to completion.
+- Both are called "orchestration". Name the difference before the first Flyte workflow, since the Flyte sandbox itself runs on Kubernetes.
+- Descriptif objective 2 names failures, logging and retries. Each card maps to them: the script loses all three, the orchestrator records all three per task.
+
+---
+
+# Four ways to describe a pipeline
+
+.boxed-content.data-table.small[
+| | Airflow | Nextflow | Flyte | Dagster |
+|:--|:--|:--|:--|:--|
+| Pipeline is | a Python program | dataflow through channels | typed Python functions | declared assets |
+| Graph comes from | explicit edges (`>>`) | inferred from connections | values passed between tasks | inferred from dependencies |
+| Optimised for | scheduled operations | scientific batch | typed, cached batch | lineage and rebuilds |
+| Per-step containers | possible, not idiomatic | idiomatic, per process | idiomatic, per task | via infrastructure |
+| Resume after failure | retries per task | hash-based `-resume` | `cache=True` per task | stale-asset rebuild |
+| Runs once or forever | forever, on a calendar | once, to completion | once; schedules separate | forever, asset-driven |
+]
+
+.admonition[
+<i class="fa-solid fa-circle-right"></i> The axis that actually decides it is **scheduled
+operations versus scientific batch**. An operational workflow runs forever on a calendar
+and needs connectors and an audit trail. A scientific pipeline runs an analysis and stops,
+and needs per-step environments and a cheap resume.
+]
+
+???
+
+- Airflow is the industry reference for scheduled operations, and the module descriptif names it (Contents and Tools). This slide is where the course teaches it.
+- Airflow: a DAG is a Python program; edges are declared with `>>`; it runs forever on a calendar; retries are per task.
+- Nextflow: processes connected by channels; the graph follows from the connections; `-resume` skips steps whose inputs hash the same.
+- Flyte: typed Python functions; the graph follows from the values passed between tasks; `cache=True` skips a task whose inputs are unchanged.
+- Dagster: declared assets; rebuilds the assets that are stale.
+- The labs use Flyte because the course pipelines (newsgroup word count, neuro pipeline) are scientific batch: they run once, need a container per step, and need a cheap resume.
+
+---
+
+---
+
 .section-mark[
 # Apache Airflow
 
